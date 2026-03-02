@@ -19,7 +19,7 @@ export default function GameResultspage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [playerScores, setPlayerScores] = useState<PlayerScoreDetails | null>(null);
 
-   useEffect(() => {
+  useEffect(() => {
     const fetchGame = async () => {
       setLoading(true);
       try {
@@ -36,7 +36,7 @@ export default function GameResultspage() {
     if (!isNaN(gameId)) fetchGame();
   }, [gameId, router]);
 
-    const openPlayerModal = async (userId: number) => {
+  const openPlayerModal = async (userId: number) => {
     if (!game) return;
     try {
       const data = await getPlayerScoreDetails(gameId, userId);
@@ -139,10 +139,27 @@ export default function GameResultspage() {
               key={`${entry.id ?? idx}-${entry.createdAt}`}
               direction="row"
               justifyContent="space-between"
+              alignItems="center"
               sx={{ py: 1 }}
             >
-              <Typography>Points: {entry.points}</Typography>
-              <Typography>{new Date(entry.createdAt).toLocaleString("da-DK")}</Typography>
+              <Stack>
+                <Typography fontWeight="bold">
+                  {entry.points > 0 ? "+" : ""}
+                  {entry.points} points
+                </Typography>
+
+                <Typography variant="caption" color="text.secondary">
+                  {entry.type === "Chips" && "🎯 Chips"}
+                  {entry.type === "Rebuy" && "♻️ Rebuy"}
+                  {entry.type === "Bounty" && entry.knockedOutUserName && (
+                    <>💀 Knocked out {entry.knockedOutUserName}</>
+                  )}
+                </Typography>
+              </Stack>
+
+              <Typography variant="caption">
+                {new Date(entry.createdAt).toLocaleString("da-DK")}
+              </Typography>
             </Stack>
           ))}
           {playerScores?.entries.length === 0 && <Typography>No scores yet.</Typography>}
