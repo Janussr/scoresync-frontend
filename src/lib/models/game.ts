@@ -57,3 +57,11 @@ export interface HallOfFameEntry {
   playerName: string;
   wins: number;
 }
+
+export interface BountyRow {
+  userId: number;
+  userName: string;
+  knockouts: number;
+  timesKnockedOut: number;
+  totalBountyPoints: number;
+}

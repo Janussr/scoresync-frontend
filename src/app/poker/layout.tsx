@@ -32,6 +32,10 @@ if (!hydrated) return null;
           Hall of Fame
         </Button>
 
+          <Button component={Link} href="/poker/knockout-leaderboard" variant="contained">
+          Bounty board
+        </Button>
+
          {isLoggedIn && isAdmin && (
           <Button component={Link} href="/poker/admin-panel" variant="contained">
             Admin panel

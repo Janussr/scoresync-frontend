@@ -1,5 +1,5 @@
 import { apiFetch } from "./clients";
-import { Game, GameDetails, HallOfFameEntry, Participant } from "@/lib/models/game";
+import { BountyRow, Game, GameDetails, HallOfFameEntry, Participant } from "@/lib/models/game";
 import { PlayerScoreDetails, Score } from "@/lib/models/score";
 
 export const startGame = () =>
@@ -76,3 +76,6 @@ export const registerKnockout = (gameId: number, victimUserId: number) =>
     method: "POST",
     body: { killerUserId, victimUserId } as any,
   });
+
+  export const getKnockoutLeaderboard = () =>
+  apiFetch<BountyRow[]>(`/games/bounty-leaderboard`);
