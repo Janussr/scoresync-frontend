@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getAllGames, cancelGame, startGame, endGame, addParticipants, removeParticipant, addScore, removePoints, addPointsBulk, removeGame, updateRules, registerKnockout } from "@/lib/api/games";
+import { getAllGames, cancelGame, startGame, endGame, addParticipants, removeParticipant, addScore, removePoints, addPointsBulk, removeGame, updateRules, registerAdminKnockout } from "@/lib/api/games";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Participant } from "@/lib/models/game";
@@ -48,6 +48,9 @@ export default function AdminPanelPage() {
   const [savingRules, setSavingRules] = useState(false);
   const [knockoutTarget, setKnockoutTarget] = useState<{ [key: number]: string }>({});
   const [loadingKnockout, setLoadingKnockout] = useState<{ [key: number]: boolean }>({});
+  const [killerUserId, setKillerUserId] = useState<number | "">("");
+const [victimUserId, setVictimUserId] = useState<number | "">("");
+const [knockoutLoading, setKnockoutLoading] = useState(false);
 
   // 🔐 Route protection
   useEffect(() => {
@@ -353,7 +356,63 @@ export default function AdminPanelPage() {
                   ))}
               </Select>
             </Stack>
+{/* Knockout section */}
+<Box sx={{ my: 2, p: 2, border: "1px dashed grey", borderRadius: 2 }}>
+  <Typography variant="subtitle1" mb={1}>Admin Knockout</Typography>
 
+  <Stack direction="row" spacing={2} alignItems="center">
+    {/* Killer dropdown */}
+    <Select
+      value={killerUserId}
+      displayEmpty
+      onChange={(e) => setKillerUserId(Number(e.target.value))}
+      sx={{ minWidth: 180 }}
+    >
+      <MenuItem value="" disabled>Select killer</MenuItem>
+      {currentGame?.participants.map(p => (
+        <MenuItem key={p.userId} value={p.userId}>{p.userName}</MenuItem>
+      ))}
+    </Select>
+
+    {/* Victim dropdown */}
+    <Select
+      value={victimUserId}
+      displayEmpty
+      onChange={(e) => setVictimUserId(Number(e.target.value))}
+      sx={{ minWidth: 180 }}
+    >
+      <MenuItem value="" disabled>Select victim</MenuItem>
+      {currentGame?.participants
+        .filter(p => p.userId !== killerUserId)
+        .map(p => (
+          <MenuItem key={p.userId} value={p.userId}>{p.userName}</MenuItem>
+        ))}
+    </Select>
+
+    <Button
+      variant="contained"
+      onClick={async () => {
+        if (!currentGame || !killerUserId || !victimUserId) return;
+
+        try {
+          setKnockoutLoading(true);
+          await registerAdminKnockout(currentGame.id, killerUserId, victimUserId);
+          fetchGames();
+          setKillerUserId("");
+          setVictimUserId("");
+        } catch (err) {
+          console.error(err);
+          alert("Could not register knockout");
+        } finally {
+          setKnockoutLoading(false);
+        }
+      }}
+      disabled={knockoutLoading || !killerUserId || !victimUserId}
+    >
+      Register Knockout
+    </Button>
+  </Stack>
+</Box>
             {/* Participants + score inputs */}
             <Typography variant="subtitle1">Participants</Typography>
             {currentGame.participants.map((p) => (
@@ -367,56 +426,11 @@ export default function AdminPanelPage() {
                     setScoreInputs({ ...scoreInputs, [p.userId]: e.target.value })
                   }
                 />
+                
                 <Button variant="contained" onClick={() => addScoreHandler(p.userId)}>
                   Add Points
                 </Button>
-                {/* Knockout section */}
-<Stack direction="row" spacing={1} alignItems="center">
-  <Select
-    size="small"
-    displayEmpty
-    value={knockoutTarget[p.userId] || ""}
-    onChange={(e: SelectChangeEvent) =>
-      setKnockoutTarget({ ...knockoutTarget, [p.userId]: e.target.value })
-    }
-    sx={{ minWidth: 180 }}
-  >
-    <MenuItem value="" disabled>
-      Vælg spiller at slå ud
-    </MenuItem>
-    {currentGame.participants
-      .filter((other) => other.userId !== p.userId)
-      .map((other) => (
-        <MenuItem key={other.userId} value={other.userId}>
-          {other.userName}
-        </MenuItem>
-      ))}
-  </Select>
-
-  <Button
-    size="small"
-    variant="outlined"
-    color="success"
-    disabled={!knockoutTarget[p.userId] || loadingKnockout[p.userId]}
-    onClick={async () => {
-      if (!currentGame || !knockoutTarget[p.userId]) return;
-
-      try {
-        setLoadingKnockout({ ...loadingKnockout, [p.userId]: true });
-        await registerKnockout(currentGame.id, Number(knockoutTarget[p.userId]));
-        setKnockoutTarget({ ...knockoutTarget, [p.userId]: "" });
-        fetchGames(); // refresh data
-      } catch (err) {
-        console.error(err);
-        alert("Could not register knockout");
-      } finally {
-        setLoadingKnockout({ ...loadingKnockout, [p.userId]: false });
-      }
-    }}
-  >
-    Register Knockout
-  </Button>
-</Stack>
+                
                 <Button
                   variant="outlined"
                   color="error"
@@ -507,6 +521,7 @@ export default function AdminPanelPage() {
             <Box />
           </CardContent>
         </Card>
+        
       )}
 
       <Dialog open={removeGameConfirmOpen} onClose={handleCancelRemoveGame}>

@@ -10,6 +10,7 @@ import {
   CardContent,
   TextField,
   Divider,
+  MenuItem,
 } from "@mui/material";
 
 import { getAllGames, addParticipants as apiJoinGame, addScore, rebuy, registerKnockout } from "@/lib/api/games";
@@ -230,9 +231,9 @@ export default function ActiveGamePlayerPage() {
                       {currentGame.participants
                         .filter((p) => p.userId !== Number(userId))
                         .map((p) => (
-                          <option key={p.userId} value={p.userId}>
+                          <MenuItem key={p.userId} value={p.userId}>
                             {p.userName}
-                          </option>
+                          </MenuItem>
                         ))}
                     </TextField>
 

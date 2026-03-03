@@ -65,8 +65,14 @@ export const updateRules = (gameId: number, rebuyValue: number, bountyValue: num
 export const rebuy = (gameId: number) =>
   apiFetch(`/games/${gameId}/rebuy`, { method: "POST" });
 
-export const registerKnockout = (gameId: number, knockedOutUserId: number) =>
+export const registerKnockout = (gameId: number, victimUserId: number) =>
   apiFetch(`/games/${gameId}/bounty`, {
     method: "POST",
-    body: { knockedOutUserId } as any,
+    body: { victimUserId } as any,
+  });
+
+  export const registerAdminKnockout = (gameId: number, killerUserId: number, victimUserId: number) =>
+  apiFetch(`/games/${gameId}/admin/bounty`, {
+    method: "POST",
+    body: { killerUserId, victimUserId } as any,
   });
