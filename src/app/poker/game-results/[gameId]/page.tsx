@@ -151,8 +151,8 @@ export default function GameResultspage() {
                 <Typography variant="caption" color="text.secondary">
                   {entry.type === "Chips" && "🎯 Chips"}
                   {entry.type === "Rebuy" && "♻️ Rebuy"}
-                  {entry.type === "Bounty" && entry.knockedOutUserName && (
-                    <>💀 Knocked out {entry.knockedOutUserName}</>
+                  {entry.type === "Bounty" && entry.victimUserName && (
+                    <>💀 Knocked out {entry.victimUserName}</>
                   )}
                 </Typography>
               </Stack>

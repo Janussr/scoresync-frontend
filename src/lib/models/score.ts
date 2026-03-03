@@ -6,7 +6,7 @@ export interface Score {
   createdAt: string;
   totalPoints: number;
   type: "Chips" | "Rebuy" | "Bounty";
-  knockedOutUserName: string;
+  victimUserName: string;
 }
 
 export interface PlayerScoreDetails {
