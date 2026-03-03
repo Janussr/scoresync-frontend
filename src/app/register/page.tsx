@@ -69,6 +69,12 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      handleRegister();
+    }
+  };
+
 
   return (
     <Box
@@ -113,6 +119,7 @@ export default function RegisterPage() {
             margin="normal"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={handleKeyDown} 
           />
 
           <TextField
@@ -121,6 +128,7 @@ export default function RegisterPage() {
             margin="normal"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={handleKeyDown} 
           />
 
           <TextField
@@ -130,6 +138,7 @@ export default function RegisterPage() {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDown} 
           />
 
           <TextField
@@ -139,6 +148,7 @@ export default function RegisterPage() {
             margin="normal"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            onKeyDown={handleKeyDown} 
           />
 
           <Button
