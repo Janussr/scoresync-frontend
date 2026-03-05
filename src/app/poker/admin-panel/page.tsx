@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getAllGames, cancelGame, startGame, endGame, addParticipants, removeParticipant, addScore, removePoints, addPointsBulk, removeGame, updateRules, registerAdminKnockout } from "@/lib/api/games";
+import { getActiveGame, getAllGames, cancelGame, startGame, endGame, addParticipants, removeParticipant, addScore, removePoints, addPointsBulk, removeGame, updateRules, registerAdminKnockout, rebuy } from "@/lib/api/games";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Participant } from "@/lib/models/game";
@@ -50,6 +50,7 @@ export default function AdminPanelPage() {
   const [killerUserId, setKillerUserId] = useState<number | "">("");
   const [victimUserId, setVictimUserId] = useState<number | "">("");
   const [knockoutLoading, setKnockoutLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
   const { showError } = useError();
 
   // 🔐 Route protection
@@ -66,9 +67,10 @@ export default function AdminPanelPage() {
   }, [isLoggedIn, role, router]);
 
   useEffect(() => {
-    fetchGames();
+    fetchActiveGame();
     fetchUsers();
   }, []);
+
 
   const fetchUsers = async () => {
     try {
@@ -79,15 +81,13 @@ export default function AdminPanelPage() {
     }
   };
 
-  const fetchGames = async () => {
+  const fetchActiveGame = async () => {
     try {
-      const data = await getAllGames();
-      setGames(data);
-
-      const active = data.find(g => !g.isFinished);
+      const active = await getActiveGame();
       if (active) {
         const participants = active.participants || [];
         const scores = active.scores || [];
+
         setCurrentGame({ ...active, participants, scores });
 
         setRebuyValue(active.rebuyValue ?? "");
@@ -96,15 +96,27 @@ export default function AdminPanelPage() {
         const inputs: { [key: number]: string } = {};
         participants.forEach(p => (inputs[p.userId] = ""));
         setScoreInputs(inputs);
+      } else {
+        setCurrentGame(null);
       }
     } catch (err: any) {
-      showError(err.message || "failed to fetch games")
+      showError(err.message || "Failed to fetch active game");
+    }
+  };
+
+  const fetchAllGames = async () => {
+    try {
+      const data = await getAllGames();
+      setGames(data);
+    } catch (err: any) {
+      showError(err.message || "Failed to fetch all games");
     }
   };
 
   const startGameHandler = async () => {
     try {
       const game = await startGame();
+      fetchActiveGame();
       setCurrentGame({ ...game, participants: [], scores: [] });
     } catch (err: any) {
       showError(err.message || "failed to start game")
@@ -119,7 +131,7 @@ export default function AdminPanelPage() {
     try {
       await addScore(currentGame.id, userId, value);
       setScoreInputs({ ...scoreInputs, [userId]: "" });
-      fetchGames();
+      fetchActiveGame();
     } catch (err: any) {
       showError(err.message || "failed to add score")
     }
@@ -139,7 +151,7 @@ export default function AdminPanelPage() {
         await endGame(currentGame.id);
       }
       setCurrentGame(null);
-      fetchGames();
+      // fetchAllGames();
     } catch (err: any) {
       alert(err.message || "Something went wrong");
     } finally {
@@ -156,7 +168,7 @@ export default function AdminPanelPage() {
     try {
       await addParticipants(currentGame.id, [userId]);
       setSelectedUserId("");
-      fetchGames();
+      fetchActiveGame();
       setHasJoined(true);
     } catch (err: any) {
       showError(err.message || " ")
@@ -202,7 +214,7 @@ export default function AdminPanelPage() {
     if (!scoreToRemove) return;
     try {
       await removePoints(scoreToRemove.id);
-      fetchGames(); // refresh game data
+      fetchActiveGame() 
     } catch (err: any) {
       showError(err.message || "failed to remove points")
     } finally {
@@ -223,7 +235,7 @@ export default function AdminPanelPage() {
     try {
       await addPointsBulk(currentGame.id, scoresToAdd);
       setScoreInputs({});
-      fetchGames();
+      fetchActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to add bulk points")
     }
@@ -245,7 +257,7 @@ export default function AdminPanelPage() {
 
     try {
       await removeGame(gameToRemove.id);
-      fetchGames();
+      fetchAllGames();
     } catch (err) {
       alert("Could not delete game");
     } finally {
@@ -267,11 +279,41 @@ export default function AdminPanelPage() {
         Number(bountyValue)
       );
 
-      fetchGames();
+      fetchActiveGame();
     } catch (err: any) {
       showError(err.message || "failed to save rules")
     } finally {
       setSavingRules(false);
+    }
+  };
+
+  const registerKnockoutHandler = async () => {
+    if (!currentGame || !killerUserId || !victimUserId) return;
+
+    try {
+      setKnockoutLoading(true);
+      await registerAdminKnockout(currentGame.id, killerUserId, victimUserId);
+      await fetchActiveGame();
+      setKillerUserId("");
+      setVictimUserId("");
+    } catch (err: any) {
+      showError(err.message || "Failed to register knockout");
+    } finally {
+      setKnockoutLoading(false);
+    }
+  };
+
+  const handleRebuy = async () => {
+    if (!currentGame) return;
+
+    try {
+      setLoadingAction(true);
+      await rebuy(currentGame.id);
+      fetchActiveGame();
+    } catch (err: any) {
+      alert(err.message || "Rebuy failed");
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -281,7 +323,8 @@ export default function AdminPanelPage() {
   }
   return (
     <Box p={5}>
-      <Typography variant="h4" mb={3}>🎮 Poker Game Admin</Typography>
+      <Typography variant="h4" mb={3}> Poker Game Admin</Typography>
+
 
       {!currentGame ? (
         <Button variant="contained" onClick={startGameHandler}>
@@ -342,7 +385,7 @@ export default function AdminPanelPage() {
                 sx={{ minWidth: 220 }}
               >
                 <MenuItem value="" disabled>
-                  Choose player
+                  Choose player to game
                 </MenuItem>
                 {users
                   .filter((u) => !currentGame?.participants.some((p) => p.userId === u.id))
@@ -354,6 +397,7 @@ export default function AdminPanelPage() {
               </Select>
             </Stack>
             {/* Knockout section */}
+            {currentGame.bountyValue > 0 && (
             <Box sx={{ my: 2, p: 2, border: "1px dashed grey", borderRadius: 2 }}>
               <Typography variant="subtitle1" mb={1}>Admin Knockout</Typography>
 
@@ -388,27 +432,14 @@ export default function AdminPanelPage() {
 
                 <Button
                   variant="contained"
-                  onClick={async () => {
-                    if (!currentGame || !killerUserId || !victimUserId) return;
-
-                    try {
-                      setKnockoutLoading(true);
-                      await registerAdminKnockout(currentGame.id, killerUserId, victimUserId);
-                      fetchGames();
-                      setKillerUserId("");
-                      setVictimUserId("");
-                    } catch (err: any) {
-                      showError(err.message || "failed to register knockout")
-                    } finally {
-                      setKnockoutLoading(false);
-                    }
-                  }}
+                  onClick={registerKnockoutHandler}
                   disabled={knockoutLoading || !killerUserId || !victimUserId}
                 >
                   Register Knockout
                 </Button>
               </Stack>
             </Box>
+            )}
             {/* Participants + score inputs */}
             <Typography variant="subtitle1">Participants</Typography>
             {currentGame.participants.map((p) => (
@@ -426,6 +457,17 @@ export default function AdminPanelPage() {
                 <Button variant="contained" onClick={() => addScoreHandler(p.userId)}>
                   Add Points
                 </Button>
+
+                {currentGame.rebuyValue > 0 && (
+                  <Button
+                    variant="outlined"
+                    color="warning"
+                    onClick={handleRebuy}
+                    disabled={loadingAction || currentGame.isFinished}
+                  >
+                    Rebuy (-{currentGame.rebuyValue} points)
+                  </Button>
+                )}
 
                 <Button
                   variant="outlined"
@@ -532,6 +574,16 @@ export default function AdminPanelPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Box marginTop={2}></Box>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={fetchAllGames}
+        sx={{ mb: 3 }}
+      >
+        Fetch All Games
+      </Button>
 
       <Typography variant="h5" mt={4}>All Games</Typography>
       {[...games]

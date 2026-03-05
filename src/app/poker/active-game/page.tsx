@@ -13,7 +13,7 @@ import {
   MenuItem,
 } from "@mui/material";
 
-import { getAllGames, addParticipants as apiJoinGame, addScore, rebuy, registerKnockout } from "@/lib/api/games";
+import { getActiveGame, addParticipants as apiJoinGame, addScore, rebuy, registerKnockout } from "@/lib/api/games";
 import { Game } from "@/lib/models/game";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -35,16 +35,19 @@ export default function ActiveGamePlayerPage() {
   }, []);
 
   const fetchActiveGame = async () => {
-    const games = await getAllGames();
-    const active = games.find((g) => !g.isFinished);
-    if (active) {
-      setCurrentGame(active);
+  const game = await getActiveGame();
 
-      if (userId && active.participants.some(p => p.userId === Number(userId))) {
-        setHasJoined(true);
-      }
-    }
-  };
+  if (!game) {
+    setCurrentGame(null);
+    return;
+  }
+
+  setCurrentGame(game);
+
+  if (userId && game.participants.some(p => p.userId === Number(userId))) {
+    setHasJoined(true);
+  }
+};
 
   const joinGame = async () => {
     // If not logged in -> login page
@@ -87,7 +90,7 @@ export default function ActiveGamePlayerPage() {
       await rebuy(currentGame.id);
       fetchActiveGame();
     } catch (err: any) {
-      alert(err.message || "Rebuy failed");
+      showError(err.message || "Rebuy failed");
     } finally {
       setLoadingAction(false);
     }
@@ -102,7 +105,7 @@ export default function ActiveGamePlayerPage() {
       setKnockoutUserId("");
       fetchActiveGame();
     } catch (err: any) {
-      alert(err.message || "Knockout failed");
+      showError(err.message || "Knockout failed");
     } finally {
       setLoadingAction(false);
     }

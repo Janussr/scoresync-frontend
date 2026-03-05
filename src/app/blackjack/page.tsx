@@ -57,6 +57,7 @@ export default function BlackJackPage() {
                         alt="Black Jack Cheatsheet"
                         width={500}
                         height={300}
+                        priority
                         style={{ width: "100%", height: "auto", margin: "0 auto" }}
                     />
 

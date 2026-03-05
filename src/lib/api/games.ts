@@ -20,6 +20,9 @@ export const getPlayerScoreDetails = (gameId: number, userId: number) =>
 export const getAllGames = () =>
   apiFetch<Game[]>(`/games`);
 
+export const getActiveGame = () =>
+  apiFetch<Game | null>(`/games/active/game`);
+
 export const getHallOfFame = () =>
   apiFetch<HallOfFameEntry[]>(`/halloffame`);
 

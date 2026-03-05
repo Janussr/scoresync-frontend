@@ -8,11 +8,11 @@ import {
   Button,
   Box,
   Container,
+  Stack
 } from "@mui/material";
 import Link from "next/link";
 import Providers from "./Providers";
 import { useAuth } from "@/context/AuthContext";
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 
 function Header() {
   const { isLoggedIn, logout, isAdmin, hydrated, username } = useAuth();
@@ -48,6 +48,14 @@ function Header() {
           >
             ♠ Poker pals ♦
           </Button>
+
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "gold", ml: 2, fontStyle: "italic", textTransform: "capitalize" }}
+          >
+            {isLoggedIn ? `${username}` : ""}
+          </Typography>
+
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
           <Button component={Link} href="/blackjack" sx={{ color: "gold" }}>
@@ -62,18 +70,29 @@ function Header() {
             ♠ Roulette
           </Button>
 
-          {!isLoggedIn ? (
-            <Button component={Link} href="/login" sx={{ color: "gold" }}>
-              Login
-            </Button>
-          ) : (
-            <>
-              <Button onClick={logout} sx={{ color: "gold" }}>
-                Logout
+          <Box>
+            {!isLoggedIn ? (
+              <Button component={Link} href="/login" sx={{ color: "gold" }}>
+                Login
               </Button>
-            <Typography >{username}</Typography>
-            </>
-          )}
+            ) : (
+              <Stack direction="column" alignItems="center" spacing={0.3}>
+                <Button
+                  onClick={logout}
+                  sx={{
+                    color: "gold",
+                    "&:hover": { color: "white", transform: "scale(1.05)" },
+                    transition: "0.2s",
+                  }}
+                >
+                  Logout
+                </Button>
+
+              </Stack>
+            )}
+
+          </Box>
+
         </Box>
       </Toolbar>
     </AppBar>
