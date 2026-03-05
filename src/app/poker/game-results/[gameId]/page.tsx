@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { getGameDetails, getPlayerScoreDetails } from "@/lib/api/games";
 import { GameDetails, PlayerScoreDetails } from "@/lib/models/game";
+import { useError } from "@/context/ErrorContext";
 
 
 export default function GameResultspage() {
@@ -18,15 +19,15 @@ export default function GameResultspage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [playerScores, setPlayerScores] = useState<PlayerScoreDetails | null>(null);
-
+  const { showError } = useError();
   useEffect(() => {
     const fetchGame = async () => {
       setLoading(true);
       try {
         const data = await getGameDetails(gameId);
         setGame(data);
-      } catch (err) {
-        console.error("Failed to fetch game:", err);
+      } catch (err: any) {
+        showError(err.message || "failed to fetch game")
         router.push("/poker");
       } finally {
         setLoading(false);
@@ -42,8 +43,8 @@ export default function GameResultspage() {
       const data = await getPlayerScoreDetails(gameId, userId);
       setPlayerScores(data);
       setModalOpen(true);
-    } catch (err) {
-      console.error(err);
+   } catch (err: any) {
+      showError(err.message || "failed to open dialog")
     }
   };
 

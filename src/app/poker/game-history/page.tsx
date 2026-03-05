@@ -16,17 +16,19 @@ import {
 } from "@mui/material";
 import { getAllGames } from "@/lib/api/games";
 import { GameDetails, HistoryEntry, Game } from "@/lib/models/game";
+import { useError } from "@/context/ErrorContext";
 
 
 export default function GameHistoryPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const { showError } = useError();
 
   useEffect(() => {
     fetchGames();
   }, []);
 
-    const fetchGames = async () => {
+  const fetchGames = async () => {
     setLoading(true);
     try {
       const games: Game[] = await getAllGames();
@@ -41,11 +43,11 @@ const [loading, setLoading] = useState(true);
           date: g.endedAt || g.winner!.winDate,
           playerCount: g.participants?.length ?? 0,
         }))
-        .sort((a, b) => b.date.localeCompare(a.date)); 
+        .sort((a, b) => b.date.localeCompare(a.date));
 
       setHistory(finishedGames);
-    } catch (err) {
-      console.error("Failed to fetch game history:", err);
+    } catch (err: any) {
+      showError(err.message || "failed to fetch game history")
     } finally {
       setLoading(false);
     }
@@ -79,13 +81,13 @@ const [loading, setLoading] = useState(true);
                     width="100%"
                   >
                     <ListItemText
-                      primary={`Game #${entry.gameNumber} — ${entry.winnerName} — ${entry.totalScore} pts`}
-                      secondary={`${new Date(entry.date).toLocaleString("da-DK")} • ${entry.playerCount} spillere`}
+                      primary={`Game #${entry.gameNumber} — ${entry.winnerName} — ${entry.totalScore} points`}
+                      secondary={`${new Date(entry.date).toLocaleString("da-DK")} • ${entry.playerCount} players`}
                     />
 
                     <Link href={`/poker/game-results/${entry.id}`} passHref>
                       <Button variant="outlined" size="small" >
-                        Se scoreboard
+                        Game results
                       </Button>
                     </Link>
                   </Stack>

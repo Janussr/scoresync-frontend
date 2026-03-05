@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import Providers from "./Providers";
 import { useAuth } from "@/context/AuthContext";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 
 function Header() {
   const { isLoggedIn, logout, isAdmin, hydrated, username } = useAuth();
@@ -85,7 +86,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <Providers>
           <Header />
-
           <Container maxWidth="lg" sx={{ mt: 4 }}>
             {children}
           </Container>

@@ -5,15 +5,24 @@ import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow } fro
 
 import { getKnockoutLeaderboard } from "@/lib/api/games";
 import { BountyRow } from "@/lib/models/game";
+import { useError } from "@/context/ErrorContext";
 
 export default function BountyLeaderboardPage() {
   const [data, setData] = useState<BountyRow[]>([]);
+ const { showError } = useError();
 
   useEffect(() => {
-    getKnockoutLeaderboard()
-      .then(setData)
-      .catch(console.error);
-  }, []);
+    const fetchLeaderboard = async () => {
+      try {
+        const rows = await getKnockoutLeaderboard();
+        setData(rows);
+      } catch (err: any) {
+        showError(err.message || "Failed to fetch leaderboard");
+      }
+    };
+
+    fetchLeaderboard();
+  }, [showError]);
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>

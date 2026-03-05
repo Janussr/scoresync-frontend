@@ -17,15 +17,17 @@ import { getAllGames, addParticipants as apiJoinGame, addScore, rebuy, registerK
 import { Game } from "@/lib/models/game";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { ErrorProvider, useError } from "@/context/ErrorContext";
 
 export default function ActiveGamePlayerPage() {
   const [currentGame, setCurrentGame] = useState<Game | null>(null);
   const [points, setPoints] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
-  const { userId, username, numericUserId } = useAuth();
+  const { userId, username} = useAuth();
   const router = useRouter();
   const [knockoutUserId, setKnockoutUserId] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
+  const { showError } = useError();
 
   // Fetch active game
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function ActiveGamePlayerPage() {
 
   const joinGame = async () => {
     // If not logged in -> login page
-    if (!numericUserId) {
+    if (!userId) {
       router.push("/login");
       return;
     }
@@ -54,26 +56,25 @@ export default function ActiveGamePlayerPage() {
     if (!currentGame) return;
 
     try {
-      await apiJoinGame(currentGame.id, [numericUserId]);
+      await apiJoinGame(currentGame.id, [userId]);
       setHasJoined(true);
       fetchActiveGame();
-    } catch (err) {
-      console.error("Failed to join game:", err);
+    } catch (err: any) {
+      showError(err.message || "Failed to join game");
     }
   };
   const submitScore = async () => {
-    if (!currentGame || !numericUserId || !points) return;
+    if (!currentGame || !userId || !points) return;
 
     try {
-      await addScore(currentGame.id, numericUserId, Number(points));
+      await addScore(currentGame.id, userId, Number(points));
       setPoints("");
       fetchActiveGame();
     } catch (err: any) {
       if (err.message.includes("Game has ended") || err.message.includes("Game has ended")) {
         alert("Game has ended.");
       } else {
-        console.error("Error at submitScore:", err);
-        alert("Something went wrong try later.");
+        showError("Something went wrong, try later")
       }
     }
   };
@@ -126,7 +127,7 @@ export default function ActiveGamePlayerPage() {
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 2 }}>
       <Typography variant="h4" mb={3} textAlign="center" fontWeight="bold">
-        🎮 Aktivt spil #{currentGame.gameNumber}
+        Active game #{currentGame.gameNumber}
       </Typography>
 
       <Card>
@@ -170,7 +171,7 @@ export default function ActiveGamePlayerPage() {
 
               <Stack spacing={2}>
                 <TextField
-                  label="Dine points"
+                  label="Points"
                   type="number"
                   value={points}
                   onChange={(e) => setPoints(e.target.value)}

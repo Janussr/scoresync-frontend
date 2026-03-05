@@ -73,26 +73,26 @@ export default function BlackJackPage() {
                         Player Actions
                     </Typography>
                     <ul>
-                        <li><strong>Hit:</strong> Træk et ekstra kort. Betaler 1:1</li>
-                        <li><strong>Stand:</strong> Behold nuværende hånd. Betaler 1:1</li>
-                        <li><strong>Double Down:</strong> Dobbler indsatsen, træk ét kort og stå. Betaler 1:1 pr hånd</li>
-                        <li><strong>Split:</strong> Del to kort med samme værdi i to hænder. Betaler 1:1 pr hånd</li>
-                        <li><strong>Surrender:</strong> Opgiv hånden og mist halvdelen af indsatsen. Betaler halvdelen tilbage</li>
-                        <li><strong>Insurance:</strong> kun når dealerens opkort er et es - Læg halvdelen af indsatsen. Hvis dealer har blackjack, betaler insurance 2:1 på insurance-bettet.</li>
-                        <li><strong>Five card charlie:</strong> Hvis der bliver lagt fem kort, uden at gå bust. Betaler 2:1</li>
-                        <li><strong>Blackjack:</strong> Hvis spillerens to første kort giver 21. Betaler 3:2 "bet 10, gevinst 15 total win = 25"</li>
-                        <li><strong>Push:</strong> Uafgjort - indsatsen returneres.</li>
+                        <li><strong>Hit:</strong> Draw an additional card. Pays 1:1</li>
+                        <li><strong>Stand:</strong> Keep your current hand. Pays 1:1</li>
+                        <li><strong>Double Down:</strong> Double your bet, draw one card, and stand. Pays 1:1 per hand</li>
+                        <li><strong>Split:</strong> Split two cards of the same value into two hands. Pays 1:1 per hand</li>
+                        <li><strong>Surrender:</strong> Give up the hand and lose half of your bet. Half of the bet is returned</li>
+                        <li><strong>Insurance:</strong> Only available when the dealer’s upcard is an Ace. Place a side bet equal to half your original bet. If the dealer has blackjack, the insurance bet pays 2:1</li>
+                        <li><strong>Five Card Charlie:</strong> If five cards are drawn without going bust. Pays 2:1</li>
+                        <li><strong>Blackjack:</strong> If the player's first two cards total 21. Pays 3:2 "bet 10, win 15, total payout = 25"</li>
+                        <li><strong>Push:</strong> A tie – the original bet is returned.</li>
                     </ul>
 
                     <Typography variant="h6" sx={{ fontWeight: "bold", mt: 3, mb: 1 }}>
                         Rules
                     </Typography>
                     <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                        1. Dealeren giver to kort til hver spiller og to til sig selv.<br />
-                        2. Spillerne kan "Hit" for flere kort eller "Stand" for at beholde deres hånd.<br />
-                        3. Målet er at nå så tæt på 21 som muligt uden at gå over.<br />
-                        4. Kort med billedværdi tæller som 10, Esser kan være 1 eller 11.<br />
-                        5. Dealer trækker til mindst 17-21, står på soft-17 (fx es + 6 = soft 17).
+                        1. The dealer deals two cards to each player and two to themselves.<br />
+                        2. Players can "Hit" to receive more cards or "Stand" to keep their current hand.<br />
+                        3. The goal is to get as close to 21 as possible without going over.<br />
+                        4. Face cards count as 10, and Aces can count as 1 or 11.<br />
+                        5. The dealer draws until reaching at least 17–21 and stands on soft 17 (e.g., Ace + 6 = soft 17).
                     </Typography>
                 </Box>
             )}

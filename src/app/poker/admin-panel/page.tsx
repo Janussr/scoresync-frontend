@@ -26,6 +26,7 @@ import { Score } from "@/lib/models/score";
 import { Game, Participant } from "@/lib/models/game";
 import { User } from "@/lib/models/user"
 import { useAuth } from "@/context/AuthContext";
+import { useError } from "@/context/ErrorContext";
 
 export default function AdminPanelPage() {
   const router = useRouter();
@@ -46,11 +47,10 @@ export default function AdminPanelPage() {
   const [rebuyValue, setRebuyValue] = useState<number | "">("");
   const [bountyValue, setBountyValue] = useState<number | "">("");
   const [savingRules, setSavingRules] = useState(false);
-  const [knockoutTarget, setKnockoutTarget] = useState<{ [key: number]: string }>({});
-  const [loadingKnockout, setLoadingKnockout] = useState<{ [key: number]: boolean }>({});
   const [killerUserId, setKillerUserId] = useState<number | "">("");
-const [victimUserId, setVictimUserId] = useState<number | "">("");
-const [knockoutLoading, setKnockoutLoading] = useState(false);
+  const [victimUserId, setVictimUserId] = useState<number | "">("");
+  const [knockoutLoading, setKnockoutLoading] = useState(false);
+  const { showError } = useError();
 
   // 🔐 Route protection
   useEffect(() => {
@@ -74,8 +74,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
     try {
       const data = await getAllUsers();
       setUsers(data);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showError(err.message || "Failed to fetch users");
     }
   };
 
@@ -97,8 +97,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
         participants.forEach(p => (inputs[p.userId] = ""));
         setScoreInputs(inputs);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showError(err.message || "failed to fetch games")
     }
   };
 
@@ -106,8 +106,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
     try {
       const game = await startGame();
       setCurrentGame({ ...game, participants: [], scores: [] });
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showError(err.message || "failed to start game")
     }
   };
 
@@ -120,8 +120,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
       await addScore(currentGame.id, userId, value);
       setScoreInputs({ ...scoreInputs, [userId]: "" });
       fetchGames();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showError(err.message || "failed to add score")
     }
   };
 
@@ -158,8 +158,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
       setSelectedUserId("");
       fetchGames();
       setHasJoined(true);
-    } catch (err) {
-      console.error("Failed to add participant:", err);
+    } catch (err: any) {
+      showError(err.message || " ")
     }
   };
 
@@ -203,9 +203,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
     try {
       await removePoints(scoreToRemove.id);
       fetchGames(); // refresh game data
-    } catch (err) {
-      console.error("Failed to remove points:", err);
-      alert("Could not remove points");
+    } catch (err: any) {
+      showError(err.message || "failed to remove points")
     } finally {
       setConfirmOpen(false);
       setScoreToRemove(null);
@@ -225,9 +224,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
       await addPointsBulk(currentGame.id, scoresToAdd);
       setScoreInputs({});
       fetchGames();
-    } catch (err) {
-      console.error(err);
-      alert("Could not add scores");
+    } catch (err: any) {
+      showError(err.message || "Failed to add bulk points")
     }
   };
 
@@ -270,9 +268,8 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
       );
 
       fetchGames();
-    } catch (err) {
-      alert("Could not save rules");
-      console.error(err);
+    } catch (err: any) {
+      showError(err.message || "failed to save rules")
     } finally {
       setSavingRules(false);
     }
@@ -345,7 +342,7 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
                 sx={{ minWidth: 220 }}
               >
                 <MenuItem value="" disabled>
-                  Vælg spiller
+                  Choose player
                 </MenuItem>
                 {users
                   .filter((u) => !currentGame?.participants.some((p) => p.userId === u.id))
@@ -356,63 +353,62 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
                   ))}
               </Select>
             </Stack>
-{/* Knockout section */}
-<Box sx={{ my: 2, p: 2, border: "1px dashed grey", borderRadius: 2 }}>
-  <Typography variant="subtitle1" mb={1}>Admin Knockout</Typography>
+            {/* Knockout section */}
+            <Box sx={{ my: 2, p: 2, border: "1px dashed grey", borderRadius: 2 }}>
+              <Typography variant="subtitle1" mb={1}>Admin Knockout</Typography>
 
-  <Stack direction="row" spacing={2} alignItems="center">
-    {/* Killer dropdown */}
-    <Select
-      value={killerUserId}
-      displayEmpty
-      onChange={(e) => setKillerUserId(Number(e.target.value))}
-      sx={{ minWidth: 180 }}
-    >
-      <MenuItem value="" disabled>Select killer</MenuItem>
-      {currentGame?.participants.map(p => (
-        <MenuItem key={p.userId} value={p.userId}>{p.userName}</MenuItem>
-      ))}
-    </Select>
+              <Stack direction="row" spacing={2} alignItems="center">
+                {/* Killer dropdown */}
+                <Select
+                  value={killerUserId}
+                  displayEmpty
+                  onChange={(e) => setKillerUserId(Number(e.target.value))}
+                  sx={{ minWidth: 180 }}
+                >
+                  <MenuItem value="" disabled>Select killer</MenuItem>
+                  {currentGame?.participants.map(p => (
+                    <MenuItem key={p.userId} value={p.userId}>{p.userName}</MenuItem>
+                  ))}
+                </Select>
 
-    {/* Victim dropdown */}
-    <Select
-      value={victimUserId}
-      displayEmpty
-      onChange={(e) => setVictimUserId(Number(e.target.value))}
-      sx={{ minWidth: 180 }}
-    >
-      <MenuItem value="" disabled>Select victim</MenuItem>
-      {currentGame?.participants
-        .filter(p => p.userId !== killerUserId)
-        .map(p => (
-          <MenuItem key={p.userId} value={p.userId}>{p.userName}</MenuItem>
-        ))}
-    </Select>
+                {/* Victim dropdown */}
+                <Select
+                  value={victimUserId}
+                  displayEmpty
+                  onChange={(e) => setVictimUserId(Number(e.target.value))}
+                  sx={{ minWidth: 180 }}
+                >
+                  <MenuItem value="" disabled>Select victim</MenuItem>
+                  {currentGame?.participants
+                    .filter(p => p.userId !== killerUserId)
+                    .map(p => (
+                      <MenuItem key={p.userId} value={p.userId}>{p.userName}</MenuItem>
+                    ))}
+                </Select>
 
-    <Button
-      variant="contained"
-      onClick={async () => {
-        if (!currentGame || !killerUserId || !victimUserId) return;
+                <Button
+                  variant="contained"
+                  onClick={async () => {
+                    if (!currentGame || !killerUserId || !victimUserId) return;
 
-        try {
-          setKnockoutLoading(true);
-          await registerAdminKnockout(currentGame.id, killerUserId, victimUserId);
-          fetchGames();
-          setKillerUserId("");
-          setVictimUserId("");
-        } catch (err) {
-          console.error(err);
-          alert("Could not register knockout");
-        } finally {
-          setKnockoutLoading(false);
-        }
-      }}
-      disabled={knockoutLoading || !killerUserId || !victimUserId}
-    >
-      Register Knockout
-    </Button>
-  </Stack>
-</Box>
+                    try {
+                      setKnockoutLoading(true);
+                      await registerAdminKnockout(currentGame.id, killerUserId, victimUserId);
+                      fetchGames();
+                      setKillerUserId("");
+                      setVictimUserId("");
+                    } catch (err: any) {
+                      showError(err.message || "failed to register knockout")
+                    } finally {
+                      setKnockoutLoading(false);
+                    }
+                  }}
+                  disabled={knockoutLoading || !killerUserId || !victimUserId}
+                >
+                  Register Knockout
+                </Button>
+              </Stack>
+            </Box>
             {/* Participants + score inputs */}
             <Typography variant="subtitle1">Participants</Typography>
             {currentGame.participants.map((p) => (
@@ -426,11 +422,11 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
                     setScoreInputs({ ...scoreInputs, [p.userId]: e.target.value })
                   }
                 />
-                
+
                 <Button variant="contained" onClick={() => addScoreHandler(p.userId)}>
                   Add Points
                 </Button>
-                
+
                 <Button
                   variant="outlined"
                   color="error"
@@ -521,7 +517,7 @@ const [knockoutLoading, setKnockoutLoading] = useState(false);
             <Box />
           </CardContent>
         </Card>
-        
+
       )}
 
       <Dialog open={removeGameConfirmOpen} onClose={handleCancelRemoveGame}>

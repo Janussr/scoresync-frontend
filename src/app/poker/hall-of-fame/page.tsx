@@ -16,18 +16,20 @@ import {
 } from "@mui/material";
 import { HallOfFameEntry } from "@/lib/models/game";
 import { getHallOfFame } from "@/lib/api/games";
+import { useError } from "@/context/ErrorContext";
 
 export default function HallOfFamePage() {
   const [hallOfFame, setHallOfFame] = useState<HallOfFameEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const {showError} = useError();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getHallOfFame();
         setHallOfFame(data);
-      } catch (err) {
-        console.error("Failed to fetch Hall of Fame:", err);
+      } catch (err: any) {
+      showError(err.message || "failed to fetch hall of fame")
       } finally {
         setLoading(false);
       }
