@@ -60,7 +60,13 @@ export default function GameHistoryPage() {
 
 
   return (
-    <Box sx={{ maxWidth: 700, mx: "auto", mt: 4, px: 2 }}>
+    <Box sx={{
+      width: "100%",
+      maxWidth: { md: 800 },
+      mx: "auto",
+      px: { xs: 1, md: 0 },
+      mt: 4,
+    }}>
       <Typography
         variant="h4"
         sx={{ mb: 3, textAlign: "center", fontWeight: "bold" }}

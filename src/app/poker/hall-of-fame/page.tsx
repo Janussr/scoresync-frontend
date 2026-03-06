@@ -46,7 +46,13 @@ export default function HallOfFamePage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", mt: 6, px: 2 }}>
+    <Box sx={{
+    width: "100%",          
+    maxWidth: { md: 500 },  
+    mx: "auto",             
+    px: { xs: 1, md: 0 },    
+    mt: 4,
+  }}>
       <Typography
         variant="h4"
         sx={{ mb: 3, textAlign: "center", fontWeight: "bold" }}

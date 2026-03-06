@@ -1,50 +1,57 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Stack, Button, Box } from "@mui/material";
+import { Box, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
-export default function PokerLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const { isLoggedIn, role, isAdmin, hydrated } = useAuth();
-if (!hydrated) return null;
+export default function PokerLayout({ children }: { children: ReactNode }) {
+  const { isLoggedIn, isAdmin, hydrated } = useAuth(); 
+  const theme = useTheme();                           
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); 
+  const pathname = usePathname();                     
+
+  if (!hydrated) return null;
+
+  const links = [
+    { label: "Join game", href: "/poker/active-game" },
+    { label: "Game history", href: "/poker/game-history" },
+    { label: "Poker hands", href: "/poker" },
+    { label: "Hall of Fame", href: "/poker/hall-of-fame" },
+    { label: "Bounty board", href: "/poker/knockout-leaderboard" },
+    ...(isLoggedIn && isAdmin ? [{ label: "Admin panel", href: "/poker/admin-panel" }] : []),
+  ];
+const cleanPath = pathname.replace(/\/$/, "");
+
+const activeIndex = links.findIndex(
+  (link) => cleanPath === link.href.replace(/\/$/, "")
+);
 
   return (
     <Box>
-      <Stack spacing={2} direction="row" justifyContent="center" mt={5}>
-        <Button component={Link} href="/poker/active-game" variant="contained">
-          Join game
-        </Button>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs
+          value={activeIndex !== -1 ? activeIndex : false}
+          variant={isMobile ? "scrollable" : "standard"}
+          scrollButtons={isMobile ? "auto" : undefined}
+          allowScrollButtonsMobile
+          textColor="inherit"
+          indicatorColor="secondary"
+        >
+          {links.map((link, index) => (
+            <Tab
+              key={link.href}
+              label={link.label}
+              component={Link}
+              href={link.href}
+              sx={{ minWidth: isMobile ? 120 : 160 }}
+            />
+          ))}
+        </Tabs>
+      </Box>
 
-        <Button component={Link} href="/poker/game-history" variant="contained">
-          Game history
-        </Button>
-
-        <Button component={Link} href="/poker" variant="contained">
-         Poker hand ranking
-        </Button>
-
-        <Button component={Link} href="/poker/hall-of-fame" variant="contained">
-          Hall of Fame
-        </Button>
-
-          <Button component={Link} href="/poker/knockout-leaderboard" variant="contained">
-          Bounty board
-        </Button>
-
-         {isLoggedIn && isAdmin && (
-          <Button component={Link} href="/poker/admin-panel" variant="contained">
-            Admin panel
-          </Button>
-        )}
-
-      </Stack>
-
-      <Box mt={4}>{children}</Box>
+      <Box mt={3}>{children}</Box>
     </Box>
   );
 }

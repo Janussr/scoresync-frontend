@@ -23,7 +23,7 @@ export default function ActiveGamePlayerPage() {
   const [currentGame, setCurrentGame] = useState<Game | null>(null);
   const [points, setPoints] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
-  const { userId, username} = useAuth();
+  const { userId, username } = useAuth();
   const router = useRouter();
   const [knockoutUserId, setKnockoutUserId] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
@@ -35,19 +35,19 @@ export default function ActiveGamePlayerPage() {
   }, []);
 
   const fetchActiveGame = async () => {
-  const game = await getActiveGame();
+    const game = await getActiveGame();
 
-  if (!game) {
-    setCurrentGame(null);
-    return;
-  }
+    if (!game) {
+      setCurrentGame(null);
+      return;
+    }
 
-  setCurrentGame(game);
+    setCurrentGame(game);
 
-  if (userId && game.participants.some(p => p.userId === Number(userId))) {
-    setHasJoined(true);
-  }
-};
+    if (userId && game.participants.some(p => p.userId === Number(userId))) {
+      setHasJoined(true);
+    }
+  };
 
   const joinGame = async () => {
     // If not logged in -> login page
@@ -128,7 +128,13 @@ export default function ActiveGamePlayerPage() {
     (p) => p.userId === Number(userId)
   );
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 2 }}>
+    <Box sx={{
+      width: "100%",
+      maxWidth: { md: 800 },
+      mx: "auto",
+      px: { xs: 1, md: 0 },
+      mt: 4,
+    }}>
       <Typography variant="h4" mb={3} textAlign="center" fontWeight="bold">
         Active game #{currentGame.gameNumber}
       </Typography>
@@ -164,11 +170,11 @@ export default function ActiveGamePlayerPage() {
                 <Typography fontWeight="bold">Your game status</Typography>
 
                 <Typography>
-                   Rebuys used: <b>{me?.rebuyCount ?? 0}</b>
+                  Rebuys used: <b>{me?.rebuyCount ?? 0}</b>
                 </Typography>
 
                 <Typography>
-                   Bounties on you: <b>{me?.activeBounties ?? 0}</b>
+                  Bounties on you: <b>{me?.activeBounties ?? 0}</b>
                 </Typography>
               </Box>
 
@@ -198,22 +204,24 @@ export default function ActiveGamePlayerPage() {
                   Add points
                 </Button>
 
-                <Divider sx={{ my: 2 }} />
+                {(currentGame.bountyValue > 0 || currentGame.rebuyValue > 0) && (
+                  <Divider sx={{ my: 2 }} />
+                )}
 
-                {currentGame.rebuyValue && (
+                {currentGame.rebuyValue > 0 && (
                   <Typography variant="caption" color="text.secondary">
                     Rebuy costs {currentGame.rebuyValue} points
                   </Typography>
                 )}
 
-                {currentGame.bountyValue && (
+                {currentGame.bountyValue > 0 && (
                   <Typography variant="caption" color="text.secondary">
                     Knockout gives {currentGame.bountyValue} points per bounty on target
                   </Typography>
                 )}
 
 
-                {currentGame.rebuyValue && (
+                {currentGame.rebuyValue > 0 && (
                   <Button
                     variant="outlined"
                     color="warning"
@@ -224,7 +232,7 @@ export default function ActiveGamePlayerPage() {
                   </Button>
                 )}
 
-                {currentGame.bountyValue && (
+                {currentGame.bountyValue > 0 && (
                   <Stack spacing={1}>
                     <TextField
                       select
@@ -272,6 +280,7 @@ export default function ActiveGamePlayerPage() {
           )}
         </CardContent>
       </Card>
+      <Box marginBottom={2}></Box>
     </Box>
   );
 }

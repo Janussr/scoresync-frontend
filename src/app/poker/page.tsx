@@ -9,7 +9,13 @@ export default function PokerPage() {
       <Stack spacing={2} direction="row" justifyContent="center" mt={5}>
 
 
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{
+          width: "100%",
+          maxWidth: { md: 350 },
+          mx: "auto",
+          px: { xs: 1, md: 0 },
+          mt: 4,
+        }}>
           <Image
             src="/images/poker-cheatsheet.jpg"
             alt="Black Jack Cheatsheet"

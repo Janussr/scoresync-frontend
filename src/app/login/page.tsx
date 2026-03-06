@@ -72,7 +72,7 @@ const handleLogin = async () => {
               mb: 3,
             }}
           >
-            ♠ Casino Login ♦
+            ♠ Login ♦
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Box, Typography, Card, CardContent, Stack, Divider, Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Stack,
+  Divider,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
 
 import { getGameDetails, getPlayerScoreDetails } from "@/lib/api/games";
 import { GameDetails, PlayerScoreDetails } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
-
 
 export default function GameResultspage() {
   const params = useParams();
@@ -20,6 +30,7 @@ export default function GameResultspage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [playerScores, setPlayerScores] = useState<PlayerScoreDetails | null>(null);
   const { showError } = useError();
+
   useEffect(() => {
     const fetchGame = async () => {
       setLoading(true);
@@ -27,7 +38,7 @@ export default function GameResultspage() {
         const data = await getGameDetails(gameId);
         setGame(data);
       } catch (err: any) {
-        showError(err.message || "failed to fetch game")
+        showError(err.message || "Failed to fetch game");
         router.push("/poker");
       } finally {
         setLoading(false);
@@ -43,8 +54,8 @@ export default function GameResultspage() {
       const data = await getPlayerScoreDetails(gameId, userId);
       setPlayerScores(data);
       setModalOpen(true);
-   } catch (err: any) {
-      showError(err.message || "failed to open dialog")
+    } catch (err: any) {
+      showError(err.message || "Failed to open dialog");
     }
   };
 
@@ -63,59 +74,52 @@ export default function GameResultspage() {
   if (!game) return <Typography sx={{ textAlign: "center", mt: 4 }}>Game not found</Typography>;
 
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 2 }}>
-      <Typography variant="h4" sx={{ mb: 2, textAlign: "center", fontWeight: "bold" }}>
+    <Box sx={{ maxWidth: { xs: "100%", md: 800 }, mx: "auto", mt: 4, px: 2 }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 2, textAlign: "center", fontWeight: "bold", fontSize: { xs: "1.5rem", md: "2rem" } }}
+      >
         🎲 Game #{game.gameNumber} Scoreboard
       </Typography>
 
-      <Typography variant="subtitle2" sx={{ mb: 2, textAlign: "center" }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ mb: 2, textAlign: "center", fontSize: { xs: "0.875rem", md: "1rem" } }}
+      >
         Started: {new Date(game.startedAt).toLocaleString("da-DK")}
         {game.endedAt && <> — Ended: {new Date(game.endedAt).toLocaleString("da-DK")}</>}
       </Typography>
 
       <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent>
-          {game.scores?.slice()
+          {game.scores
+            ?.slice()
             .sort((a, b) => b.totalPoints - a.totalPoints)
             .map((s, idx) => {
               const isWinner = game.winner?.userId === s.userId;
-
               return (
-                <Box key={`${s.id ?? idx}-${s.userId}`}>
+                <Box key={`${s.id ?? idx}-${s.userId}`} sx={{ mb: 1 }}>
                   <Stack
                     direction="row"
                     justifyContent="space-between"
                     alignItems="center"
-                    sx={{ py: 1, px: 2, borderRadius: 1 }}
+                    sx={{ py: 1, px: 2, borderRadius: 1, flexWrap: "wrap" }}
                   >
-                    {/* Left side: placement number + name */}
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Typography
-                        sx={{
-                          minWidth: 24,
-                          textAlign: "right",
-                          fontWeight: "bold",
-                          color: "text.secondary",
-                        }}
-                      >
-                        {idx + 1}.
-                      </Typography>
+                    <Button
+                      onClick={() => openPlayerModal(s.userId)}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: isWinner ? "bold" : "normal",
+                        textAlign: "left",
+                        minWidth: 0,
+                        mr: 1,
+                      }}
+                    >
+                      {idx + 1}. {capitalize(s.userName)}
+                    </Button>
 
-                      <Button
-                        onClick={() => openPlayerModal(s.userId)}
-                        sx={{
-                          // fontWeight: isWinner ? "bold" : "normal",
-                          textTransform: "none",
-                          p: 0,
-                          minWidth: 0,
-                        }}
-                      >
-                        {capitalize(s.userName)}
-                      </Button>
-                    </Stack>
-
-                    <Typography sx={{ fontWeight: isWinner ? "bold" : "normal" }}>
-                      {s.totalPoints} points
+                    <Typography sx={{ fontWeight: isWinner ? "bold" : "normal", flexShrink: 0 }}>
+                      {s.totalPoints} pts
                     </Typography>
                   </Stack>
                   <Divider />
@@ -124,7 +128,7 @@ export default function GameResultspage() {
             })}
 
           {game.winner && (
-            <Typography sx={{ mt: 2, textAlign: "center", fontWeight: "bold" }}>
+            <Typography sx={{ mt: 2, textAlign: "center", fontWeight: "bold", fontSize: { xs: "1rem", md: "1.25rem" } }}>
               🏆 Winner: {game.winner.userName} ({game.winner.winningScore} pts)
             </Typography>
           )}
@@ -141,31 +145,34 @@ export default function GameResultspage() {
               direction="row"
               justifyContent="space-between"
               alignItems="center"
-              sx={{ py: 1 }}
+              sx={{ py: 1, flexWrap: "wrap" }}
             >
-              <Stack>
+              <Stack direction="row" spacing={1} alignItems="center">
                 <Typography fontWeight="bold">
                   {entry.points > 0 ? "+" : ""}
-                  {entry.points} points
+                  {entry.points} pts
                 </Typography>
-
                 <Typography variant="caption" color="text.secondary">
                   {entry.type === "Chips" && "🎯 Chips"}
                   {entry.type === "Rebuy" && "♻️ Rebuy"}
-                  {entry.type === "Bounty" && entry.victimUserName && (
-                    <>💀 Knocked out {entry.victimUserName}</>
-                  )}
+                  {entry.type === "Bounty" && entry.victimUserName && <>💀 Knocked out {entry.victimUserName}</>}
                 </Typography>
               </Stack>
 
-              <Typography variant="caption">
+              <Typography variant="caption" sx={{ flexShrink: 0 }}>
                 {new Date(entry.createdAt).toLocaleString("da-DK")}
               </Typography>
             </Stack>
           ))}
-          {playerScores?.entries.length === 0 && <Typography>No scores yet.</Typography>}
+
+          {playerScores?.entries.length === 0 && (
+            <Typography sx={{ textAlign: "center" }}>No scores yet.</Typography>
+          )}
+
           <Divider sx={{ my: 1 }} />
-          <Typography sx={{ mt: 1, fontWeight: "bold" }}>Total: {playerScores?.totalPoints}</Typography>
+          <Typography sx={{ mt: 1, fontWeight: "bold", textAlign: "right" }}>
+            Total: {playerScores?.totalPoints}
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={closeModal}>Close</Button>
