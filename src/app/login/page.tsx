@@ -18,7 +18,7 @@ import { loginUser } from "@/lib/api/users";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth(); // ✅ brug login fra context
+  const { login } = useAuth(); 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

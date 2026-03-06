@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { registerUser } from "@/lib/api/users"; 
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -41,27 +42,8 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "http://localhost:5279/api/users/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username,
-            name,
-            password,
-          }),
-        }
-      );
+      await registerUser(username, name, password);
 
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message);
-      }
-
-      // success → redirect
       router.push("/login");
     } catch (err: any) {
       setError(err.message || "Something went wrong");

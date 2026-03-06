@@ -1,5 +1,11 @@
-export const API_BASE_URL = "http://localhost:5279/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+function logout() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
+}
 
 function isTokenExpired(token: string) {
   try {
@@ -11,49 +17,47 @@ function isTokenExpired(token: string) {
   }
 }
 
-//Hvis du laver API-funktioner i lib/api/*.ts, brug apiFetch.
-//Hvis du laver direkte API-kald i en komponent og vil reagere på token + logout automatisk, brug useApi.
 export const apiFetch = async <T>(url: string, options?: RequestInit): Promise<T> => {
   const opts: RequestInit = { ...options };
-  
-  // Hvis body er objekt, gør det til JSON
-  if (opts.body && typeof opts.body === "object") {
+
+  if (opts.body && typeof opts.body !== "string") {
     opts.body = JSON.stringify(opts.body);
   }
 
-  // Headers
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(opts.headers as Record<string, string>),
   };
 
-  //Hent token fra localStorage og sæt Authorization header
- const token = localStorage.getItem("token");
+  let token: string | null = null;
 
-if (token) {
-  if (isTokenExpired(token)) {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
-    throw new Error("Token expired");
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("token");
   }
 
-  headers["Authorization"] = `Bearer ${token}`;
-}
+  if (token) {
+    if (isTokenExpired(token)) {
+      logout();
+      throw new Error("Token expired");
+    }
 
-  const res = await fetch(`${API_BASE_URL}${url}`, { ...opts, headers });
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
- if (res.status === 401) {
-  localStorage.removeItem("token");
+  const res = await fetch(`${API_BASE_URL}${url}`, {
+    ...opts,
+    headers,
+  });
 
-  window.location.href = "/login";
+  if (res.status === 401) {
+    logout();
+    throw new Error("Session expired");
+  }
 
-  throw new Error("Session expired");
-}
-
-if (!res.ok) {
-  const text = await res.text();
-  throw new Error(text || "API error");
-}
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "API error");
+  }
 
   const text = await res.text();
   return text ? JSON.parse(text) : (null as unknown as T);
