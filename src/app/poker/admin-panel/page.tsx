@@ -34,7 +34,7 @@ import {
   removeGame,
   updateRules,
   registerAdminKnockout,
-  rebuy,
+  adminRebuy
 } from "@/lib/api/games";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
@@ -273,11 +273,11 @@ export default function AdminPanelPage() {
     }
   };
 
-  const handleRebuy = async () => {
+  const handleRebuy = async (userId: number) => {
     if (!currentGame) return;
     try {
       setLoadingAction(true);
-      await rebuy(currentGame.id);
+      await adminRebuy(currentGame.id, userId);
       fetchActiveGame();
     } catch (err: any) {
       alert(err.message || "Rebuy failed");
@@ -506,10 +506,10 @@ export default function AdminPanelPage() {
                           <Button
                             variant="outlined"
                             color="warning"
-                            onClick={handleRebuy}
+                            onClick={() => handleRebuy(p.userId)}
                             disabled={loadingAction || currentGame.isFinished}
                           >
-                            Rebuy (-{currentGame.rebuyValue} points)
+                            Rebuy (-{currentGame.rebuyValue})
                           </Button>
                         )}
 
@@ -585,7 +585,7 @@ export default function AdminPanelPage() {
           variant="contained"
           color="success"
           onClick={fetchAllGames}
-          // sx={{ width: { xs: "100%", sm: "auto" } }}
+        // sx={{ width: { xs: "100%", sm: "auto" } }}
         >
           Fetch All Games
         </Button>
