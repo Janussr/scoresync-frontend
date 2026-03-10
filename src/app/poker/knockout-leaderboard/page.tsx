@@ -13,7 +13,7 @@ import {
   CardContent,
 } from "@mui/material";
 
-import { getKnockoutLeaderboard } from "@/lib/api/games";
+import { getKnockoutLeaderboard } from "@/lib/api/bounties";
 import { BountyRow } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
 

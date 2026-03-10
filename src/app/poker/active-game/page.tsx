@@ -13,7 +13,10 @@ import {
   MenuItem,
 } from "@mui/material";
 
-import { getActiveGame, addParticipants as apiJoinGame, addScore, rebuy, registerKnockout } from "@/lib/api/games";
+import { getActiveGame } from "@/lib/api/games";
+import { addScore, rebuy } from "@/lib/api/scores";
+import { addParticipants as apiJoinGame, removeParticipant } from "@/lib/api/participants";
+import { registerKnockout } from "@/lib/api/bounties";
 import { Game } from "@/lib/models/game";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";

@@ -14,9 +14,6 @@ export const cancelGame = (gameId: number) =>
 export const getGameDetails = (gameId: number) =>
   apiFetch<GameDetails>(`/games/${gameId}`);
 
-export const getPlayerScoreDetails = (gameId: number, userId: number) =>
-  apiFetch<PlayerScoreDetails>(`/games/${gameId}/players/${userId}/scores`);
-
 export const getAllGames = () =>
   apiFetch<Game[]>(`/games`);
 
@@ -26,33 +23,37 @@ export const getActiveGame = () =>
 export const getHallOfFame = () =>
   apiFetch<HallOfFameEntry[]>(`/halloffame`);
 
-export const addScore = (gameId: number, userId: number, value: number) =>
-  apiFetch<PlayerScoreDetails>(`/games/${gameId}/score`, {
-    method: "POST",
-    body: { userId, value } as any, 
-  });
+// export const getPlayerScoreDetails = (gameId: number, userId: number) =>
+//   apiFetch<PlayerScoreDetails>(`/scores/${gameId}/players/${userId}/scores`);
 
-  export const addPointsBulk = (gameId: number, scores: { userId: number; points: number }[]) =>
-  apiFetch<Score[]>(`/games/${gameId}/points/bulk`, {
-    method: "POST",
-    body: JSON.stringify({ gameId, scores }),
-  });
 
-  export const removePoints = (pointId: number) =>
-  apiFetch<Participant[]>(`/games/points/${pointId}`, {
-    method: "DELETE",
-  });
+// export const addScore = (gameId: number, userId: number, value: number) =>
+//   apiFetch<PlayerScoreDetails>(`/scores/${gameId}/score`, {
+//     method: "POST",
+//     body: { userId, value } as any, 
+//   });
 
-export const addParticipants = (gameId: number, userIds: number[]) =>
-  apiFetch<Participant[]>(`/games/${gameId}/participants`, {
-    method: "POST",
-    body: { userIds } as any,
-  });
+//   export const addPointsBulk = (gameId: number, scores: { userId: number; points: number }[]) =>
+//   apiFetch<Score[]>(`/scores/${gameId}/points/bulk`, {
+//     method: "POST",
+//     body: JSON.stringify({ gameId, scores }),
+//   });
 
-export const removeParticipant = (gameId: number, userId: number) =>
-  apiFetch<Participant[]>(`/games/${gameId}/participants/${userId}`, {
-    method: "DELETE",
-  });
+//   export const removePoints = (pointId: number) =>
+//   apiFetch<Participant[]>(`/scores/points/${pointId}`, {
+//     method: "DELETE",
+//   });
+
+// export const addParticipants = (gameId: number, userIds: number[]) =>
+//   apiFetch<Participant[]>(`/participants/${gameId}`, {
+//     method: "POST",
+//     body: { userIds } as any,
+//   });
+
+// export const removeParticipant = (gameId: number, userId: number) =>
+//   apiFetch<Participant[]>(`/participants/${gameId}/participants/${userId}`, {
+//     method: "DELETE",
+//   });
 
   export const removeGame = (gameId: number) =>
   apiFetch<void>(`/games/remove/${gameId}`, {
@@ -65,26 +66,26 @@ export const updateRules = (gameId: number, rebuyValue: number, bountyValue: num
     body: { rebuyValue, bountyValue } as any,
   });
 
-export const rebuy = (gameId: number) =>
-  apiFetch(`/games/${gameId}/rebuy`, { method: "POST" });
+// export const rebuy = (gameId: number) =>
+//   apiFetch(`/scores/${gameId}/rebuy`, { method: "POST" });
 
-export const adminRebuy = (gameId: number, userId: number) =>
-  apiFetch(`/games/${gameId}/admin/rebuy`, {
-    method: "POST",    
-    body: JSON.stringify(userId)
-  });
+// export const adminRebuy = (gameId: number, userId: number) =>
+//   apiFetch(`/scores/${gameId}/admin/rebuy`, {
+//     method: "POST",    
+//     body: JSON.stringify(userId)
+//   });
 
-export const registerKnockout = (gameId: number, victimUserId: number) =>
-  apiFetch(`/games/${gameId}/bounty`, {
-    method: "POST",
-    body: { victimUserId } as any,
-  });
+// export const registerKnockout = (gameId: number, victimUserId: number) =>
+//   apiFetch(`/bounties/${gameId}/bounty`, {
+//     method: "POST",
+//     body: { victimUserId } as any,
+//   });
 
-  export const registerAdminKnockout = (gameId: number, killerUserId: number, victimUserId: number) =>
-  apiFetch(`/games/${gameId}/admin/bounty`, {
-    method: "POST",
-    body: { killerUserId, victimUserId } as any,
-  });
+//   export const registerAdminKnockout = (gameId: number, killerUserId: number, victimUserId: number) =>
+//   apiFetch(`/bounties/${gameId}/admin/bounty`, {
+//     method: "POST",
+//     body: { killerUserId, victimUserId } as any,
+//   });
 
-  export const getKnockoutLeaderboard = () =>
-  apiFetch<BountyRow[]>(`/games/bounty-leaderboard`);
+//   export const getKnockoutLeaderboard = () =>
+//   apiFetch<BountyRow[]>(`/bounties/bounty-leaderboard`);

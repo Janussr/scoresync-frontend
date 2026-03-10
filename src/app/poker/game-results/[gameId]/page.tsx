@@ -16,7 +16,8 @@ import {
   DialogActions,
 } from "@mui/material";
 
-import { getGameDetails, getPlayerScoreDetails } from "@/lib/api/games";
+import { getGameDetails } from "@/lib/api/games";
+import { getPlayerScoreDetails } from "@/lib/api/scores";
 import { GameDetails, PlayerScoreDetails } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
 

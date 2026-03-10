@@ -26,16 +26,12 @@ import {
   cancelGame,
   startGame,
   endGame,
-  addParticipants,
-  removeParticipant,
-  addScore,
-  addPointsBulk,
-  removePoints,
   removeGame,
   updateRules,
-  registerAdminKnockout,
-  adminRebuy
 } from "@/lib/api/games";
+import { addScore, addPointsBulk, removePoints, adminRebuy } from "@/lib/api/scores";
+import { addParticipants, removeParticipant } from "@/lib/api/participants";
+import { registerAdminKnockout } from "@/lib/api/bounties";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Participant } from "@/lib/models/game";
