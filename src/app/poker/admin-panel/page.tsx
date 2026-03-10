@@ -306,7 +306,7 @@ export default function AdminPanelPage() {
       </Typography>
 
       {!currentGame ? (
-        <Button variant="contained" onClick={startGameHandler}>
+        <Button variant="contained" color="success" onClick={startGameHandler}>
           Start New Game
         </Button>
       ) : (
@@ -357,6 +357,7 @@ export default function AdminPanelPage() {
                     variant="contained"
                     onClick={handleSaveRules}
                     disabled={savingRules}
+                    color="success"
                   >
                     Save rules
                   </Button>
@@ -563,7 +564,7 @@ export default function AdminPanelPage() {
 
             {/* Action Buttons */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-              <Button variant="contained" color="primary" onClick={addAllScoresHandler}>
+              <Button variant="contained" color="success" onClick={addAllScoresHandler}>
                 Add All Scores
               </Button>
               <Button
@@ -582,9 +583,9 @@ export default function AdminPanelPage() {
       <Box mt={2} mb={2}>
         <Button
           variant="contained"
-          color="primary"
+          color="success"
           onClick={fetchAllGames}
-          sx={{ width: { xs: "100%", sm: "auto" } }}
+          // sx={{ width: { xs: "100%", sm: "auto" } }}
         >
           Fetch All Games
         </Button>

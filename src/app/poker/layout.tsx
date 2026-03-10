@@ -20,6 +20,7 @@ export default function PokerLayout({ children }: { children: ReactNode }) {
     { label: "Poker hands", href: "/poker" },
     { label: "Hall of Fame", href: "/poker/hall-of-fame" },
     { label: "Bounty board", href: "/poker/knockout-leaderboard" },
+    { label: "Combination Statistic", href: "/poker/card-statistic" },
     ...(isLoggedIn && isAdmin ? [{ label: "Admin panel", href: "/poker/admin-panel" }] : []),
   ];
 const cleanPath = pathname.replace(/\/$/, "");

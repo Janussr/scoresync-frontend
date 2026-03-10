@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
 import {
   Box,
   Typography,
@@ -11,6 +12,9 @@ import {
 import Link from "next/link";
 
 export default function HomePage() {
+
+  const { isLoggedIn, role } = useAuth();
+
   return (
     <Box
       sx={{
@@ -34,47 +38,47 @@ export default function HomePage() {
         ♠ Poker Pals ♦
       </Typography>
 
+      {!isLoggedIn && (
+        <Stack direction="row" spacing={3} justifyContent="center" mb={10}>
+          <Button
+            component={Link}
+            href="/login"
+            variant="contained"
+            sx={{
+              backgroundColor: "gold",
+              color: "black",
+              fontWeight: "bold",
+              px: 4,
+              "&:hover": {
+                backgroundColor: "#ffd700",
+                transform: "scale(1.05)",
+              },
+              transition: "0.2s",
+            }}
+          >
+            Login
+          </Button>
 
-      <Stack direction="row" spacing={3} justifyContent="center" mb={10}>
-        <Button
-          component={Link}
-          href="/login"
-          variant="contained"
-          sx={{
-            backgroundColor: "gold",
-            color: "black",
-            fontWeight: "bold",
-            px: 4,
-            "&:hover": {
-              backgroundColor: "#ffd700",
-              transform: "scale(1.05)",
-            },
-            transition: "0.2s",
-          }}
-        >
-          Login
-        </Button>
-
-        <Button
-          component={Link}
-          href="/register"
-          variant="outlined"
-          sx={{
-            borderColor: "gold",
-            color: "gold",
-            fontWeight: "bold",
-            px: 4,
-            "&:hover": {
-              backgroundColor: "rgba(255,215,0,0.1)",
-              transform: "scale(1.05)",
-            },
-            transition: "0.2s",
-          }}
-        >
-          Register
-        </Button>
-      </Stack>
-
+          <Button
+            component={Link}
+            href="/register"
+            variant="outlined"
+            sx={{
+              borderColor: "gold",
+              color: "gold",
+              fontWeight: "bold",
+              px: 4,
+              "&:hover": {
+                backgroundColor: "rgba(255,215,0,0.1)",
+                transform: "scale(1.05)",
+              },
+              transition: "0.2s",
+            }}
+          >
+            Register
+          </Button>
+        </Stack>
+      )}
       {/* GAME PREVIEW CARDS */}
       <Stack
         direction={{ xs: "column", md: "row" }}
