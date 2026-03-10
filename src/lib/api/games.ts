@@ -70,7 +70,7 @@ export const rebuy = (gameId: number) =>
 
 export const adminRebuy = (gameId: number, userId: number) =>
   apiFetch(`/games/${gameId}/admin/rebuy`, {
-    method: "POST",
+    method: "POST",    
     body: JSON.stringify(userId)
   });
 
