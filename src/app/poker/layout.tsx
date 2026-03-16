@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function PokerLayout({ children }: { children: ReactNode }) {
-  const { isLoggedIn, isAdmin, hydrated } = useAuth();
+  const { isLoggedIn, role, hydrated } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const pathname = usePathname();
@@ -20,9 +20,15 @@ export default function PokerLayout({ children }: { children: ReactNode }) {
     { label: "Game history", href: "/poker/game-history" },
     { label: "Hall of Fame", href: "/poker/hall-of-fame" },
     { label: "Bounty board", href: "/poker/knockout-leaderboard" },
-    ...(isLoggedIn && isAdmin ? [{ label: "Game panel", href: "/poker/game-control-panel" }] : []),
-    ...(isLoggedIn && isAdmin ? [{ label: "Admin panel", href: "/poker/admin-panel" }] : []),
   ];
+  if (isLoggedIn) {
+    if (role === "Admin" || role === "Gamemaster") {
+      links.push({ label: "Game panel", href: "/poker/game-control-panel" });
+    }
+    if (role === "Admin") {
+      links.push({ label: "Admin panel", href: "/poker/admin-panel" });
+    }
+  }
   const cleanPath = pathname.replace(/\/$/, "");
 
   const activeIndex = links.findIndex(
@@ -34,11 +40,10 @@ export default function PokerLayout({ children }: { children: ReactNode }) {
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
           value={activeIndex === -1 ? false : activeIndex}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
+          variant="standard"
           textColor="inherit"
           indicatorColor="secondary"
+          centered
         >
           {links.map((link, index) => (
             <Tab

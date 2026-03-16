@@ -66,10 +66,10 @@ export default function AdminPanelPage() {
   const [loadingAction, setLoadingAction] = useState(false);
   const { showError } = useError();
 
-  useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
-    if (role !== "Admin") router.replace("/");
-  }, [isLoggedIn, role, router]);
+ useEffect(() => {
+  if (!isLoggedIn) router.replace("/login");
+  else if (role !== "Admin" && role !== "Gamemaster") router.replace("/");
+}, [isLoggedIn, role, router]);
 
   useEffect(() => {
     fetchActiveGame();
@@ -282,7 +282,7 @@ export default function AdminPanelPage() {
     }
   };
 
-  if (!isLoggedIn || role !== "Admin") return null;
+  if (!isLoggedIn || (role !== "Admin" && role !== "Gamemaster")) return null;
 
   return (
     <Box
@@ -487,8 +487,8 @@ export default function AdminPanelPage() {
                         direction="row"
                         spacing={1}
                         sx={{
-                          flexShrink: 0, // Prevent buttons from shrinking
-                          overflowX: "auto", // Scroll if screen is too narrow
+                          flexShrink: 0, 
+                          overflowX: "auto", 
                         }}
                       >
                         <Button
@@ -615,8 +615,7 @@ export default function AdminPanelPage() {
                     Game results
                   </Button>
                 </Link>
-
-                {g.isFinished && (
+                {g.isFinished && (role === "Admin") && (
                   <Button
                     variant="outlined"
                     color="error"

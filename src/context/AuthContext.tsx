@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type UserRole = "User" | "Admin" | null;
+type UserRole = "User" | "Admin" | "Gamemaster" |null;
 
 type AuthContextType = {
   token: string | null;

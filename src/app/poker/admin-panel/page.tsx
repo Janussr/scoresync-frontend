@@ -79,7 +79,6 @@ export default function AdminPanelPage() {
         Admin panel
       </Typography>
 
-      {/* Single Card with Both Accordions */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Divider sx={{ my: 2 }} />
@@ -243,7 +242,6 @@ export default function AdminPanelPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}
