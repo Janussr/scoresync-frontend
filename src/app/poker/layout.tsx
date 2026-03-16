@@ -7,35 +7,35 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function PokerLayout({ children }: { children: ReactNode }) {
-  const { isLoggedIn, isAdmin, hydrated } = useAuth(); 
-  const theme = useTheme();                           
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); 
-  const pathname = usePathname();                     
+  const { isLoggedIn, isAdmin, hydrated } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const pathname = usePathname();
 
   if (!hydrated) return null;
 
   const links = [
     { label: "Join game", href: "/poker/active-game" },
-    { label: "Game history", href: "/poker/game-history" },
     { label: "Poker hands", href: "/poker" },
+    { label: "Game history", href: "/poker/game-history" },
     { label: "Hall of Fame", href: "/poker/hall-of-fame" },
     { label: "Bounty board", href: "/poker/knockout-leaderboard" },
-    { label: "Combination Statistic", href: "/poker/card-statistic" },
+    ...(isLoggedIn && isAdmin ? [{ label: "Game panel", href: "/poker/game-control-panel" }] : []),
     ...(isLoggedIn && isAdmin ? [{ label: "Admin panel", href: "/poker/admin-panel" }] : []),
   ];
-const cleanPath = pathname.replace(/\/$/, "");
+  const cleanPath = pathname.replace(/\/$/, "");
 
-const activeIndex = links.findIndex(
-  (link) => cleanPath === link.href.replace(/\/$/, "")
-);
+  const activeIndex = links.findIndex(
+    (link) => cleanPath === link.href.replace(/\/$/, "")
+  );
 
   return (
     <Box>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
-          value={activeIndex !== -1 ? activeIndex : false}
-          variant={isMobile ? "scrollable" : "standard"}
-          scrollButtons={isMobile ? "auto" : undefined}
+          value={activeIndex === -1 ? false : activeIndex}
+          variant="scrollable"
+          scrollButtons="auto"
           allowScrollButtonsMobile
           textColor="inherit"
           indicatorColor="secondary"

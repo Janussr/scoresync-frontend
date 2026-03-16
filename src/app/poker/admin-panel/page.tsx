@@ -302,460 +302,63 @@ export default function AdminPanelPage() {
         mb={3}
         sx={{ fontSize: { xs: "1.5rem", md: "2.125rem" }, fontWeight: 500 }}
       >
-        Poker Game Admin
+        Admin panel
       </Typography>
 
-      {!currentGame ? (
-        <Button variant="contained" color="success" onClick={startGameHandler}>
-          Start New Game
-        </Button>
-      ) : (
-        <Card sx={{ mb: { xs: 2, md: 4 } }}>
-          <CardContent>
-            <Typography variant="h6">
-              Active Game #{currentGame.gameNumber}
-            </Typography>
-            <Typography>
-              Started: {new Date(currentGame.startedAt).toLocaleString("da-DK")}
-            </Typography>
 
-            <Divider sx={{ my: 2 }} />
+      <Card sx={{ mb: { xs: 2, md: 4 } }}>
+        <CardContent>
+          <Divider sx={{ my: 2 }} />
 
-            {/* --- Accordion for Game Rules --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Game Rules</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={2}
-                  alignItems="flex-start"
-                  mb={2}
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography>Reset User Password</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-start" mb={2}>
+                {/* Vælg bruger */}
+                <Select
+                  value={adminResetUserId}
+                  displayEmpty
+                  onChange={(e) => setAdminResetUserId(Number(e.target.value))}
+                  sx={{ width: { xs: "100%", sm: 220 } }}
                 >
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Rebuy value"
-                    value={rebuyValue}
-                    onChange={(e) =>
-                      setRebuyValue(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    sx={{ width: { xs: "100%", sm: 150 } }}
-                  />
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Bounty value"
-                    value={bountyValue}
-                    onChange={(e) =>
-                      setBountyValue(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    sx={{ width: { xs: "100%", sm: 150 } }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={handleSaveRules}
-                    disabled={savingRules}
-                    color="success"
-                  >
-                    Save rules
-                  </Button>
-                </Stack>
-                <Typography variant="caption" color="text.secondary">
-                  Current rules: Rebuy = {currentGame.rebuyValue ?? "-"} / Bounty ={" "}
-                  {currentGame.bountyValue ?? "-"}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* --- Accordion for Choose Player to Join --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Choose Player to Join</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={2}>
-                  <Select
-                    value={selectedUserId}
-                    displayEmpty
-                    onChange={handleSelectUser}
-                    sx={{ width: { xs: "100%", sm: 220 } }}
-                  >
-                    <MenuItem value="" disabled>
-                      Choose player to game
+                  <MenuItem value="" disabled>
+                    Select user
+                  </MenuItem>
+                  {users.map((u) => (
+                    <MenuItem key={u.id} value={u.id}>
+                      {u.name} ({u.username})
                     </MenuItem>
-                    {users
-                      .filter((u) =>
-                        !currentGame?.participants.some((p) => p.userId === u.id)
-                      )
-                      .map((u) => (
-                        <MenuItem key={u.id} value={u.id}>
-                          {u.name} ({u.username})
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
+                  ))}
+                </Select>
 
-            {/* --- Accordion for Admin Knockout --- */}
-            {currentGame.bountyValue > 0 && (
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>Register Knockout</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    alignItems="flex-start"
-                  >
-                    <Select
-                      value={killerUserId}
-                      displayEmpty
-                      onChange={(e) => setKillerUserId(Number(e.target.value))}
-                      sx={{ width: { xs: "100%", sm: 180 } }}
-                    >
-                      <MenuItem value="" disabled>
-                        Select killer
-                      </MenuItem>
-                      {currentGame?.participants.map((p) => (
-                        <MenuItem key={p.userId} value={p.userId}>
-                          {p.userName}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                {/* Input for nyt password */}
+                <TextField
+                  size="small"
+                  label="New Password"
+                  type="password"
+                  value={adminResetPassword}
+                  onChange={(e) => setAdminResetPassword(e.target.value)}
+                  sx={{ width: { xs: "100%", sm: 220 } }}
+                />
 
-                    <Select
-                      value={victimUserId}
-                      displayEmpty
-                      onChange={(e) => setVictimUserId(Number(e.target.value))}
-                      sx={{ width: { xs: "100%", sm: 180 } }}
-                    >
-                      <MenuItem value="" disabled>
-                        Select victim
-                      </MenuItem>
-                      {currentGame?.participants
-                        .filter((p) => p.userId !== killerUserId)
-                        .map((p) => (
-                          <MenuItem key={p.userId} value={p.userId}>
-                            {p.userName}
-                          </MenuItem>
-                        ))}
-                    </Select>
-
-                    <Button
-                      variant="contained"
-                      onClick={registerKnockoutHandler}
-                      disabled={knockoutLoading || !killerUserId || !victimUserId}
-                    >
-                      Register Knockout
-                    </Button>
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-            )}
-
-            {/* --- Accordion for Participants --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Participants ({currentGame.participants.length})</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {currentGame.participants.map((p) => (
-                  <Box key={p.userId} sx={{ width: "100%", overflowX: "auto", mb: 1 }}>
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={2}
-                      alignItems={{ xs: "stretch", sm: "center" }}
-                    >
-                      {/* Participant Name */}
-                      <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                        {p.userName}
-                      </Typography>
-
-                      {/* Points Input */}
-                      <TextField
-                        size="small"
-                        label="Type points to add"
-                        value={scoreInputs[p.userId] || ""}
-                        onChange={(e) =>
-                          setScoreInputs({ ...scoreInputs, [p.userId]: e.target.value })
-                        }
-                        sx={{ width: { xs: "100%", sm: 150 } }}
-                      />
-
-                      {/* Buttons in one row */}
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{
-                          flexShrink: 0, // Prevent buttons from shrinking
-                          overflowX: "auto", // Scroll if screen is too narrow
-                        }}
-                      >
-                        <Button
-                          variant="contained"
-                          onClick={() => addScoreHandler(p.userId)}
-                        >
-                          Add Points
-                        </Button>
-
-                        {currentGame.rebuyValue > 0 && (
-                          <Button
-                            variant="outlined"
-                            color="warning"
-                            onClick={() => handleRebuy(p.userId)}
-                            disabled={loadingAction || currentGame.isFinished}
-                          >
-                            Rebuy (-{currentGame.rebuyValue})
-                          </Button>
-                        )}
-
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => {
-                            setParticipantToRemove(p);
-                            setRemoveParticipantConfirmOpen(true);
-                          }}
-                        >
-                          Remove Player
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </Box>
-                ))}
-              </AccordionDetails>
-            </Accordion>
-
-            {/* --- Accordion for Password reset --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Admin Reset User Password</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-start" mb={2}>
-                  {/* Vælg bruger */}
-                  <Select
-                    value={adminResetUserId}
-                    displayEmpty
-                    onChange={(e) => setAdminResetUserId(Number(e.target.value))}
-                    sx={{ width: { xs: "100%", sm: 220 } }}
-                  >
-                    <MenuItem value="" disabled>
-                      Select user
-                    </MenuItem>
-                    {users.map((u) => (
-                      <MenuItem key={u.id} value={u.id}>
-                        {u.name} ({u.username})
-                      </MenuItem>
-                    ))}
-                  </Select>
-
-                  {/* Input for nyt password */}
-                  <TextField
-                    size="small"
-                    label="New Password"
-                    type="password"
-                    value={adminResetPassword}
-                    onChange={(e) => setAdminResetPassword(e.target.value)}
-                    sx={{ width: { xs: "100%", sm: 220 } }}
-                  />
-
-                  {/* Knap for at åbne confirmation */}
-                  <Button
-                    variant="contained"
-                    color="error"
-                    disabled={!adminResetUserId || !adminResetPassword || adminResetLoading}
-                    onClick={() => setAdminResetConfirmOpen(true)}
-                  >
-                    Reset Password
-                  </Button>
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* --- Accordion for Score Entries --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Score Entries ({currentGame.scores.length})</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {currentGame.scores.map((s) => (
-                  <Stack
-                    key={s.id}
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    alignItems={{ xs: "stretch", sm: "center" }}
-                    mb={1}
-                  >
-                    <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                      {s.userName}: {s.points}
-                    </Typography>
-                    {s.points > 0 && (
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleConfirmRemove(s)}
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </Stack>
-                ))}
-              </AccordionDetails>
-            </Accordion>
-
-            {/* Action Buttons */}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-              <Button variant="contained" color="success" onClick={addAllScoresHandler}>
-                Add All Scores
-              </Button>
-              <Button
-                color={currentGame.scores.length === 0 ? "warning" : "error"}
-                variant="contained"
-                onClick={handleEndGameClick}
-              >
-                {currentGame.scores.length === 0 ? "Cancel game" : "End game"}
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Fetch All Games Button */}
-      <Box mt={2} mb={2}>
-        <Button
-          variant="contained"
-          color="success"
-          onClick={fetchAllGames}
-        // sx={{ width: { xs: "100%", sm: "auto" } }}
-        >
-          Fetch All Games
-        </Button>
-      </Box>
-
-      {/* All Games List */}
-      <Typography
-        sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
-        mb={2}
-      >
-        All Games
-      </Typography>
-
-      {[...games]
-        .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
-        .map((g) => (
-          <Card key={g.id} sx={{ mt: 1 }}>
-            <CardContent>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1}
-                alignItems={{ xs: "flex-start", sm: "center" }}
-                justifyContent="space-between"
-                sx={{ width: "100%", overflowX: "auto" }}
-              >
-                <Typography sx={{ flex: 1 }}>
-                  Game #{g.gameNumber} — {g.isFinished ? "Finished" : "Active"}
-                </Typography>
-
-                <Link href={`/poker/game-results/${g.id}`} passHref>
-                  <Button variant="outlined" size="small" sx={{ mt: { xs: 1, sm: 0 } }}>
-                    View scoreboard
-                  </Button>
-                </Link>
-
-                {g.isFinished && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    sx={{ mt: { xs: 1, sm: 0 } }}
-                    onClick={() => handleRemoveGameClick(g)}
-                  >
-                    Delete permanently
-                  </Button>
-                )}
+                {/* Knap for at åbne confirmation */}
+                <Button
+                  variant="contained"
+                  color="error"
+                  disabled={!adminResetUserId || !adminResetPassword || adminResetLoading}
+                  onClick={() => setAdminResetConfirmOpen(true)}
+                >
+                  Reset Password
+                </Button>
               </Stack>
-            </CardContent>
-          </Card>
-        ))}
+            </AccordionDetails>
+          </Accordion>
+        </CardContent>
+      </Card>
 
-
-
-
-
-      {/* Remove Participant Confirmation Modal */}
-      <Dialog
-        open={removeParticipantConfirmOpen}
-        onClose={handleCancelRemoveParticipant}
-      >
-        <DialogTitle>Remove Player</DialogTitle>
-        <DialogContent>
-          Are you sure you want to remove {participantToRemove?.userName} from the game?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelRemoveParticipant}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmRemoveParticipant}>
-            Remove
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Remove Points Confirmation Modal */}
-      <Dialog
-        open={confirmOpen}
-        onClose={handleCancelRemove}
-      >
-        <DialogTitle>Remove Points</DialogTitle>
-        <DialogContent>
-          Are you sure you want to remove {scoreToRemove?.points} points from {scoreToRemove?.userName}?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelRemove}>Cancel</Button>
-          <Button color="error" onClick={handleRemovePoint}>Remove</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* End / Cancel Game Confirmation Modal */}
-      <Dialog
-        open={endGameConfirmOpen}
-        onClose={() => setEndGameConfirmOpen(false)}
-      >
-        <DialogTitle>
-          {currentGame?.scores.length === 0 ? "Cancel Game" : "End Game"}
-        </DialogTitle>
-        <DialogContent>
-          {currentGame?.scores.length === 0
-            ? "Are you sure you want to cancel this game? All progress will be lost."
-            : "Are you sure you want to end this game?"}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEndGameConfirmOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={confirmEndOrCancelGame}>
-            {currentGame?.scores.length === 0 ? "Cancel Game" : "End Game"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Remove Game Confirmation Modal */}
-      <Dialog
-        open={removeGameConfirmOpen}
-        onClose={handleCancelRemoveGame}
-      >
-        <DialogTitle>Delete Game Permanently</DialogTitle>
-        <DialogContent>
-          Are you sure you want to permanently delete Game #{gameToRemove?.gameNumber}? This action cannot be undone.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelRemoveGame}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmRemoveGame}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Reset password modal */}
       <Dialog
         open={adminResetConfirmOpen}
         onClose={() => setAdminResetConfirmOpen(false)}
