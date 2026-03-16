@@ -32,7 +32,7 @@ import {
 import { addScore, addPointsBulk, removePoints, adminRebuy } from "@/lib/api/scores";
 import { addParticipants, removeParticipant } from "@/lib/api/participants";
 import { registerAdminKnockout } from "@/lib/api/bounties";
-import { AdminResetPwd, getAllUsers } from "@/lib/api/users";
+import { adminResetPwd, getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Participant } from "@/lib/models/game";
 import { User } from "@/lib/models/user";

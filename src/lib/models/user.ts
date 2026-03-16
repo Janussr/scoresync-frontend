@@ -9,3 +9,9 @@ export interface Participant {
   userName: string;
 }
 
+export type UserRole = "User" | "Admin" | "Gamemaster";
+
+export interface SetUserRoleResponse {
+  message: string;
+  user: User;
+}

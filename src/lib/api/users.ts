@@ -1,4 +1,4 @@
-import { User } from "../models/user";
+import { SetUserRoleResponse, User, UserRole,  } from "../models/user";
 import { apiFetch } from "./clients";
 
 export const getAllUsers = () =>
@@ -16,8 +16,14 @@ export const registerUser = (username: string, name: string, password: string) =
     body: { username, name, password } as any,
   });
 
-export const AdminResetPwd = (userId: number, newPassword: string) =>
+export const adminResetPwd = (userId: number, newPassword: string) =>
   apiFetch<{ token: string }>(`/users/admin/reset-password`, {
     method: "POST",
     body: { userId, newPassword } as any,
+  });
+
+  export const setUserRole = (userId: number, role: UserRole) =>
+  apiFetch<SetUserRoleResponse>(`/users/admin/set-role`, {
+    method: "POST",
+    body: { userId, role }as any,
   });
