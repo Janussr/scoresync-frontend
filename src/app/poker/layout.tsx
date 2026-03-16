@@ -38,13 +38,14 @@ export default function PokerLayout({ children }: { children: ReactNode }) {
   return (
     <Box>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={activeIndex === -1 ? false : activeIndex}
-          variant="standard"
-          textColor="inherit"
-          indicatorColor="secondary"
-          centered
-        >
+       <Tabs
+  value={activeIndex === -1 ? false : activeIndex}
+  variant={isMobile ? "scrollable" : "standard"} // scrollable på mobil
+  scrollButtons={isMobile ? "auto" : undefined} // kun på mobil
+  centered={!isMobile} // center på desktop
+  textColor="inherit"
+  indicatorColor="secondary"
+>
           {links.map((link, index) => (
             <Tab
               key={link.href}

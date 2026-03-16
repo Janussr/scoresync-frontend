@@ -1,22 +1,28 @@
 "use client";
 
-import { Stack, Box, Typography, Tabs, Tab } from "@mui/material";
+import { Stack, Box, Typography, Tabs, Tab, useMediaQuery, useTheme } from "@mui/material";
 import Image from "next/image";
 import { useState } from "react";
 
 export default function PokerPage() {
   const [activeTab, setActiveTab] = useState(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
   return (
-
-    <Box sx={{ maxWidth: { xs: "100%", sm: 700 }, mx: "auto", mt: 4, px: { xs: 1, sm: 2 } }}>
+    <Box sx={{ maxWidth: { xs: "100%", sm: 700 }, mx: "auto", mt: 4, px: { xs: 2, sm: 3 } }}>
       <Typography
         variant="h4"
-        sx={{ mb: 0, textAlign: "center", fontWeight: "bold", fontSize: { xs: "1.5rem", sm: "2rem" } }}
+        sx={{
+          mb: 3,
+          textAlign: "center",
+          fontWeight: "bold",
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Card Statistics
       </Typography>
@@ -25,8 +31,9 @@ export default function PokerPage() {
       <Tabs
         value={activeTab}
         onChange={handleTabChange}
-        variant="fullWidth"
-        centered
+        variant={isMobile ? "scrollable" : "fullWidth"}
+        scrollButtons={isMobile ? "auto" : undefined}
+        centered={!isMobile}
         sx={{ mb: 3 }}
       >
         <Tab label="Cheat sheet" />
@@ -35,35 +42,28 @@ export default function PokerPage() {
         <Tab label="Interesting Stats" />
       </Tabs>
 
-      {/* Poker cheat sheet */}
+      {/* Tab Panels */}
       {activeTab === 0 && (
-
-
-        <Stack spacing={2} direction="row" justifyContent="center" mt={5}>
-
-
-          <Box sx={{
-            width: "100%",
-            maxWidth: { md: 350 },
-            mx: "auto",
-            px: { xs: 1, md: 0 },
-            mt: 4,
-          }}>
+        <Stack spacing={2} direction="column" alignItems="center" mt={3}>
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: { xs: 350, sm: 500 },
+              mt: 2,
+            }}
+          >
             <Image
               src="/images/poker-cheatsheet.jpg"
-              alt="Black Jack Cheatsheet"
+              alt="Poker Cheatsheet"
               width={500}
               height={300}
+              style={{ width: "100%", height: "auto", display: "block", margin: "0 auto" }}
               priority
-              style={{ width: "100%", height: "auto", margin: "0 auto" }}
             />
           </Box>
-
         </Stack>
-
-
       )}
-       {/* Poker hands probabilites */}
+
       {activeTab === 1 && (
         <Box>
           <Typography
@@ -72,7 +72,6 @@ export default function PokerPage() {
           >
             Texas Hold’em Hand Probabilities
           </Typography>
-
           <Stack spacing={1}>
             <Typography><strong>Royal Flush:</strong> 0.0032% (1 in 30,940)</Typography>
             <Typography><strong>Straight Flush:</strong> 0.0279% (1 in 3,589)</Typography>
@@ -88,7 +87,6 @@ export default function PokerPage() {
         </Box>
       )}
 
-      {/* Starting Hands */}
       {activeTab === 2 && (
         <Box>
           <Typography
@@ -97,7 +95,6 @@ export default function PokerPage() {
           >
             Texas Hold’em Starting Hands
           </Typography>
-
           <Stack spacing={1}>
             <Typography><strong>Any Pocket Pair:</strong> 5.88% (1 in 17)</Typography>
             <Typography><strong>Specific Pair (AA, KK, etc):</strong> 0.45% (1 in 221)</Typography>
@@ -110,7 +107,6 @@ export default function PokerPage() {
         </Box>
       )}
 
-      {/* Interesting Stats */}
       {activeTab === 3 && (
         <Box>
           <Typography
@@ -119,7 +115,6 @@ export default function PokerPage() {
           >
             Interesting Poker Stats
           </Typography>
-
           <Stack spacing={1}>
             <Typography><strong>Chance of hitting a set with a pocket pair:</strong> 11.8% (≈ 1 in 8.5)</Typography>
             <Typography><strong>Chance of flopping a flush draw with suited cards:</strong> ~10.9%</Typography>
@@ -129,7 +124,6 @@ export default function PokerPage() {
           </Stack>
         </Box>
       )}
-
     </Box>
   );
 }
