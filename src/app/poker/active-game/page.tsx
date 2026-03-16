@@ -152,7 +152,7 @@ export default function ActiveGamePlayerPage() {
               </Button>
               <Divider sx={{ my: 2 }} />
               <Typography variant="caption" color="text.secondary">
-                You can onle see and type in your own points.
+                You can only see and type in your own points.
               </Typography>
             </Box>
           ) : (

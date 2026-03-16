@@ -31,7 +31,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <AppBar
                 position="sticky"
                 sx={{
-                    background: "linear-gradient(90deg, #4a1f1f, #8b0000)",
+                    // background: "linear-gradient(90deg, #4a1f1f, #8b0000)",
+                    background: "#0b3d0b",
                     borderBottom: "2px solid gold",
                 }}
             >
@@ -49,7 +50,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                             fontSize: 22,
                         }}
                     >
-                        ♠ Poker pals ♦
+                        ♠ Poker Pals ♦
                     </Typography>
 
                     {/* Desktop menu */}
