@@ -16,3 +16,8 @@ export const registerUser = (username: string, name: string, password: string) =
     body: { username, name, password } as any,
   });
 
+export const AdminResetPwd = (userId: number, newPassword: string) =>
+  apiFetch<{ token: string }>(`/users/admin/reset-password`, {
+    method: "POST",
+    body: { userId, newPassword } as any,
+  });

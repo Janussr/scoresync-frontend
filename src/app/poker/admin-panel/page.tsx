@@ -32,7 +32,7 @@ import {
 import { addScore, addPointsBulk, removePoints, adminRebuy } from "@/lib/api/scores";
 import { addParticipants, removeParticipant } from "@/lib/api/participants";
 import { registerAdminKnockout } from "@/lib/api/bounties";
-import { getAllUsers } from "@/lib/api/users";
+import { AdminResetPwd, getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Participant } from "@/lib/models/game";
 import { User } from "@/lib/models/user";
@@ -64,6 +64,10 @@ export default function AdminPanelPage() {
   const [victimUserId, setVictimUserId] = useState<number | "">("");
   const [knockoutLoading, setKnockoutLoading] = useState(false);
   const [loadingAction, setLoadingAction] = useState(false);
+  const [adminResetUserId, setAdminResetUserId] = useState<number | "">("");
+  const [adminResetPassword, setAdminResetPassword] = useState("");
+  const [adminResetConfirmOpen, setAdminResetConfirmOpen] = useState(false);
+  const [adminResetLoading, setAdminResetLoading] = useState(false);
   const { showError } = useError();
 
   useEffect(() => {
@@ -526,6 +530,52 @@ export default function AdminPanelPage() {
               </AccordionDetails>
             </Accordion>
 
+            {/* --- Accordion for Password reset --- */}
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>Admin Reset User Password</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-start" mb={2}>
+                  {/* Vælg bruger */}
+                  <Select
+                    value={adminResetUserId}
+                    displayEmpty
+                    onChange={(e) => setAdminResetUserId(Number(e.target.value))}
+                    sx={{ width: { xs: "100%", sm: 220 } }}
+                  >
+                    <MenuItem value="" disabled>
+                      Select user
+                    </MenuItem>
+                    {users.map((u) => (
+                      <MenuItem key={u.id} value={u.id}>
+                        {u.name} ({u.username})
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  {/* Input for nyt password */}
+                  <TextField
+                    size="small"
+                    label="New Password"
+                    type="password"
+                    value={adminResetPassword}
+                    onChange={(e) => setAdminResetPassword(e.target.value)}
+                    sx={{ width: { xs: "100%", sm: 220 } }}
+                  />
+
+                  {/* Knap for at åbne confirmation */}
+                  <Button
+                    variant="contained"
+                    color="error"
+                    disabled={!adminResetUserId || !adminResetPassword || adminResetLoading}
+                    onClick={() => setAdminResetConfirmOpen(true)}
+                  >
+                    Reset Password
+                  </Button>
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
 
             {/* --- Accordion for Score Entries --- */}
             <Accordion>
@@ -703,6 +753,40 @@ export default function AdminPanelPage() {
           <Button onClick={handleCancelRemoveGame}>Cancel</Button>
           <Button color="error" onClick={handleConfirmRemoveGame}>
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={adminResetConfirmOpen}
+        onClose={() => setAdminResetConfirmOpen(false)}
+      >
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          Are you sure you want to reset the password for{" "}
+          {users.find((u) => u.id === adminResetUserId)?.name}?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAdminResetConfirmOpen(false)}>Cancel</Button>
+          <Button
+            color="error"
+            onClick={async () => {
+              if (!adminResetUserId || !adminResetPassword) return;
+
+              try {
+                setAdminResetLoading(true);
+                await AdminResetPwd(adminResetUserId, adminResetPassword);
+                setAdminResetConfirmOpen(false);
+                setAdminResetPassword("");
+                setAdminResetUserId("");
+                alert("Password reset successfully");
+              } catch (err: any) {
+                alert(err.message || "Failed to reset password");
+              } finally {
+                setAdminResetLoading(false);
+              }
+            }}
+          >
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>
