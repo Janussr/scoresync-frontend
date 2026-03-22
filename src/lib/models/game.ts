@@ -7,6 +7,8 @@ export interface Winner {
   winDate: string;
 }
 
+export type GameType = "BlackJack" | "Poker" | "Roullette";
+
 export interface GameDetails {
   id: number;
   gameNumber: number;
@@ -15,7 +17,13 @@ export interface GameDetails {
   isFinished: boolean;
   scores: Score[];
   winner?: Winner | null;
+  type: GameType;
+  players?: Player[];
+  rebuyValue?: number;
+  bountyValue?: number; 
+  rounds?: RoundDto[]; 
 }
+
 
 export interface PlayerScoreDetails {
   userId: number;
@@ -32,16 +40,40 @@ export interface Game {
   isFinished: boolean;
   rebuyValue: number;
   bountyValue: number;
-  participants: Participant[];
+  players: Player[];
   scores: Score[];
+  type: GameType;
+  rounds: RoundDto[];
   winner?: Winner | null;
 }
 
-export interface Participant {
-  userId: number;
-  userName: string;
+export interface GamePanel {
+  id: number;
+  gameNumber: number;
+  startedAt: string;
+  isFinished: boolean;
+  rebuyValue: number;
+  bountyValue: number;
+  players: Player[];
+  scores: Score[];
+  type: GameType;
+  rounds: RoundDto[];
+}
+
+
+export interface RoundDto {
+  id: number;
+  roundNumber: number;
+  scores: Score[];
+}
+
+export interface Player {
+  playerId: number;
+  userId: number
+  username: string;
   rebuyCount: number;
   activeBounties: number;
+  isActive: boolean;
 }
 
 export interface HistoryEntry {
@@ -64,4 +96,12 @@ export interface BountyRow {
   knockouts: number;
   timesKnockedOut: number;
   totalBountyPoints: number;
+}
+
+export interface RoundDto {
+  id: number;
+  roundNumber: number;
+  startedAt: string; 
+  endedAt: string | null; 
+
 }

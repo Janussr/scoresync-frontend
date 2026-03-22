@@ -41,7 +41,7 @@ export default function GameHistoryPage() {
           winnerName: g.winner!.userName,
           totalScore: g.winner!.winningScore,
           date: g.endedAt || g.winner!.winDate,
-          playerCount: g.participants?.length ?? 0,
+          playerCount: g.players?.length ?? 0,
         }))
         .sort((a, b) => b.date.localeCompare(a.date));
 

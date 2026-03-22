@@ -1,5 +1,5 @@
 import { apiFetch } from "./clients";
-import { BountyRow, Game, GameDetails, HallOfFameEntry, Participant } from "@/lib/models/game";
+import { BountyRow, Game, GameDetails, HallOfFameEntry, Player } from "@/lib/models/game";
 import { PlayerScoreDetails, Score } from "@/lib/models/score";
 
 
@@ -16,7 +16,7 @@ export const addScore = (gameId: number, userId: number, value: number) =>
   });
 
   export const removePoints = (pointId: number) =>
-  apiFetch<Participant[]>(`/scores/points/${pointId}`, {
+  apiFetch<Player[]>(`/scores/points/${pointId}`, {
     method: "DELETE",
   });
 
@@ -24,11 +24,24 @@ export const getPlayerScoreDetails = (gameId: number, userId: number) =>
   apiFetch<PlayerScoreDetails>(`/scores/${gameId}/players/${userId}/scores`);
 
 
-export const rebuy = (gameId: number) =>
-  apiFetch(`/scores/${gameId}/rebuy`, { method: "POST" });
+// export const rebuy = (gameId: number) =>
+//   apiFetch(`/scores/${gameId}/rebuy`, { method: "POST" });
 
-export const adminRebuy = (gameId: number, userId: number) =>
-  apiFetch(`/scores/${gameId}/admin/rebuy`, {
-    method: "POST",    
-    body: JSON.stringify(userId)
+export const rebuy = (gameId: number, playerId: number) =>
+  apiFetch(`/scores/${gameId}/rebuy`, {
+    method: "POST",
+    body: { playerId } as any,
   });
+
+export const adminRebuy = async (
+  gameId: number,
+  actorUserId: number,
+  targetUserId: number,
+  isAdmin: boolean
+) => {
+  return await apiFetch(`/scores/${gameId}/rebuy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gameId, actorUserId, targetUserId, isAdmin }),
+  });
+};

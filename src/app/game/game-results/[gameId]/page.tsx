@@ -97,9 +97,9 @@ export default function GameResultspage() {
             ?.slice()
             .sort((a, b) => b.totalPoints - a.totalPoints)
             .map((s, idx) => {
-              const isWinner = game.winner?.userId === s.userId;
+              const isWinner = game.winner?.userId === s.playerId;
               return (
-                <Box key={`${s.id ?? idx}-${s.userId}`} sx={{ mb: 1 }}>
+                <Box key={`${s.id ?? idx}-${s.playerId}`} sx={{ mb: 1 }}>
                   <Stack
                     direction="row"
                     justifyContent="space-between"
@@ -107,7 +107,7 @@ export default function GameResultspage() {
                     sx={{ py: 1, px: 2, borderRadius: 1, flexWrap: "wrap" }}
                   >
                     <Button
-                      onClick={() => openPlayerModal(s.userId)}
+                      onClick={() => openPlayerModal(s.playerId)}
                       sx={{
                         textTransform: "none",
                         fontWeight: isWinner ? "bold" : "normal",

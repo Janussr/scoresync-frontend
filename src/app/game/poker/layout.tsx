@@ -15,22 +15,21 @@ export default function PokerLayout({ children }: { children: ReactNode }) {
   if (!hydrated) return null;
 
   const links = [
-    { label: "Join game", href: "/poker/active-game" },
-    { label: "Poker hands", href: "/poker" },
-    { label: "Game history", href: "/poker/game-history" },
-    { label: "Hall of Fame", href: "/poker/hall-of-fame" },
-    { label: "Bounty board", href: "/poker/knockout-leaderboard" },
+    { label: "Join game", href: "game/active-game" },
+    { label: "Poker hands", href: "game/poker" },
+    { label: "Game history", href: "game/poker/game-history" },
+    { label: "Hall of Fame", href: "game/poker/hall-of-fame" },
+    { label: "Bounty board", href: "game/poker/knockout-leaderboard" },
   ];
   if (isLoggedIn) {
     if (role === "Admin" || role === "Gamemaster") {
-      links.push({ label: "Game panel", href: "/poker/game-control-panel" });
+      links.push({ label: "Game panel", href: "/game/game-control-panel" });
     }
     if (role === "Admin") {
-      links.push({ label: "Admin panel", href: "/poker/admin-panel" });
+      links.push({ label: "Admin panel", href: "/account/admin-panel" });
     }
   }
   const cleanPath = pathname.replace(/\/$/, "");
-
   const activeIndex = links.findIndex(
     (link) => cleanPath === link.href.replace(/\/$/, "")
   );
@@ -38,14 +37,14 @@ export default function PokerLayout({ children }: { children: ReactNode }) {
   return (
     <Box>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-       <Tabs
-  value={activeIndex === -1 ? false : activeIndex}
-  variant={isMobile ? "scrollable" : "standard"} // scrollable på mobil
-  scrollButtons={isMobile ? "auto" : undefined} // kun på mobil
-  centered={!isMobile} // center på desktop
-  textColor="inherit"
-  indicatorColor="secondary"
->
+        <Tabs
+          value={activeIndex === -1 ? false : activeIndex}
+          variant={isMobile ? "scrollable" : "standard"}
+          scrollButtons={isMobile ? "auto" : undefined}
+          centered={!isMobile} // center på desktop
+          textColor="inherit"
+          indicatorColor="secondary"
+        >
           {links.map((link, index) => (
             <Tab
               key={link.href}

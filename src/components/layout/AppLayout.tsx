@@ -21,6 +21,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const [open, setOpen] = useState(false);
 
     const navLinks = [
+        { label: "♠ Lobby", href: "/lobby" },
         { label: "♣ Black Jack", href: "/blackjack" },
         { label: "♦ Poker", href: "/poker" },
         { label: "♠ Roulette", href: "/roulette" },

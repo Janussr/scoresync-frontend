@@ -1,96 +1,93 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-
-type UserRole = "User" | "Admin" | "Gamemaster" |null;
+import { loginUser, logoutUser, getCurrentUser } from "@/lib/api/users";
+import type { UserRole } from "@/lib/models/user";
 
 type AuthContextType = {
-  token: string | null;
   role: UserRole;
   isLoggedIn: boolean;
   isAdmin: boolean;
   hydrated: boolean;
   userId: number | null;
   username: string | null;
-  login: (token: string) => void;
-  logout: () => void;
+  login: (username: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function parseJwt(token: string) {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(base64));
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const applyToken = (jwt: string) => {
-    const payload = parseJwt(jwt);
+  const isAdmin = role === "Admin";
+  const isLoggedIn = !!userId;
 
-    if (!payload) return logout();
-
-    if (payload.exp * 1000 < Date.now()) {
-      return logout();
+  const fetchCurrentUser = async () => {
+  try {
+    const user = await getCurrentUser(); 
+    if (!user) {
+      setUserId(null);
+      setUsername(null);
+      setRole(null);
+      return;
     }
-
-    setToken(jwt);
-    setRole(
-      payload?.role ??
-      payload?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ??
-      null
-    );
-    setUserId(payload?.id ?? null);
-    setUsername(payload?.unique_name ?? null);
-  };
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-
-    if (storedToken) {
-      applyToken(storedToken);
-    }
-
-    setHydrated(true);
-  }, []);
-
-  const login = (jwt: string) => {
-    localStorage.setItem("token", jwt);
-    applyToken(jwt);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-    setRole(null);
+    setUserId(user.id);
+    setUsername(user.username);
+    setRole(user.role);
+  } catch (err: any) {
+    if (err.message !== "Unauthorized") console.error("Failed to fetch current user", err);
     setUserId(null);
     setUsername(null);
+    setRole(null);
+  } finally {
+    setHydrated(true);
+  }
+};
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
+
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const success = await loginUser(username, password); 
+      if (!success) return false;
+
+      await fetchCurrentUser(); 
+      return true;
+    } catch (err) {
+      console.error("Login failed", err);
+      return false;
+    }
   };
 
-  const isAdmin = role === "Admin";
+  const logout = async () => {
+    try {
+      await logoutUser(); 
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUserId(null);
+      setUsername(null);
+      setRole(null);
+    }
+  };
 
   return (
     <AuthContext.Provider
       value={{
-        token,
         role,
-        isLoggedIn: !!token,
+        isLoggedIn,
         isAdmin,
-        login,
-        logout,
         hydrated,
         userId,
-        username
+        username,
+        login,
+        logout,
       }}
     >
       {children}

@@ -12,15 +12,20 @@ import {
 import Link from "next/link";
 
 export default function HomePage() {
+  const { isLoggedIn } = useAuth();
 
-  const { isLoggedIn, role } = useAuth();
+  const games = [
+    { title: "♣ Black Jack", link: "/blackjack" },
+    { title: "♦ Poker", link: "/poker" },
+    { title: "♠ Roulette", link: "/roulette" },
+  ];
+
+  const lobby = { title: "Active Games", link: "/lobby" };
 
   return (
     <Box
       sx={{
         minHeight: "90vh",
-        // background: "radial-gradient(circle at top, #8b0000, #1a0000 70%)",
-        // background: "#07250e",
         color: "white",
         textAlign: "center",
         py: 10,
@@ -39,6 +44,7 @@ export default function HomePage() {
         ♠ Poker Pals ♦
       </Typography>
 
+      {/* LOGIN / REGISTER */}
       {!isLoggedIn && (
         <Stack direction="row" spacing={3} justifyContent="center" mb={10}>
           <Button
@@ -71,7 +77,6 @@ export default function HomePage() {
               px: 4,
               "&:hover": {
                 backgroundColor: "rgba(255,215,0,0.1)",
-                // backgroundColor: "#0b3d0b",
                 transform: "scale(1.05)",
               },
               transition: "0.2s",
@@ -81,26 +86,60 @@ export default function HomePage() {
           </Button>
         </Stack>
       )}
-      {/* GAME PREVIEW CARDS */}
+
+      {/* LOBBY / GAMES CARD UNDER */}
+      <Box>
+        <Card
+          sx={{
+            display: "inline-block",
+            p: 2,
+            mb: 2,
+            border: "2px solid gold",
+            borderRadius: 4,
+            background: "#1b3d1b",
+            boxShadow: "0 0 20px rgba(255,215,0,0.3)",
+            transition: "0.3s",
+            "&:hover": {
+              transform: "translateY(-5px) scale(1.03)",
+              boxShadow: "0 0 30px rgba(255,215,0,0.6)",
+            },
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{ color: "gold", fontWeight: "bold", mb: 2 }}
+          >
+            {lobby.title}
+          </Typography>
+          <Button
+            component={Link}
+            href={lobby.link}
+            variant="contained"
+            sx={{
+              backgroundColor: "#596b06",
+              color: "gold",
+              "&:hover": { backgroundColor: "#1ba300" },
+            }}
+          >
+            Enter Lobby
+          </Button>
+        </Card>
+      </Box>
+
+      {/* 3 SPILKORT */}
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={4}
         justifyContent="center"
         alignItems="center"
+        mb={6}
       >
-        {[
-          { title: "♣ Black Jack", link: "/blackjack" },
-          { title: "♦ Poker", link: "/poker" },
-          { title: "♠ Roulette", link: "/roulette" },
-        ].map((game) => (
+        {games.map((game) => (
           <Card
             key={game.title}
             sx={{
               width: 280,
-              // background: "linear-gradient(145deg, #4a1f1f, #2a0f0f)",
               background: "#0b3d0b",
-
-              
               border: "2px solid gold",
               borderRadius: 4,
               boxShadow: "0 0 20px rgba(255,215,0,0.3)",
@@ -124,17 +163,10 @@ export default function HomePage() {
                 href={game.link}
                 fullWidth
                 variant="contained"
-                // sx={{
-                //   backgroundColor: "#8b0000",
-                //   "&:hover": {
-                //     backgroundColor: "#a30000",
-                //   },
-                  sx={{
-            backgroundColor: "#596b06", // mørk rød
-color: "gold",
-"&:hover": {
-  backgroundColor: "#1ba300",
-}
+                sx={{
+                  backgroundColor: "#596b06",
+                  color: "gold",
+                  "&:hover": { backgroundColor: "#1ba300" },
                 }}
               >
                 Join
@@ -143,6 +175,8 @@ color: "gold",
           </Card>
         ))}
       </Stack>
+
+      
     </Box>
   );
 }

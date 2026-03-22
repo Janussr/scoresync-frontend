@@ -1,5 +1,5 @@
 import { apiFetch } from "./clients";
-import {  Game, GameDetails, HallOfFameEntry  } from "@/lib/models/game";
+import {  Game, GameDetails, GamePanel, HallOfFameEntry  } from "@/lib/models/game";
 
 export const startGame = () =>
   apiFetch<Game>(`/games/start`, { method: "POST" });
@@ -16,8 +16,17 @@ export const getGameDetails = (gameId: number) =>
 export const getAllGames = () =>
   apiFetch<Game[]>(`/games`);
 
-export const getActiveGame = () =>
-  apiFetch<Game | null>(`/games/active/game`);
+export const getActiveGames = () =>
+  apiFetch<Game[] | null>(`/games/active`);
+
+export const getActiveGameForGamePanel = () =>
+  apiFetch<GamePanel | null>(`/games/game-panel/active`);
+
+export const getActiveGameForPlayerPage = () =>
+  apiFetch<GameDetails | null>(`/games/player-page/active`);
+
+export const getActiveLobbyGames = () =>
+  apiFetch<Game[]>(`/games/lobby`);
 
 export const getHallOfFame = () =>
   apiFetch<HallOfFameEntry[]>(`/halloffame`);
@@ -32,3 +41,21 @@ export const updateRules = (gameId: number, rebuyValue: number, bountyValue: num
     method: "PATCH",
     body: { rebuyValue, bountyValue } as any,
   });
+
+export const joinGameAsPlayer = (gameId: number, targetUserId?: number) =>
+  apiFetch(`/games/${gameId}/join`, {
+    method: "POST",
+    body: targetUserId !== undefined ? JSON.stringify({ targetUserId }) : undefined,
+  });
+
+export const leaveGame = (gameId: number, targetUserId?: number) =>
+  apiFetch(`/games/${gameId}/leave`, {
+    method: "POST",
+    body: targetUserId !== undefined ? JSON.stringify({ targetUserId }) : undefined,
+  });
+
+// export const adminAddPlayers = (gameId: number, targetUserId: number) =>
+//   apiFetch(`/games/${gameId}/add-participant`, {
+//     method: "POST",
+//     body: targetUserId as any ,
+//   });

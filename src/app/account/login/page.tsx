@@ -13,50 +13,39 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { registerUser } from "@/lib/api/users"; 
+import { useAuth } from "@/context/AuthContext"; 
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const router = useRouter();
-
+  const { login } = useAuth(); 
   const [username, setUsername] = useState("");
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
-    setError("");
+const handleLogin = async () => {
+  setError(null);
+  setLoading(true);
 
-    if (!username || !name || !password) {
-      setError("All fields are required");
-      return;
+  try {
+    const success = await login(username, password); 
+    if (success) {
+      router.push("/"); 
+    } else {
+      setError("Ugyldigt brugernavn eller password");
     }
+  } catch (err: any) {
+    setError(err.message ?? "Login fejlede");
+  } finally {
+    setLoading(false);
+  }
+};
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      await registerUser(username, name, password);
-
-      router.push("/login");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+ const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
-      handleRegister();
+      handleLogin();
     }
   };
-
 
   return (
     <Box
@@ -65,12 +54,11 @@ export default function RegisterPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        // background: "radial-gradient(circle at center, #8b0000, #1a0000)",
       }}
     >
       <Card
         sx={{
-          width: 450,
+          width: 400,
           borderRadius: 4,
           boxShadow: "0 0 25px rgba(255, 215, 0, 0.4)",
           border: "2px solid gold",
@@ -86,18 +74,15 @@ export default function RegisterPage() {
               mb: 3,
             }}
           >
-            ♦ Create Account ♠
+            ♠ Login ♦
           </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
           <TextField
             fullWidth
             label="Username"
+            variant="outlined"
             margin="normal"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -106,54 +91,35 @@ export default function RegisterPage() {
 
           <TextField
             fullWidth
-            label="Name"
-            margin="normal"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={handleKeyDown} 
-          />
-
-          <TextField
-            fullWidth
             label="Password"
             type="password"
+            variant="outlined"
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={handleKeyDown} 
           />
 
-          <TextField
-            fullWidth
-            label="Confirm Password"
-            type="password"
-            margin="normal"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            onKeyDown={handleKeyDown} 
-          />
-
           <Button
             fullWidth
             variant="contained"
-            onClick={handleRegister}
-            disabled={loading}
             sx={{
               mt: 3,
               backgroundColor: "#8b0000",
-              "&:hover": {
-                backgroundColor: "#a30000",
-              },
+              "&:hover": { backgroundColor: "#a30000" },
               fontWeight: "bold",
+              letterSpacing: "1px",
             }}
+            onClick={handleLogin}
+            disabled={loading}
           >
-            {loading ? "Creating Account..." : "Register"}
+            {loading ? "Logger ind..." : "Login"}
           </Button>
 
           <Typography sx={{ mt: 2, textAlign: "center" }}>
-            Already have an account?{" "}
-            <MuiLink component={Link} href="/login" underline="hover">
-              Login
+            Don’t have an account?{" "}
+            <MuiLink component={Link} href="/register" underline="hover">
+              Register
             </MuiLink>
           </Typography>
         </CardContent>

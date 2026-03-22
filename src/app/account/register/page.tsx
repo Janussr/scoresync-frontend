@@ -13,37 +13,49 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext"; 
-import { loginUser } from "@/lib/api/users";
+import { registerUser } from "@/lib/api/users"; 
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { login } = useAuth(); 
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-const handleLogin = async () => {
-  setError(null);
-  setLoading(true);
+  const handleRegister = async () => {
+    setError("");
 
-  try {
-    const data = await loginUser(username, password);
-    login(data.token);
-    router.push("/poker/active-game");
-  } catch (err: any) {
-    setError(err.message ?? "Login fejlede");
-  } finally {
-    setLoading(false);
-  }
-};
+    if (!username || !username || !password) {
+      setError("All fields are required");
+      return;
+    }
 
- const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      handleLogin();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await registerUser(username, password);
+
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
+   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      handleRegister();
+    }
+  };
+
 
   return (
     <Box
@@ -52,11 +64,12 @@ const handleLogin = async () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        // background: "radial-gradient(circle at center, #8b0000, #1a0000)",
       }}
     >
       <Card
         sx={{
-          width: 400,
+          width: 450,
           borderRadius: 4,
           boxShadow: "0 0 25px rgba(255, 215, 0, 0.4)",
           border: "2px solid gold",
@@ -72,15 +85,18 @@ const handleLogin = async () => {
               mb: 3,
             }}
           >
-            ♠ Login ♦
+            ♦ Create Account ♠
           </Typography>
 
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           <TextField
             fullWidth
             label="Username"
-            variant="outlined"
             margin="normal"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -91,33 +107,43 @@ const handleLogin = async () => {
             fullWidth
             label="Password"
             type="password"
-            variant="outlined"
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={handleKeyDown} 
           />
 
+          <TextField
+            fullWidth
+            label="Confirm Password"
+            type="password"
+            margin="normal"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            onKeyDown={handleKeyDown} 
+          />
+
           <Button
             fullWidth
             variant="contained"
+            onClick={handleRegister}
+            disabled={loading}
             sx={{
               mt: 3,
               backgroundColor: "#8b0000",
-              "&:hover": { backgroundColor: "#a30000" },
+              "&:hover": {
+                backgroundColor: "#a30000",
+              },
               fontWeight: "bold",
-              letterSpacing: "1px",
             }}
-            onClick={handleLogin}
-            disabled={loading}
           >
-            {loading ? "Logger ind..." : "Login"}
+            {loading ? "Creating Account..." : "Register"}
           </Button>
 
           <Typography sx={{ mt: 2, textAlign: "center" }}>
-            Don’t have an account?{" "}
-            <MuiLink component={Link} href="/register" underline="hover">
-              Register
+            Already have an account?{" "}
+            <MuiLink component={Link} href="/login" underline="hover">
+              Login
             </MuiLink>
           </Typography>
         </CardContent>

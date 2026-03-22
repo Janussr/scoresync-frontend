@@ -1,6 +1,7 @@
 export interface Score {
   id: number;
-  userId: number;
+  playerId: number;
+   userId: number;
   userName: string;
   points: number;
   createdAt: string;
