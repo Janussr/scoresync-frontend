@@ -43,15 +43,6 @@ export const apiFetch = async <T>(
     token = localStorage.getItem("token");
   }
 
-  if (token) {
-    if (isTokenExpired(token)) {
-      logout();
-      throw new Error("Token expired");
-    }
-
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   //Old way
   // const res = await fetch(`${API_BASE_URL}${url}`, {
   //   ...opts,
@@ -63,7 +54,6 @@ export const apiFetch = async <T>(
   ...opts,
   headers,
 });
-  const res = await fetch(`${API_BASE_URL}${url}`, opts);
 
   if (res.status === 401) {
     logoutUser();
