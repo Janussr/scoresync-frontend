@@ -15,12 +15,12 @@ export default function HomePage() {
   const { isLoggedIn } = useAuth();
 
   const games = [
-    { title: "♣ Black Jack", link: "/blackjack" },
-    { title: "♦ Poker", link: "/poker" },
-    { title: "♠ Roulette", link: "/roulette" },
+    { title: "♣ Black Jack", link: "/game/blackjack" },
+    { title: "♦ Poker", link: "/game/poker" },
+    { title: "♠ Roulette", link: "/game/roulette" },
   ];
 
-  const lobby = { title: "Active Games", link: "/lobby" };
+  const lobby = { title: "Active Games", link: "/game/lobby" };
 
   return (
     <Box
@@ -49,7 +49,7 @@ export default function HomePage() {
         <Stack direction="row" spacing={3} justifyContent="center" mb={10}>
           <Button
             component={Link}
-            href="/login"
+            href="account/login"
             variant="contained"
             sx={{
               backgroundColor: "gold",
@@ -68,7 +68,7 @@ export default function HomePage() {
 
           <Button
             component={Link}
-            href="/register"
+            href="account/register"
             variant="outlined"
             sx={{
               borderColor: "gold",

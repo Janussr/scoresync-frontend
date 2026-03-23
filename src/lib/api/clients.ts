@@ -43,13 +43,7 @@ export const apiFetch = async <T>(
     token = localStorage.getItem("token");
   }
 
-  //Old way
-  // const res = await fetch(`${API_BASE_URL}${url}`, {
-  //   ...opts,
-  //   headers,
-  // });
-
-  //New dynamic
+  
   const res = await fetch(`${getApiBaseUrl()}${url}`, {
   ...opts,
   headers,

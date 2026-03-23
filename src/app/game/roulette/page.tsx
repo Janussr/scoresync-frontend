@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Box, Typography, Tabs, Tab, Stack } from "@mui/material";
 import Image from "next/image";
+import SectionTitle from "@/components/ui/SectionTitle";
 
 export default function RoulettePage() {
   const [activeTab, setActiveTab] = useState(0);
@@ -35,10 +36,9 @@ export default function RoulettePage() {
       {/* Rules Tab */}
       {activeTab === 0 && (
         <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-            Bet Types
-          </Typography>
-           <Stack spacing={1}>
+
+          <SectionTitle>Bet Types</SectionTitle>
+           <Stack spacing={1} mb={3}>
             <Typography><strong>Straight Up:</strong> Bet on a single number. Pays 35:1.</Typography>
             <Typography><strong>Split:</strong> Bet on two adjacent numbers. Pays 17:1.</Typography>
             <Typography><strong>Street:</strong> Bet on three numbers in a row. Pays 11:1.</Typography>
@@ -51,10 +51,8 @@ export default function RoulettePage() {
             <Typography><strong>Columns:</strong> Bet on one of the three columns. Pays 2:1.</Typography>
            </Stack>
 
-          <Typography variant="h6" sx={{ fontWeight: "bold", mt: 3, mb: 0 }}>
-            Rules
-          </Typography>
-          <Stack spacing={0.5} mb={2}>
+          <SectionTitle>Rules</SectionTitle>
+          <Stack spacing={0.5} mb={3} >
             <Typography>1. Players place their bets on the table before the ball is put into play.</Typography>
             <Typography>2. The croupier spins the wheel and throws the ball in the opposite direction.</Typography>
             <Typography>3. Before the ball lands on a number, betting is closed.</Typography>

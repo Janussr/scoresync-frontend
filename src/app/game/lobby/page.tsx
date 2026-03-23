@@ -31,32 +31,32 @@ export default function LobbyPage() {
   };
 
   // ----- Join Game -----
- const handleJoinGame = async (gameId: number) => {
-  if (!userId) return showError("You must be logged in to join a game");
+  const handleJoinGame = async (gameId: number) => {
+    if (!userId) return showError("You must be logged in to join a game");
 
-  try {
-    setJoiningGameId(gameId);
+    try {
+      setJoiningGameId(gameId);
 
-    await joinGameAsPlayer(gameId, userId);
+      await joinGameAsPlayer(gameId, userId);
 
-    router.push(`/active-game`);
-  } catch (err: any) {
-    showError(err.message || "Failed to join game");
-  } finally {
-    setJoiningGameId(null);
-  }
-};
+      router.push(`/game/active-game`);
+    } catch (err: any) {
+      showError(err.message || "Failed to join game");
+    } finally {
+      setJoiningGameId(null);
+    }
+  };
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 6, px: 2 }}>
       <Typography variant="h4" mb={3} textAlign="center">
         Game Lobby
       </Typography>
-
-      <Button onClick={fetchLobby} disabled={loadingLobby}>
-        {loadingLobby ? "Loading..." : "Show Lobby"}
-      </Button>
-
+      <Stack alignItems="center">
+        <Button onClick={fetchLobby} disabled={loadingLobby}>
+          {loadingLobby ? "Loading..." : "Show Lobby"}
+        </Button>
+      </Stack>
       {lobbyGames && lobbyGames.length > 0 ? (
         <Stack spacing={2} mt={2}>
           {lobbyGames.map(game => (
@@ -64,8 +64,8 @@ export default function LobbyPage() {
               <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Typography>Game #{game.gameNumber}</Typography>
                 <Typography variant="body2" color="text.secondary">
-          Type: {game.type} {/* <-- Tilføj her */}
-        </Typography>
+                  {game.type}
+                </Typography>
                 <Button
                   variant="contained"
                   onClick={() => handleJoinGame(game.id)}
@@ -79,7 +79,7 @@ export default function LobbyPage() {
         </Stack>
       ) : (
         <Typography mt={2} textAlign="center">
-          No games in the lobby. Click "Show Lobby" to refresh.
+          Click "Show Lobby" to refresh.
         </Typography>
       )}
     </Box>

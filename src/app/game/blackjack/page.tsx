@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Box, Typography, Stack, Tabs, Tab } from "@mui/material";
 import Image from "next/image";
+import SectionTitle from "@/components/ui/SectionTitle";
 
 export default function BlackJackPage() {
     const [activeTab, setActiveTab] = useState(0);
@@ -28,7 +29,7 @@ export default function BlackJackPage() {
                 centered
                 sx={{ mb: 3 }}
             >
-                <Tab label="Player Options" />
+                <Tab label="Rules" />
                 <Tab label="Probability of busting" />
                 <Tab label="Cheatsheet" />
             </Tabs>
@@ -36,14 +37,8 @@ export default function BlackJackPage() {
             {/* Tab Panels */}
             {activeTab === 0 && (
                 <Box>
-                    <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "bold", mb: 0, fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
-                    >
-                        Player Actions
-                    </Typography>
-
-                    <Stack spacing={1}>
+                    <SectionTitle>Player Actions</SectionTitle>
+                    <Stack spacing={1}  mb={2}> 
                         <Typography><strong>Hit:</strong> Draw an additional card. Pays 1:1</Typography>
                         <Typography><strong>Stand:</strong> Keep your current hand. Pays 1:1</Typography>
                         <Typography><strong>Double Down:</strong> Double your bet, draw one card, and stand. Pays 1:1 per hand</Typography>
@@ -55,12 +50,9 @@ export default function BlackJackPage() {
                         <Typography><strong>Push:</strong> A tie – the original bet is returned.</Typography>
                     </Stack>
 
-                    <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "bold", mt: 3, mb: 0, fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
-                    >
+                    <SectionTitle>
                         Rules
-                    </Typography>
+                    </SectionTitle>
 
                     <Stack spacing={0.5} mb={2}>
                         <Typography>1. The dealer deals two cards to each player and two to themselves.</Typography>
@@ -74,13 +66,10 @@ export default function BlackJackPage() {
 
             {activeTab === 1 && (
                 <Box sx={{ textAlign: { xs: "left", sm: "center" } }}>
-                    <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "bold", mb: 2, fontSize: { xs: "1.2rem", sm: "1.5rem" } }}
-                    >
-                        Player hand vs busting
-                    </Typography>
-                    <Stack spacing={1} sx={{ mb: 2 }}>
+                    <SectionTitle>
+                        Probability of busting drawing cards
+                    </SectionTitle>
+                    <Stack spacing={1} mt={2} sx={{ mb: 2 }}>
                         <Typography><strong>Player Hand Total 21:</strong> Probability of Busting 100%</Typography>
                         <Typography><strong>Player Hand Total 20:</strong> Probability of Busting 92%</Typography>
                         <Typography><strong>Player Hand Total 19:</strong> Probability of Busting 85%</Typography>

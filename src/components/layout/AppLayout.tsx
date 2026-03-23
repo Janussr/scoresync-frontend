@@ -21,10 +21,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const [open, setOpen] = useState(false);
 
     const navLinks = [
-        { label: "♠ Lobby", href: "/lobby" },
-        { label: "♣ Black Jack", href: "/blackjack" },
-        { label: "♦ Poker", href: "/poker" },
-        { label: "♠ Roulette", href: "/roulette" },
+        { label: "♦ Poker ♦", href: "/game/poker" },
+        { label: "♥ Roulette ♥", href: "/game/roulette" },
+        { label: "♣ Black Jack ♣", href: "/game/blackjack" },
+        { label: "♠ Lobby ♠", href: "/game/lobby" },
+        { label: " Admin page ", href: "/account/admin-panel" },
     ];
 
     return (
@@ -75,7 +76,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         )}
 
                         {!isLoggedIn ? (
-                            <Button component={Link} href="/login" sx={{ color: "gold" }}>
+                            <Button component={Link} href="/account/login" sx={{ color: "gold" }}>
                                 Login
                             </Button>
                         ) : (
@@ -118,7 +119,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         ))}
 
                         {!isLoggedIn ? (
-                            <Button component={Link} href="/login">
+                            <Button component={Link} href="/account/login">
                                 Login
                             </Button>
                         ) : (

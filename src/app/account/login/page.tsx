@@ -118,7 +118,7 @@ const handleLogin = async () => {
 
           <Typography sx={{ mt: 2, textAlign: "center" }}>
             Don’t have an account?{" "}
-            <MuiLink component={Link} href="/register" underline="hover">
+            <MuiLink component={Link} href="/account/register" underline="hover">
               Register
             </MuiLink>
           </Typography>

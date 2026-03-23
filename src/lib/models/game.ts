@@ -86,6 +86,7 @@ export interface HistoryEntry {
 }
 
 export interface HallOfFameEntry {
+  playerId: number; 
   playerName: string;
   wins: number;
 }

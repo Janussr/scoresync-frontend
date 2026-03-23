@@ -43,7 +43,7 @@ export default function RegisterPage() {
 
       await registerUser(username, password);
 
-      router.push("/login");
+      router.push("/account/login");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -142,7 +142,7 @@ export default function RegisterPage() {
 
           <Typography sx={{ mt: 2, textAlign: "center" }}>
             Already have an account?{" "}
-            <MuiLink component={Link} href="/login" underline="hover">
+            <MuiLink component={Link} href="/account/login" underline="hover">
               Login
             </MuiLink>
           </Typography>
