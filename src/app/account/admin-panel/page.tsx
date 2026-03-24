@@ -101,7 +101,7 @@ export default function AdminPanelPage() {
                   </MenuItem>
                   {users.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
-                      {u.name} ({u.username})
+                      {u.username} ({u.username})
                     </MenuItem>
                   ))}
                 </Select>
@@ -150,7 +150,7 @@ export default function AdminPanelPage() {
                   </MenuItem>
                   {users.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
-                      {u.name} ({u.username})
+                      {u.username} ({u.username})
                     </MenuItem>
                   ))}
                 </Select>
@@ -183,7 +183,7 @@ export default function AdminPanelPage() {
         <DialogTitle>Reset Password</DialogTitle>
         <DialogContent>
           Are you sure you want to reset the password for{" "}
-          {users.find((u) => u.id === Number(adminResetUserId))?.name}?
+          {users.find((u) => u.id === Number(adminResetUserId))?.username}?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAdminResetConfirmOpen(false)}>Cancel</Button>
@@ -214,7 +214,7 @@ export default function AdminPanelPage() {
         <DialogTitle>Set User Role</DialogTitle>
         <DialogContent>
           Are you sure you want to set{" "}
-          {users.find((u) => u.id === Number(selectedUserId))?.name}’s role to{" "}
+          {users.find((u) => u.id === Number(selectedUserId))?.username}’s role to{" "}
           {selectedRole}?
         </DialogContent>
         <DialogActions>

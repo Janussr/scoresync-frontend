@@ -1,10 +1,9 @@
 export interface User {
   id: number;
   username: string;
-  name: string;
 }
 
-export interface Participant {
+export interface Player {
   userId: number;
   userName: string;
 }

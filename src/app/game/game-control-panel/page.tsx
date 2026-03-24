@@ -31,8 +31,8 @@ import {
   getActiveGameForGamePanel
 
 } from "@/lib/api/games";
-import {  addPointsBulk, removePoints,  addScoreAdmin, rebuyAsAdmin } from "@/lib/api/scores";
-import { AddPlayersToGameAsAdmin, removeParticipant } from "@/lib/api/players";
+import { addPointsBulk, removePoints, addScoreAdmin, rebuyAsAdmin } from "@/lib/api/scores";
+import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { adminResetPwd, getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
@@ -42,7 +42,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {  startRound } from "@/lib/api/rounds";
+import { startRound } from "@/lib/api/rounds";
 import { useGameHub } from "@/lib/hooks/useGameHub";
 
 export default function GameControlPanelPage() {
@@ -72,12 +72,12 @@ export default function GameControlPanelPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [scoreToRemove, setScoreToRemove] = useState<Score | null>(null);
   const [endGameConfirmOpen, setEndGameConfirmOpen] = useState(false);
-  const [participantToRemove, setParticipantToRemove] = useState<Player | null>(null);
-  const [removeParticipantConfirmOpen, setRemoveParticipantConfirmOpen] = useState(false);
+  const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
+  const [removePlayerConfirmOpen, setRemovePlayerConfirmOpen] = useState(false);
   const [removeGameConfirmOpen, setRemoveGameConfirmOpen] = useState(false);
   const [gameToRemove, setGameToRemove] = useState<Game | null>(null);
 
-const { userId } = useAuth();
+  const { userId } = useAuth();
 
   /** --- REDIRECT NON-ADMINS --- */
   useEffect(() => {
@@ -90,6 +90,13 @@ const { userId } = useAuth();
     fetchUsers();
     fetchCurrentActiveGame();
   }, []);
+
+  useEffect(() => {
+  if (currentGame) {
+    setRebuyValue(currentGame.rebuyValue ?? "");
+    setBountyValue(currentGame.bountyValue ?? "");
+  }
+}, [currentGame]);
 
   const fetchUsers = async () => {
     try {
@@ -142,7 +149,7 @@ const { userId } = useAuth();
     onRoundEnded: () => setCurrentRound(null),
     onGameFinished: () => {
       fetchCurrentActiveGame();
-      router.push(`/poker/game-results/${currentGame?.id}`);
+      router.push(`/game/game-results/${currentGame?.id}`);
     },
   });
 
@@ -161,7 +168,7 @@ const { userId } = useAuth();
     if (!currentGame) return;
     try {
       await startRound(currentGame.id);
-      await fetchCurrentActiveGame(); 
+      await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to start round");
     }
@@ -177,27 +184,27 @@ const { userId } = useAuth();
   //   }
   // };
 
- const addScoreHandler = async (targetPlayerId: number) => {
-  if (!currentGame) return;
+  const addScoreHandler = async (targetPlayerId: number) => {
+    if (!currentGame) return;
 
-  const value = Number(scoreInputs[targetPlayerId]);
-  if (!value) return;
+    const value = Number(scoreInputs[targetPlayerId]);
+    if (!value) return;
 
-  try {
-    setLoadingAction(true);
-    await addScoreAdmin(currentGame.id, targetPlayerId, value);
+    try {
+      setLoadingAction(true);
+      await addScoreAdmin(currentGame.id, targetPlayerId, value);
 
-    // Nulstil inputfelt
-    setScoreInputs({ ...scoreInputs, [targetPlayerId]: "" });
+      // Nulstil inputfelt
+      setScoreInputs({ ...scoreInputs, [targetPlayerId]: "" });
 
-    // Opdater spillet
-    fetchCurrentActiveGame();
-  } catch (err: any) {
-    showError(err.message || "Failed to add score");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+      // Opdater spillet
+      fetchCurrentActiveGame();
+    } catch (err: any) {
+      showError(err.message || "Failed to add score");
+    } finally {
+      setLoadingAction(false);
+    }
+  };
 
   const addAllScoresHandler = async () => {
     if (!currentGame) return;
@@ -236,7 +243,7 @@ const { userId } = useAuth();
   };
 
   const availableUsers = users.filter(
-    (u) => !(currentGame?.players ?? []).some((p) => p.playerId === u.id)
+    (u) => !(currentGame?.players ?? []).some((p) => p.userId === u.id)
   );
 
   const handleAddPlayersAsAdmin = async () => {
@@ -277,21 +284,21 @@ const { userId } = useAuth();
     }
   };
 
-const handleRebuy = async (targetUserId: number) => {
-  if (!currentGame || userId === null) return;
+  const handleRebuy = async (targetPlayerId: number) => {
+    if (!currentGame || userId === null) return;
 
-  try {
-    setLoadingAction(true);
+    try {
+      setLoadingAction(true);
 
-    await rebuyAsAdmin(currentGame.id, targetUserId);
+      await rebuyAsAdmin(currentGame.id, targetPlayerId);
 
-    fetchCurrentActiveGame();
-  } catch (err: any) {
-    showError(err.message || "Failed to rebuy");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+      fetchCurrentActiveGame();
+    } catch (err: any) {
+      showError(err.message || "Failed to rebuy");
+    } finally {
+      setLoadingAction(false);
+    }
+  };
 
   const handleSaveRules = async () => {
     if (!currentGame) return;
@@ -321,25 +328,25 @@ const handleRebuy = async (targetUserId: number) => {
     }
   };
 
-  const handleRemoveParticipantClick = (participant: Player) => {
-    setParticipantToRemove(participant);
-    setRemoveParticipantConfirmOpen(true);
+  const handleRemovePlayerClick = (player: Player) => {
+    setPlayerToRemove(player);
+    setRemovePlayerConfirmOpen(true);
   };
 
-  const handleCancelRemoveParticipant = () => {
-    setRemoveParticipantConfirmOpen(false);
-    setParticipantToRemove(null);
+  const handleCancelRemovePlayer = () => {
+    setRemovePlayerConfirmOpen(false);
+    setPlayerToRemove(null);
   };
 
-  const handleConfirmRemoveParticipant = async () => {
-    if (!currentGame || !participantToRemove) return;
+  const handleConfirmRemovePlayer = async () => {
+    if (!currentGame || !playerToRemove) return;
     try {
-      await removeParticipant(currentGame.id, participantToRemove.playerId);
-      setCurrentGame(prev => prev ? { ...prev, players: prev.players.filter(p => p.playerId !== participantToRemove.playerId) } : prev);
+      await removePlayer(currentGame.id, playerToRemove.playerId);
+      setCurrentGame(prev => prev ? { ...prev, players: prev.players.filter(p => p.playerId !== playerToRemove.playerId) } : prev);
     } catch (err: any) {
-      showError(err.message || "Failed to remove participant");
+      showError(err.message || "Failed to remove player");
     } finally {
-      handleCancelRemoveParticipant();
+      handleCancelRemovePlayer();
     }
   };
 
@@ -457,14 +464,17 @@ const handleRebuy = async (targetUserId: number) => {
                     onChange={(e) => setSelectedUserIds(e.target.value as number[])}
                     renderValue={(selected) =>
                       (selected as number[])
-                        .map((id) => users.find((u) => u.id === id)?.name)
+                        .map((id) => {
+                          const user = users.find((u) => u.id === id);
+                          return user ? user.username : `Unknown (${id})`;
+                        })
                         .join(", ")
                     }
                     sx={{ width: { xs: "100%", sm: 300 } }}
                   >
                     {availableUsers.map((u) => (
                       <MenuItem key={u.id} value={u.id}>
-                        {u.name} ({u.username})
+                        {u.username} ({u.username})
                       </MenuItem>
                     ))}
                   </Select>
@@ -539,7 +549,7 @@ const handleRebuy = async (targetUserId: number) => {
               </Accordion>
             )}
 
-            {/* --- Accordion for Participants --- */}
+            {/* --- Accordion for Players --- */}
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>Players ({currentGame.players.length})</Typography>
@@ -552,7 +562,7 @@ const handleRebuy = async (targetUserId: number) => {
                       spacing={2}
                       alignItems={{ xs: "stretch", sm: "center" }}
                     >
-                      {/* Participant Name */}
+                      {/* Player Name */}
                       <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
                         {p.username}
                       </Typography>
@@ -599,8 +609,8 @@ const handleRebuy = async (targetUserId: number) => {
                           variant="outlined"
                           color="error"
                           onClick={() => {
-                            setParticipantToRemove(p);
-                            setRemoveParticipantConfirmOpen(true);
+                            setPlayerToRemove(p);
+                            setRemovePlayerConfirmOpen(true);
                           }}
                         >
                           Remove Player
@@ -614,41 +624,45 @@ const handleRebuy = async (targetUserId: number) => {
 
             {/* --- Accordion for Score Entries --- */}
             <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Score Entries ({currentGame.scores.length})</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {currentGame.rounds.map((round) => (
-                  <Box key={round.id} sx={{ mb: 2 }}>
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                      Round {round.roundNumber}
-                    </Typography>
-                    {(round.scores ?? []).map((s) => (
-                      <Stack
-                        key={s.id}
-                        direction={{ xs: "column", sm: "row" }}
-                        spacing={2}
-                        alignItems={{ xs: "stretch", sm: "center" }}
-                        mb={1}
-                      >
-                        <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                          {s.userName}: {s.points} points, type: {s.type}
-                        </Typography>
-                        {s.points > 0 && (
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() => handleConfirmRemove(s)}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </Stack>
-                    ))}
-                  </Box>
-                ))}
-              </AccordionDetails>
-            </Accordion>
+  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+    <Typography>Score Entries ({currentGame.scores.length})</Typography>
+  </AccordionSummary>
+  <AccordionDetails>
+    {currentGame.rounds.map((round) => (
+      <Accordion key={round.id} sx={{ mb: 1 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>
+            Round {round.roundNumber} ({round.scores?.length ?? 0} scores)
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
+          {(round.scores ?? []).map((s) => (
+            <Stack
+              key={s.id}
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              alignItems={{ xs: "stretch", sm: "center" }}
+              mb={1}
+            >
+              <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
+                {s.userName}: {s.points} points, type: {s.type}
+              </Typography>
+              {s.points > 0 && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => handleConfirmRemove(s)}
+                >
+                  Remove
+                </Button>
+              )}
+            </Stack>
+          ))}
+        </AccordionDetails>
+      </Accordion>
+    ))}
+  </AccordionDetails>
+</Accordion>
 
 
             {/* Action Buttons */}
@@ -729,18 +743,18 @@ const handleRebuy = async (targetUserId: number) => {
 
 
 
-      {/* Remove Participant Confirmation Modal */}
+      {/* Remove Player Confirmation Modal */}
       <Dialog
-        open={removeParticipantConfirmOpen}
-        onClose={handleCancelRemoveParticipant}
+        open={removePlayerConfirmOpen}
+        onClose={handleCancelRemovePlayer}
       >
         <DialogTitle>Remove Player</DialogTitle>
         <DialogContent>
-          Are you sure you want to remove {participantToRemove?.username} from the game?
+          Are you sure you want to remove {playerToRemove?.username} from the game?
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelRemoveParticipant}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmRemoveParticipant}>
+          <Button onClick={handleCancelRemovePlayer}>Cancel</Button>
+          <Button color="error" onClick={handleConfirmRemovePlayer}>
             Remove
           </Button>
         </DialogActions>

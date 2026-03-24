@@ -9,7 +9,7 @@ export const AddPlayersToGameAsAdmin = (gameId: number, userIds: number[]) =>
     body: { userIds } as any,
   });
 
-export const removeParticipant = (gameId: number, userId: number) =>
-  apiFetch<Player[]>(`/participants/${gameId}/participants/${userId}`, {
+export const removePlayer = (gameId: number, userId: number) =>
+  apiFetch<Player[]>(`/players/${gameId}/player/${userId}`, {
     method: "DELETE",
   });

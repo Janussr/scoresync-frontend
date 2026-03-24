@@ -54,8 +54,3 @@ export const leaveGame = (gameId: number, targetUserId?: number) =>
     body: targetUserId !== undefined ? JSON.stringify({ targetUserId }) : undefined,
   });
 
-// export const adminAddPlayers = (gameId: number, targetUserId: number) =>
-//   apiFetch(`/games/${gameId}/add-participant`, {
-//     method: "POST",
-//     body: targetUserId as any ,
-//   });
