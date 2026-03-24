@@ -1,14 +1,17 @@
 export interface Score {
   id: number;
   playerId: number;
-   userId: number;
+  userId: number;
   userName: string;
   points: number;
   createdAt: string;
   totalPoints: number;
   type: "Chips" | "Rebuy" | "Bounty";
   victimUserName: string;
+  gameId?: number;        
+  roundId?: number; 
 }
+
 
 export interface PlayerScoreDetails {
   userId: number;

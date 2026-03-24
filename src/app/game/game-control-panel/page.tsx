@@ -31,7 +31,7 @@ import {
   getActiveGameForGamePanel
 
 } from "@/lib/api/games";
-import { addScore, addPointsBulk, removePoints, adminRebuy } from "@/lib/api/scores";
+import {  addPointsBulk, removePoints,  addScoreAdmin, rebuyAsAdmin } from "@/lib/api/scores";
 import { AddPlayersToGameAsAdmin, removeParticipant } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { adminResetPwd, getAllUsers } from "@/lib/api/users";
@@ -177,18 +177,27 @@ const { userId } = useAuth();
   //   }
   // };
 
-  const addScoreHandler = async (userId: number) => {
-    if (!currentGame) return;
-    const value = Number(scoreInputs[userId]);
-    if (!value) return;
-    try {
-      await addScore(currentGame.id, userId, value);
-      setScoreInputs({ ...scoreInputs, [userId]: "" });
-      fetchCurrentActiveGame();
-    } catch (err: any) {
-      showError(err.message || "Failed to add score");
-    }
-  };
+ const addScoreHandler = async (targetPlayerId: number) => {
+  if (!currentGame) return;
+
+  const value = Number(scoreInputs[targetPlayerId]);
+  if (!value) return;
+
+  try {
+    setLoadingAction(true);
+    await addScoreAdmin(currentGame.id, targetPlayerId, value);
+
+    // Nulstil inputfelt
+    setScoreInputs({ ...scoreInputs, [targetPlayerId]: "" });
+
+    // Opdater spillet
+    fetchCurrentActiveGame();
+  } catch (err: any) {
+    showError(err.message || "Failed to add score");
+  } finally {
+    setLoadingAction(false);
+  }
+};
 
   const addAllScoresHandler = async () => {
     if (!currentGame) return;
@@ -269,21 +278,16 @@ const { userId } = useAuth();
   };
 
 const handleRebuy = async (targetUserId: number) => {
-  if (!currentGame || !userId) return;
+  if (!currentGame || userId === null) return;
 
   try {
     setLoadingAction(true);
 
-    await adminRebuy(
-      currentGame.id,  // gameId
-      userId,          // actorUserId
-      targetUserId,    // targetUserId
-      true             // isAdmin
-    );
+    await rebuyAsAdmin(currentGame.id, targetUserId);
 
     fetchCurrentActiveGame();
   } catch (err: any) {
-    showError(err.message || "Rebuy failed");
+    showError(err.message || "Failed to rebuy");
   } finally {
     setLoadingAction(false);
   }
@@ -700,7 +704,7 @@ const handleRebuy = async (targetUserId: number) => {
                   Game #{g.gameNumber} — {g.isFinished ? "Finished" : "Active"}
                 </Typography>
 
-                <Link href={`/poker/game-results/${g.id}`} passHref>
+                <Link href={`/game/game-results/${g.id}`} passHref>
                   <Button variant="outlined" size="small" sx={{ mt: { xs: 1, sm: 0 } }}>
                     Game results
                   </Button>

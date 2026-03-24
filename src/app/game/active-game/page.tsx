@@ -8,7 +8,7 @@ import * as signalR from "@microsoft/signalr";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
-import { addScore, rebuy } from "@/lib/api/scores";
+import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
 import { registerKnockout } from "@/lib/api/bounties";
 import { GameDetails, RoundDto } from "@/lib/models/game";
 
@@ -82,22 +82,27 @@ export default function PlayerGamePage() {
   const myTotal = myScores.reduce((sum, s) => sum + s.totalPoints, 0);
 
   const submitScore = async () => {
-    if (!currentGame || !me || !points) return;
-    try {
-      await addScore(currentGame.id, me.userId, Number(points));
-      setPoints("");
-      const updated = await getActiveGameForPlayerPage();
-      setCurrentGame(updated);
-    } catch (err: any) {
-      showError(err.message || "Failed to add score");
-    }
-  };
+  if (!currentGame || !points) return;
+  try {
+    setLoadingAction(true);
+    await addScorePlayer(currentGame.id, Number(points));
+    setPoints("");
+    
+    // Opdater spillet med ny score
+    const updated = await getActiveGameForPlayerPage();
+    setCurrentGame(updated);
+  } catch (err: any) {
+    showError(err.message || "Failed to add score");
+  } finally {
+    setLoadingAction(false);
+  }
+};
 
   const handleRebuy = async () => {
     if (!currentGame || !me) return;
     try {
       setLoadingAction(true);
-      await rebuy(currentGame.id, me.playerId);
+      await rebuyAsPlayer(currentGame.id);
       const updated = await getActiveGameForPlayerPage();
       setCurrentGame(updated);
     } catch (err: any) {

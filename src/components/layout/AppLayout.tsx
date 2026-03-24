@@ -25,6 +25,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         { label: "♥ Roulette ♥", href: "/game/roulette" },
         { label: "♣ Black Jack ♣", href: "/game/blackjack" },
         { label: "♠ Lobby ♠", href: "/game/lobby" },
+        { label: " Profile ", href: "/" },
         { label: " Admin page ", href: "/account/admin-panel" },
     ];
 
