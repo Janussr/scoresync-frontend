@@ -54,11 +54,24 @@ export const apiFetch = async <T>(
     throw new Error("Session expired");
   }
 
-  // Hvis andre fejl
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "API error");
+ if (!res.ok) {
+  let errorData: any = null;
+
+  try {
+    errorData = await res.json();
+  } catch {
+    errorData = await res.text();
   }
+
+  throw {
+    status: res.status,
+    message:
+      errorData?.title ||
+      errorData?.message ||
+      errorData ||
+      "API error",
+  };
+}
 
   const text = await res.text();
   return text ? JSON.parse(text) : (null as unknown as T);

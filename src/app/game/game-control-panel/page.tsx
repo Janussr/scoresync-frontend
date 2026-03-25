@@ -47,7 +47,7 @@ import { useGameHub } from "@/lib/hooks/useGameHub";
 
 export default function GameControlPanelPage() {
   const router = useRouter();
-  const { isLoggedIn, role } = useAuth();
+  const { isLoggedIn, role, activeGameId, setActiveGameId } = useAuth();
   const { showError } = useError();
 
   /** --- STATE --- */
@@ -256,7 +256,7 @@ export default function GameControlPanelPage() {
         ? { ...prev, players: [...prev.players, ...newPlayers] }
         : prev
       );
-
+      setActiveGameId(currentGame.id);
       setSelectedUserIds([]); // reset selection
     } catch (err: any) {
       showError(err.message || "Failed to add players");
@@ -330,10 +330,10 @@ export default function GameControlPanelPage() {
     }
   };
 
-  const handleRemovePlayerClick = (player: Player) => {
-    setPlayerToRemove(player);
-    setRemovePlayerConfirmOpen(true);
-  };
+  // const handleRemovePlayerClick = (player: Player) => {
+  //   setPlayerToRemove(player);
+  //   setRemovePlayerConfirmOpen(true);
+  // };
 
   const handleCancelRemovePlayer = () => {
     setRemovePlayerConfirmOpen(false);
@@ -345,6 +345,7 @@ export default function GameControlPanelPage() {
     try {
       await removePlayer(currentGame.id, playerToRemove.playerId);
       setCurrentGame(prev => prev ? { ...prev, players: prev.players.filter(p => p.playerId !== playerToRemove.playerId) } : prev);
+      setActiveGameId(null);
     } catch (err: any) {
       showError(err.message || "Failed to remove player");
     } finally {

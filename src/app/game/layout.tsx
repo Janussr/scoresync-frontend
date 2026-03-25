@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function GameLayout({ children }: { children: ReactNode }) {
-  const { isLoggedIn, role, hydrated } = useAuth();
+  const { isLoggedIn, role, hydrated, activeGameId  } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const pathname = usePathname();
@@ -15,7 +15,10 @@ export default function GameLayout({ children }: { children: ReactNode }) {
   if (!hydrated) return null;
 
   const links = [
-    { label: "Active game", href: "/game/active-game" },
+      {
+    label: activeGameId ? "Active game" : "Lobby",
+    href: activeGameId ? "/game/active-game" : "/game/lobby",
+  },
     { label: "Game history", href: "/game/game-history" },
     { label: "Hall of Fame", href: "/game/hall-of-fame" },
     { label: "Bounty board", href: "/game/knockout-leaderboard" },

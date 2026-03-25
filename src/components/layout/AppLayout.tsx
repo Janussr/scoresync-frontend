@@ -17,17 +17,20 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-    const { isLoggedIn, logout, username } = useAuth();
+    const { isLoggedIn, logout, username, role } = useAuth();
     const [open, setOpen] = useState(false);
 
     const navLinks = [
         { label: "♦ Poker ♦", href: "/game/poker" },
         { label: "♥ Roulette ♥", href: "/game/roulette" },
         { label: "♣ Black Jack ♣", href: "/game/blackjack" },
-        { label: "♠ Lobby ♠", href: "/game/lobby" },
-        { label: " Profile ", href: "/" },
-        { label: " Admin page ", href: "/account/admin-panel" },
+        { label: "♠ Profile ♠", href: "/" },
+    
     ];
+        if (isLoggedIn) {
+    if (role === "Admin" ) {
+      navLinks.push({ label: "Admin panel", href: "/account/admin-panel" });
+    }
 
     return (
         <>
@@ -137,4 +140,5 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </Container>
         </>
     );
+}
 }

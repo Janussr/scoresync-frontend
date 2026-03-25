@@ -15,7 +15,7 @@ import { leaveGame } from "@/lib/api/players";
 
 export default function PlayerGamePage() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { userId, setActiveGameId } = useAuth();
   const { showError } = useError();
 
   const [currentGame, setCurrentGame] = useState<GameDetails | null>(null);
@@ -28,21 +28,32 @@ export default function PlayerGamePage() {
 
   // ----- Fetch active game for this player -----
   useEffect(() => {
-    if (!userId) return;
+  if (!userId) return;
 
-    const fetchGame = async () => {
-      try {
-        const game = await getActiveGameForPlayerPage();
-        if (!game) return;
+  const fetchGame = async () => {
+    try {
+      const game = await getActiveGameForPlayerPage();
 
-        setCurrentGame(game);
-      } catch (err: any) {
-        showError(err.message || "Failed to load active game");
+      // Hvis spillet ikke findes, eller der ikke er nogen spillere endnu, redirect
+      if (!game || !game.players?.some(p => p.userId === userId)) {
+        setActiveGameId(null); // ryd global state
+        router.replace("/game/lobby");
+        return;
       }
-    };
 
-    fetchGame();
-  }, [userId, showError]);
+      // Ellers sæt spillet
+      setCurrentGame(game);
+      setActiveGameId(game.id);
+    } catch (err: any) {
+      showError(err.message || "Failed to load active game");
+      // Hvis fetch fejler, redirect også
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+    }
+  };
+
+  fetchGame();
+}, [userId, router, showError, setActiveGameId]);
 
   // ----- Setup SignalR once -----
   useEffect(() => {
@@ -89,10 +100,14 @@ export default function PlayerGamePage() {
     await addScorePlayer(currentGame.id, Number(points));
     setPoints("");
     
-    // Opdater spillet med ny score
     const updated = await getActiveGameForPlayerPage();
     setCurrentGame(updated);
-  } catch (err: any) {
+    } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
+    }
     showError(err.message || "Failed to add score");
   } finally {
     setLoadingAction(false);
@@ -106,7 +121,12 @@ export default function PlayerGamePage() {
       await rebuyAsPlayer(currentGame.id);
       const updated = await getActiveGameForPlayerPage();
       setCurrentGame(updated);
-    } catch (err: any) {
+      } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
+    }
       showError(err.message || "Rebuy failed");
     } finally {
       setLoadingAction(false);
@@ -122,7 +142,12 @@ const handleKnockout = async () => {
     setKnockoutPlayerId("");
     const updated = await getActiveGameForPlayerPage();
     setCurrentGame(updated);
-  } catch (err: any) {
+    } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
+    }
     showError(err.message || "Knockout failed");
   } finally {
     setLoadingAction(false);
@@ -137,6 +162,9 @@ const handleLeaveGame = async () => {
 
     await leaveGame(currentGame.id);
 
+    setCurrentGame(null);
+    setActiveGameId(null);
+
     if (connectionRef.current) {
   await connectionRef.current.stop();
   connectionRef.current = null;
@@ -145,7 +173,12 @@ const handleLeaveGame = async () => {
     setCurrentGame(null);
 
     router.push("/game/lobby");
-  } catch (err: any) {
+    } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
+    }
     showError(err.message || "Failed to leave game");
   } finally {
     setLoadingAction(false);

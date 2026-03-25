@@ -9,14 +9,14 @@ import { useError } from "@/context/ErrorContext";
 import { GameDetails } from "@/lib/models/game"; // Sørg for at have GameDetails typen
 
 export default function LobbyPage() {
-  const { userId, username } = useAuth();
+  const { userId, setActiveGameId } = useAuth();
   const router = useRouter();
   const { showError } = useError();
+
 
   const [lobbyGames, setLobbyGames] = useState<GameDetails[] | null>(null);
   const [loadingLobby, setLoadingLobby] = useState(false);
   const [joiningGameId, setJoiningGameId] = useState<number | null>(null);
-
   // ----- Fetch Lobby -----
   const fetchLobby = async () => {
     setLoadingLobby(true);
@@ -38,6 +38,8 @@ export default function LobbyPage() {
       setJoiningGameId(gameId);
 
       await joinGameAsPlayer(gameId, userId);
+
+      setActiveGameId(gameId);
 
       router.push(`/game/active-game`);
     } catch (err: any) {
