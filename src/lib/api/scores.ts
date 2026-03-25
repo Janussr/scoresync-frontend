@@ -17,7 +17,7 @@ export const addScoreAdmin = (gameId: number, targetPlayerId: number, value: num
     body: { gameId, targetPlayerId, value }as any,
   });
 
-  export const addPointsBulk = (gameId: number, scores: { userId: number; points: number }[]) =>
+  export const addPointsBulk = (gameId: number, scores: { playerId: number; points: number }[]) =>
   apiFetch<Score[]>(`/scores/${gameId}/points/bulk`, {
     method: "POST",
     body: JSON.stringify({ gameId, scores }),

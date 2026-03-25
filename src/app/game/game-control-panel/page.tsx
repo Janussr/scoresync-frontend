@@ -212,7 +212,7 @@ export default function GameControlPanelPage() {
   const addAllScoresHandler = async () => {
     if (!currentGame) return;
     const scoresToAdd = Object.entries(scoreInputs)
-      .map(([userId, points]) => ({ userId: Number(userId), points: Number(points) }))
+      .map(([playerId, points]) => ({ playerId: Number(playerId), points: Number(points) }))
       .filter((s) => s.points > 0);
     if (!scoresToAdd.length) return;
     try {
