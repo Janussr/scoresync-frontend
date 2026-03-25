@@ -28,8 +28,8 @@ export const addScoreAdmin = (gameId: number, targetPlayerId: number, value: num
     method: "DELETE",
   });
 
-export const getPlayerScoreDetails = (gameId: number, userId: number) =>
-  apiFetch<PlayerScoreDetails>(`/scores/${gameId}/players/${userId}/scores`);
+export const getPlayerGameScoreDetails = (gameId: number, playerId: number) =>
+  apiFetch<PlayerScoreDetails>(`/scores/${gameId}/players/${playerId}/scores`);
 
 
 export const rebuyAsPlayer = (gameId: number) =>

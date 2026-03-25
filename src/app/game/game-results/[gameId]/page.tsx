@@ -17,9 +17,10 @@ import {
 } from "@mui/material";
 
 import { getGameDetails } from "@/lib/api/games";
-import { getPlayerScoreDetails } from "@/lib/api/scores";
-import { GameDetails, PlayerScoreDetails } from "@/lib/models/game";
+import { getPlayerGameScoreDetails } from "@/lib/api/scores";
+import { GameDetails } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
+import { PlayerScoreDetails } from "@/lib/models/score";
 
 export default function GameResultspage() {
   const params = useParams();
@@ -49,10 +50,10 @@ export default function GameResultspage() {
     if (!isNaN(gameId)) fetchGame();
   }, [gameId, router]);
 
-  const openPlayerModal = async (userId: number) => {
+  const openPlayerModal = async (playerId: number) => {
     if (!game) return;
     try {
-      const data = await getPlayerScoreDetails(gameId, userId);
+      const data = await getPlayerGameScoreDetails(gameId, playerId);
       setPlayerScores(data);
       setModalOpen(true);
     } catch (err: any) {
@@ -137,48 +138,53 @@ export default function GameResultspage() {
       </Card>
 
       {/* Modal */}
-      <Dialog open={modalOpen} onClose={closeModal} maxWidth="sm" fullWidth>
-        <DialogTitle>{playerScores?.userName} – Score Details</DialogTitle>
-        <DialogContent dividers>
-          {playerScores?.entries.map((entry, idx) => (
-            <Stack
-              key={`${entry.id ?? idx}-${entry.createdAt}`}
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ py: 1, flexWrap: "wrap" }}
-            >
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Typography fontWeight="bold">
-                  {entry.points > 0 ? "+" : ""}
-                  {entry.points} pts
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {entry.type === "Chips" && "🎯 Chips"}
-                  {entry.type === "Rebuy" && "♻️ Rebuy"}
-                  {entry.type === "Bounty" && entry.victimUserName && <>💀 Knocked out {entry.victimUserName}</>}
-                </Typography>
-              </Stack>
+<Dialog open={modalOpen} onClose={closeModal} maxWidth="sm" fullWidth>
+  <DialogTitle>{playerScores?.userName} – Score Details</DialogTitle>
+  <DialogContent dividers>
+    {playerScores?.rounds.map((round) => (
+      <Box key={round.roundId} sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: "bold" }}>
+          Round {round.roundNumber} ({new Date(round.startedAt).toLocaleString("da-DK")}) – Total: {round.totalPoints} pts
+        </Typography>
 
-              <Typography variant="caption" sx={{ flexShrink: 0 }}>
-                {new Date(entry.createdAt).toLocaleString("da-DK")}
+        {round.entries.map((entry, idx) => (
+          <Stack
+            key={`${entry.id ?? idx}-${entry.createdAt}`}
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ py: 0.5, flexWrap: "wrap" }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography fontWeight="bold">
+                {entry.points > 0 ? "+" : ""}
+                {entry.points} pts
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {entry.type === "Chips" && "🎯 Chips"}
+                {entry.type === "Rebuy" && "♻️ Rebuy"}
+                {entry.type === "Bounty" && entry.victimUserName && <>💀 Knocked out {entry.victimUserName}</>}
               </Typography>
             </Stack>
-          ))}
 
-          {playerScores?.entries.length === 0 && (
-            <Typography sx={{ textAlign: "center" }}>No scores yet.</Typography>
-          )}
+            <Typography variant="caption" sx={{ flexShrink: 0 }}>
+              {new Date(entry.createdAt).toLocaleString("da-DK")}
+            </Typography>
+          </Stack>
+        ))}
 
-          <Divider sx={{ my: 1 }} />
-          <Typography sx={{ mt: 1, fontWeight: "bold", textAlign: "right" }}>
-            Total: {playerScores?.totalPoints}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeModal}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        <Divider sx={{ my: 1 }} />
+      </Box>
+    ))}
+
+    <Typography sx={{ mt: 1, fontWeight: "bold", textAlign: "right" }}>
+      Total: {playerScores?.totalPoints}
+    </Typography>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={closeModal}>Close</Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 }

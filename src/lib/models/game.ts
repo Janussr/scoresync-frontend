@@ -25,12 +25,14 @@ export interface GameDetails {
 }
 
 
-export interface PlayerScoreDetails {
-  userId: number;
-  userName: string;
-  totalPoints: number;
-  entries: Score[];
-}
+
+// export interface PlayerScoreDetails {
+//   userId: number;
+//   playerId: number;
+//   userName: string;
+//   totalPoints: number;
+//   rounds: RoundScoreDto[]; 
+// }
 
 export interface Game {
   id: number;
@@ -61,11 +63,11 @@ export interface GamePanel {
 }
 
 
-export interface RoundDto {
-  id: number;
-  roundNumber: number;
-  scores: Score[];
-}
+// export interface RoundDto {
+//   id: number;
+//   roundNumber: number;
+//   scores: Score[];
+// }
 
 export interface Player {
   playerId: number;
@@ -104,5 +106,6 @@ export interface RoundDto {
   roundNumber: number;
   startedAt: string; 
   endedAt: string | null; 
-
+scores: Score[];
 }
+
