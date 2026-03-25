@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { loginUser, logoutUser, getCurrentUser } from "@/lib/api/users";
 import type { UserRole } from "@/lib/models/user";
+import { usePathname } from "next/navigation";
 
 type CurrentGame = { id: number; name: string } | null;
 // i AuthContext
@@ -54,9 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const pathname = usePathname();
+
   useEffect(() => {
+    if (hydrated) return;
+
+    const isAuthPage = pathname.startsWith("/account/login");
+    if (isAuthPage) {
+      setHydrated(true);
+      return;
+    }
+
     fetchCurrentUser();
-  }, []);
+  }, [pathname]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {

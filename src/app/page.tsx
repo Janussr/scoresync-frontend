@@ -20,8 +20,6 @@ export default function HomePage() {
     { title: "♠ Roulette", link: "/game/roulette" },
   ];
 
-  const lobby = { title: "Active Games", link: "/game/lobby" };
-
   return (
     <Box
       sx={{
@@ -87,46 +85,7 @@ export default function HomePage() {
         </Stack>
       )}
 
-      {/* LOBBY / GAMES CARD UNDER */}
-      <Box>
-        <Card
-          sx={{
-            display: "inline-block",
-            p: 2,
-            mb: 2,
-            border: "2px solid gold",
-            borderRadius: 4,
-            background: "#1b3d1b",
-            boxShadow: "0 0 20px rgba(255,215,0,0.3)",
-            transition: "0.3s",
-            "&:hover": {
-              transform: "translateY(-5px) scale(1.03)",
-              boxShadow: "0 0 30px rgba(255,215,0,0.6)",
-            },
-          }}
-        >
-          <Typography
-            variant="h4"
-            sx={{ color: "gold", fontWeight: "bold", mb: 2 }}
-          >
-            {lobby.title}
-          </Typography>
-          <Button
-            component={Link}
-            href={lobby.link}
-            variant="contained"
-            sx={{
-              backgroundColor: "#596b06",
-              color: "gold",
-              "&:hover": { backgroundColor: "#1ba300" },
-            }}
-          >
-            Enter Lobby
-          </Button>
-        </Card>
-      </Box>
-
-      {/* 3 SPILKORT */}
+      {/*  GAMES CARD UNDER */}
       <Stack
         direction={{ xs: "column", md: "row" }}
         spacing={4}

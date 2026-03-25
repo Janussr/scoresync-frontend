@@ -17,19 +17,22 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-    const { isLoggedIn, logout, username, role } = useAuth();
+    const { hydrated, isLoggedIn, logout, username, role } = useAuth();
     const [open, setOpen] = useState(false);
+
+    if (!hydrated) {
+        return <div>Loading...</div>; // fallback UI, fx spinner
+    }
 
     const navLinks = [
         { label: "♦ Poker ♦", href: "/game/poker" },
         { label: "♥ Roulette ♥", href: "/game/roulette" },
         { label: "♣ Black Jack ♣", href: "/game/blackjack" },
         { label: "♠ Profile ♠", href: "/" },
-    
     ];
-        if (isLoggedIn) {
-    if (role === "Admin" ) {
-      navLinks.push({ label: "Admin panel", href: "/account/admin-panel" });
+
+    if (isLoggedIn && role === "Admin") {
+        navLinks.push({ label: "Admin panel", href: "/account/admin-panel" });
     }
 
     return (
@@ -37,14 +40,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <AppBar
                 position="sticky"
                 sx={{
-                    // background: "linear-gradient(90deg, #4a1f1f, #8b0000)",
                     background: "#0b3d0b",
                     borderBottom: "2px solid gold",
                 }}
             >
                 <Toolbar sx={{ justifyContent: "space-between" }}>
-
-                    {/* Logo */}
                     <Typography
                         component={Link}
                         href="/"
@@ -60,13 +60,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     </Typography>
 
                     {/* Desktop menu */}
-                    <Box
-                        sx={{
-                            display: { xs: "none", md: "flex" },
-                            alignItems: "center",
-                            gap: 2,
-                        }}
-                    >
+                    <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 2 }}>
                         {navLinks.map((link) => (
                             <Button key={link.href} component={Link} href={link.href} sx={{ color: "gold" }}>
                                 {link.label}
@@ -104,12 +98,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
                 <Box sx={{ width: 250, p: 2 }}>
                     <Stack spacing={2}>
-
-                        {isLoggedIn && (
-                            <Typography sx={{ fontStyle: "italic" }}>
-                                Logged in as {username}
-                            </Typography>
-                        )}
+                        {isLoggedIn && <Typography sx={{ fontStyle: "italic" }}>Logged in as {username}</Typography>}
 
                         {navLinks.map((link) => (
                             <Button
@@ -129,7 +118,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         ) : (
                             <Button onClick={logout}>Logout</Button>
                         )}
-
                     </Stack>
                 </Box>
             </Drawer>
@@ -140,5 +128,4 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </Container>
         </>
     );
-}
 }
