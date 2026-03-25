@@ -9,8 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
-import { registerKnockout } from "@/lib/api/bounties";
+import { registerPlayerKnockout } from "@/lib/api/bounties";
 import { GameDetails, RoundDto } from "@/lib/models/game";
+import { leaveGame } from "@/lib/api/players";
 
 export default function PlayerGamePage() {
   const router = useRouter();
@@ -112,20 +113,44 @@ export default function PlayerGamePage() {
     }
   };
 
-  const handleKnockout = async () => {
-    if (!currentGame || !me || !knockoutPlayerId) return;
-    try {
-      setLoadingAction(true);
-      await registerKnockout(currentGame.id, me.playerId, knockoutPlayerId);
-      setKnockoutPlayerId("");
-      const updated = await getActiveGameForPlayerPage();
-      setCurrentGame(updated);
-    } catch (err: any) {
-      showError(err.message || "Knockout failed");
-    } finally {
-      setLoadingAction(false);
-    }
-  };
+const handleKnockout = async () => {
+  if (!currentGame || !knockoutPlayerId) return;
+
+  try {
+    setLoadingAction(true);
+    await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
+    setKnockoutPlayerId("");
+    const updated = await getActiveGameForPlayerPage();
+    setCurrentGame(updated);
+  } catch (err: any) {
+    showError(err.message || "Knockout failed");
+  } finally {
+    setLoadingAction(false);
+  }
+};
+
+const handleLeaveGame = async () => {
+  if (!currentGame) return;
+
+  try {
+    setLoadingAction(true);
+
+    await leaveGame(currentGame.id);
+
+    if (connectionRef.current) {
+  await connectionRef.current.stop();
+  connectionRef.current = null;
+}
+
+    setCurrentGame(null);
+
+    router.push("/game/lobby");
+  } catch (err: any) {
+    showError(err.message || "Failed to leave game");
+  } finally {
+    setLoadingAction(false);
+  }
+};
 
   if (!currentGame || !me) return <Typography>Loading...</Typography>;
 
@@ -192,6 +217,15 @@ export default function PlayerGamePage() {
           </Stack>
         </CardContent>
       </Card>
+
+      <Button
+  variant="outlined"
+  color="error"
+  onClick={handleLeaveGame}
+  disabled={loadingAction}
+>
+  Leave Game
+</Button>
     </Box>
   );
 }

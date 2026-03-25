@@ -63,10 +63,9 @@ export default function GameControlPanelPage() {
   const [bountyValue, setBountyValue] = useState<number | "">("");
   const [savingRules, setSavingRules] = useState(false);
   const [loadingAction, setLoadingAction] = useState(false);
-  const [killerUserId, setKillerUserId] = useState<number | "">("");
-  const [victimUserId, setVictimUserId] = useState<number | "">("");
+  const [killerPlayerId, setKillerPlayerId] = useState<number | "">("");
+  const [victimPlayerId, setVictimPlayerId] = useState<number | "">("");
   const [knockoutLoading, setKnockoutLoading] = useState(false);
-
 
   /** --- MODALS STATE --- */
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -79,6 +78,10 @@ export default function GameControlPanelPage() {
 
   const { userId } = useAuth();
 
+  const activePlayers = currentGame?.players.filter(p => p.isActive) ?? [];
+  const availableUsers = users.filter(
+    (u) => !(currentGame?.players.filter(p => p.isActive).some(p => p.userId === u.id))
+  );
   /** --- REDIRECT NON-ADMINS --- */
   useEffect(() => {
     if (!isLoggedIn) router.replace("/login");
@@ -92,11 +95,11 @@ export default function GameControlPanelPage() {
   }, []);
 
   useEffect(() => {
-  if (currentGame) {
-    setRebuyValue(currentGame.rebuyValue ?? "");
-    setBountyValue(currentGame.bountyValue ?? "");
-  }
-}, [currentGame]);
+    if (currentGame) {
+      setRebuyValue(currentGame.rebuyValue ?? "");
+      setBountyValue(currentGame.bountyValue ?? "");
+    }
+  }, [currentGame]);
 
   const fetchUsers = async () => {
     try {
@@ -242,9 +245,7 @@ export default function GameControlPanelPage() {
     }
   };
 
-  const availableUsers = users.filter(
-    (u) => !(currentGame?.players ?? []).some((p) => p.userId === u.id)
-  );
+
 
   const handleAddPlayersAsAdmin = async () => {
     if (!currentGame || selectedUserIds.length === 0) return;
@@ -314,13 +315,14 @@ export default function GameControlPanelPage() {
   };
 
   const registerKnockoutHandler = async () => {
-    if (!currentGame || !killerUserId || !victimUserId) return;
+    if (!currentGame || !killerPlayerId || !victimPlayerId) return;
+
     try {
       setKnockoutLoading(true);
-      await registerAdminKnockout(currentGame.id, killerUserId, victimUserId);
-      fetchCurrentActiveGame();
-      setKillerUserId("");
-      setVictimUserId("");
+      await registerAdminKnockout(currentGame.id, killerPlayerId, victimPlayerId);
+      await fetchCurrentActiveGame();
+      setKillerPlayerId("");
+      setVictimPlayerId("");
     } catch (err: any) {
       showError(err.message || "Failed to register knockout");
     } finally {
@@ -504,9 +506,9 @@ export default function GameControlPanelPage() {
                     alignItems="flex-start"
                   >
                     <Select
-                      value={killerUserId}
+                      value={killerPlayerId}
                       displayEmpty
-                      onChange={(e) => setKillerUserId(Number(e.target.value))}
+                      onChange={(e) => setKillerPlayerId(Number(e.target.value))}
                       sx={{ width: { xs: "100%", sm: 180 } }}
                     >
                       <MenuItem value="" disabled>
@@ -520,16 +522,16 @@ export default function GameControlPanelPage() {
                     </Select>
 
                     <Select
-                      value={victimUserId}
+                      value={victimPlayerId}
                       displayEmpty
-                      onChange={(e) => setVictimUserId(Number(e.target.value))}
+                      onChange={(e) => setVictimPlayerId(Number(e.target.value))}
                       sx={{ width: { xs: "100%", sm: 180 } }}
                     >
                       <MenuItem value="" disabled>
                         Select victim
                       </MenuItem>
                       {currentGame?.players
-                        .filter((p) => p.playerId !== killerUserId)
+                        .filter((p) => p.playerId !== killerPlayerId)
                         .map((p) => (
                           <MenuItem key={p.playerId} value={p.playerId}>
                             {p.username}
@@ -540,7 +542,7 @@ export default function GameControlPanelPage() {
                     <Button
                       variant="contained"
                       onClick={registerKnockoutHandler}
-                      disabled={knockoutLoading || !killerUserId || !victimUserId}
+                      disabled={knockoutLoading || !killerPlayerId || !victimPlayerId}
                     >
                       Register Knockout
                     </Button>
@@ -552,10 +554,10 @@ export default function GameControlPanelPage() {
             {/* --- Accordion for Players --- */}
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Players ({currentGame.players.length})</Typography>
+                <Typography>Players ({activePlayers.length})</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {currentGame.players.map((p) => (
+                {activePlayers.map((p) => (
                   <Box key={p.playerId} sx={{ width: "100%", overflowX: "auto", mb: 1 }}>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
@@ -624,45 +626,45 @@ export default function GameControlPanelPage() {
 
             {/* --- Accordion for Score Entries --- */}
             <Accordion>
-  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-    <Typography>Score Entries ({currentGame.scores.length})</Typography>
-  </AccordionSummary>
-  <AccordionDetails>
-    {currentGame.rounds.map((round) => (
-      <Accordion key={round.id} sx={{ mb: 1 }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>
-            Round {round.roundNumber} ({round.scores?.length ?? 0} scores)
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
-          {(round.scores ?? []).map((s) => (
-            <Stack
-              key={s.id}
-              direction={{ xs: "column", sm: "row" }}
-              spacing={2}
-              alignItems={{ xs: "stretch", sm: "center" }}
-              mb={1}
-            >
-              <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                {s.userName}: {s.points} points, type: {s.type}
-              </Typography>
-              {s.points > 0 && (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={() => handleConfirmRemove(s)}
-                >
-                  Remove
-                </Button>
-              )}
-            </Stack>
-          ))}
-        </AccordionDetails>
-      </Accordion>
-    ))}
-  </AccordionDetails>
-</Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>Score Entries ({currentGame.scores.length})</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {currentGame.rounds.map((round) => (
+                  <Accordion key={round.id} sx={{ mb: 1 }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>
+                        Round {round.roundNumber} ({round.scores?.length ?? 0} scores)
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
+                      {(round.scores ?? []).map((s) => (
+                        <Stack
+                          key={s.id}
+                          direction={{ xs: "column", sm: "row" }}
+                          spacing={2}
+                          alignItems={{ xs: "stretch", sm: "center" }}
+                          mb={1}
+                        >
+                          <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
+                            {s.userName}: {s.points} points, type: {s.type}
+                          </Typography>
+                          {s.points > 0 && (
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              onClick={() => handleConfirmRemove(s)}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </Stack>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </AccordionDetails>
+            </Accordion>
 
 
             {/* Action Buttons */}

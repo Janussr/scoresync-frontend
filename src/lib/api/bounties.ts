@@ -1,20 +1,20 @@
 import { apiFetch } from "./clients";
 import { BountyRow } from "@/lib/models/game";
 
-export const registerKnockout = (
+export const registerPlayerKnockout = (gameId: number, victimPlayerId: number) =>
+  apiFetch(`/bounties/player/knockout`, {
+    method: "POST",
+    body: { gameId, victimPlayerId }as any,
+  });
+
+export const registerAdminKnockout = (
   gameId: number,
   killerPlayerId: number,
   victimPlayerId: number
 ) =>
-  apiFetch(`/bounties/${gameId}/bounty`, {
+  apiFetch(`/bounties/admin/knockout`, {
     method: "POST",
-    body: { killerPlayerId, victimPlayerId } as any,
-  });
-
-  export const registerAdminKnockout = (gameId: number, killerUserId: number, victimUserId: number) =>
-  apiFetch(`/bounties/${gameId}/admin/bounty`, {
-    method: "POST",
-    body: { killerUserId, victimUserId } as any,
+    body: { gameId, killerPlayerId, victimPlayerId }as any,
   });
 
   export const getKnockoutLeaderboard = () =>
