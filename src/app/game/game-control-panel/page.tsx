@@ -639,28 +639,39 @@ export default function GameControlPanelPage() {
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
-                      {(round.scores ?? []).map((s) => (
-                        <Stack
-                          key={s.id}
-                          direction={{ xs: "column", sm: "row" }}
-                          spacing={2}
-                          alignItems={{ xs: "stretch", sm: "center" }}
-                          mb={1}
-                        >
-                          <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                            {s.userName}: {s.points} points, type: {s.type}
-                          </Typography>
-                          {s.points > 0 && (
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleConfirmRemove(s)}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </Stack>
-                      ))}
+                     {(round.scores ?? []).map((s) => (
+  <Stack
+    key={s.id}
+    direction="row"
+    alignItems="center"
+    justifyContent="space-between"
+    sx={{ ml: 2, mb: 1 }}
+  >
+    <Box>
+      <Typography fontWeight="bold">
+        {s.userName}
+      </Typography>
+
+      <Typography sx={{ ml: 1 }}>
+        {s.points >= 0 ? "+" : ""}
+        {s.points}{" "}
+        <span style={{ opacity: 0.6 }}>
+          ({s.type})
+        </span>
+      </Typography>
+    </Box>
+
+    {s.points > 0 && (
+      <Button
+        variant="outlined"
+        color="error"
+        onClick={() => handleConfirmRemove(s)}
+      >
+        Remove
+      </Button>
+    )}
+  </Stack>
+))}
                     </AccordionDetails>
                   </Accordion>
                 ))}

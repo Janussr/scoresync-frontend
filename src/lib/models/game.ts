@@ -24,16 +24,6 @@ export interface GameDetails {
   rounds?: RoundDto[]; 
 }
 
-
-
-// export interface PlayerScoreDetails {
-//   userId: number;
-//   playerId: number;
-//   userName: string;
-//   totalPoints: number;
-//   rounds: RoundScoreDto[]; 
-// }
-
 export interface Game {
   id: number;
   gameNumber: number;

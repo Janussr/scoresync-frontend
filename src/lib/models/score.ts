@@ -10,6 +10,7 @@ export interface Score {
   victimUserName: string;
   gameId?: number;        
   roundId?: number; 
+  roundNumber: number;
 }
 
 

@@ -28,32 +28,32 @@ export default function PlayerGamePage() {
 
   // ----- Fetch active game for this player -----
   useEffect(() => {
-  if (!userId) return;
+    if (!userId) return;
 
-  const fetchGame = async () => {
-    try {
-      const game = await getActiveGameForPlayerPage();
+    const fetchGame = async () => {
+      try {
+        const game = await getActiveGameForPlayerPage();
 
-      // Hvis spillet ikke findes, eller der ikke er nogen spillere endnu, redirect
-      if (!game || !game.players?.some(p => p.userId === userId)) {
-        setActiveGameId(null); // ryd global state
+        // Hvis spillet ikke findes, eller der ikke er nogen spillere endnu, redirect
+        if (!game || !game.players?.some(p => p.userId === userId)) {
+          setActiveGameId(null); // ryd global state
+          router.replace("/game/lobby");
+          return;
+        }
+
+        // Ellers sæt spillet
+        setCurrentGame(game);
+        setActiveGameId(game.id);
+      } catch (err: any) {
+        showError(err.message || "Failed to load active game");
+        // Hvis fetch fejler, redirect også
+        setActiveGameId(null);
         router.replace("/game/lobby");
-        return;
       }
+    };
 
-      // Ellers sæt spillet
-      setCurrentGame(game);
-      setActiveGameId(game.id);
-    } catch (err: any) {
-      showError(err.message || "Failed to load active game");
-      // Hvis fetch fejler, redirect også
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-    }
-  };
-
-  fetchGame();
-}, [userId, router, showError, setActiveGameId]);
+    fetchGame();
+  }, [userId, router, showError, setActiveGameId]);
 
   // ----- Setup SignalR once -----
   useEffect(() => {
@@ -79,10 +79,11 @@ export default function PlayerGamePage() {
       }
     });
 
+    const gameId = currentGame.id;
     return () => {
       if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-        connectionRef.current.invoke("LeaveGameGroup", currentGame.id).catch(() => {});
-        connectionRef.current.stop().catch(() => {});
+        connectionRef.current.invoke("LeaveGameGroup", gameId).catch(() => { });
+        connectionRef.current.stop().catch(() => { });
       }
     };
   }, [currentGame, router]);
@@ -90,29 +91,28 @@ export default function PlayerGamePage() {
   // ----- Actions -----
   const me = currentGame?.players?.find(p => p.userId === userId);
 
-  const myScores = currentGame?.scores.filter(s => s.playerId === me?.playerId) || [];
-  const myTotal = myScores.reduce((sum, s) => sum + s.totalPoints, 0);
+
 
   const submitScore = async () => {
-  if (!currentGame || !points) return;
-  try {
-    setLoadingAction(true);
-    await addScorePlayer(currentGame.id, Number(points));
-    setPoints("");
-    
-    const updated = await getActiveGameForPlayerPage();
-    setCurrentGame(updated);
+    if (!currentGame || !points) return;
+    try {
+      setLoadingAction(true);
+      await addScorePlayer(currentGame.id, Number(points));
+      setPoints("");
+
+      const updated = await getActiveGameForPlayerPage();
+      setCurrentGame(updated);
     } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
+      showError(err.message || "Failed to add score");
+    } finally {
+      setLoadingAction(false);
     }
-    showError(err.message || "Failed to add score");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+  };
 
   const handleRebuy = async () => {
     if (!currentGame || !me) return;
@@ -121,71 +121,81 @@ export default function PlayerGamePage() {
       await rebuyAsPlayer(currentGame.id);
       const updated = await getActiveGameForPlayerPage();
       setCurrentGame(updated);
-      } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
-    }
+    } catch (err: any) {
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
       showError(err.message || "Rebuy failed");
     } finally {
       setLoadingAction(false);
     }
   };
 
-const handleKnockout = async () => {
-  if (!currentGame || !knockoutPlayerId) return;
+  const handleKnockout = async () => {
+    if (!currentGame || !knockoutPlayerId) return;
 
-  try {
-    setLoadingAction(true);
-    await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
-    setKnockoutPlayerId("");
-    const updated = await getActiveGameForPlayerPage();
-    setCurrentGame(updated);
+    try {
+      setLoadingAction(true);
+      await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
+      setKnockoutPlayerId("");
+      const updated = await getActiveGameForPlayerPage();
+      setCurrentGame(updated);
     } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
+      showError(err.message || "Knockout failed");
+    } finally {
+      setLoadingAction(false);
     }
-    showError(err.message || "Knockout failed");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+  };
 
-const handleLeaveGame = async () => {
-  if (!currentGame) return;
+  const handleLeaveGame = async () => {
+    if (!currentGame) return;
 
-  try {
-    setLoadingAction(true);
+    try {
+      setLoadingAction(true);
 
-    await leaveGame(currentGame.id);
+      await leaveGame(currentGame.id);
 
-    setCurrentGame(null);
-    setActiveGameId(null);
+      setCurrentGame(null);
+      setActiveGameId(null);
 
-    if (connectionRef.current) {
-  await connectionRef.current.stop();
-  connectionRef.current = null;
-}
+      if (connectionRef.current) {
+        await connectionRef.current.stop();
+        connectionRef.current = null;
+      }
 
-    setCurrentGame(null);
-
-    router.push("/game/lobby");
+      router.push("/game/lobby");
     } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
+      showError(err.message || "Failed to leave game");
+    } finally {
+      setLoadingAction(false);
     }
-    showError(err.message || "Failed to leave game");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+  };
 
   if (!currentGame || !me) return <Typography>Loading...</Typography>;
+
+  const myScores = currentGame?.rounds
+    ?.flatMap(r => r.scores)
+    .filter(s => s.playerId === me?.playerId) ?? [];
+
+  const myRebuys = myScores.filter(s => s.type === "Rebuy").length;
+  const myBounties = myScores.filter(s => s.type === "Bounty").length;
+
+  const myTotal = currentGame?.rounds
+    ?.flatMap(r => r.scores)
+    .filter(s => s.playerId === me?.playerId)
+    .reduce((sum, s) => sum + s.points, 0) ?? 0;
 
   return (
     <Box sx={{ width: "100%", maxWidth: { md: 800 }, mx: "auto", px: { xs: 1, md: 0 }, mt: 4 }}>
@@ -208,6 +218,8 @@ const handleLeaveGame = async () => {
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "background.paper", border: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
             <Typography fontWeight="bold">Your game status</Typography>
             <Typography>Total points: <b>{myTotal}</b></Typography>
+            <Typography>Rebuys: <b>{myRebuys}</b></Typography>
+            <Typography>Bounties: <b>{myBounties}</b></Typography>
           </Box>
 
           <Stack spacing={2}>
@@ -216,13 +228,13 @@ const handleLeaveGame = async () => {
 
             {((currentGame.rebuyValue ?? 0) > 0 || (currentGame.bountyValue ?? 0) > 0) && <Divider sx={{ my: 2 }} />}
 
-            {currentGame.rebuyValue && currentGame.rebuyValue > 0 && (
+            {(currentGame.rebuyValue ?? 0) > 0 && (
               <Button variant="outlined" color="warning" onClick={handleRebuy} disabled={loadingAction}>
                 Rebuy (-{currentGame.rebuyValue})
               </Button>
             )}
 
-            {currentGame.bountyValue && currentGame.bountyValue > 0 && (
+            {(currentGame.bountyValue ?? 0) > 0 && (
               <Stack spacing={1}>
                 <TextField
                   select
@@ -242,23 +254,46 @@ const handleLeaveGame = async () => {
             )}
 
             <Divider sx={{ my: 2 }} />
+            <Typography fontWeight="bold">Your game status</Typography>
+            <Typography>Total points: <b>{myTotal}</b></Typography>
 
-            <Typography fontWeight="bold" mb={1}>Your scores:</Typography>
-            {myScores.map(s => (
-              <Typography key={s.playerId}>+{s.totalPoints} points</Typography>
-            ))}
+            {(currentGame.rounds ?? [])
+              .slice()
+              .sort((a, b) => a.roundNumber - b.roundNumber)
+              .map(round => {
+                const myScores = round.scores.filter(s => s.playerId === me.playerId);
+                if (myScores.length === 0) return null;
+
+                return (
+                  <Box key={round.id} sx={{ mb: 2 }}>
+                    <Typography fontWeight="bold">
+                      Round {round.roundNumber}
+                    </Typography>
+
+                    {myScores.map(score => (
+                      <Typography key={score.id} sx={{ ml: 2 }}>
+                        {score.points >= 0 ? "+" : ""}
+                        {score.points}{" "}
+                        <span style={{ opacity: 0.6 }}>
+                          ({(score.type)})
+                        </span>
+                      </Typography>
+                    ))}
+                  </Box>
+                );
+              })}
           </Stack>
         </CardContent>
       </Card>
 
       <Button
-  variant="outlined"
-  color="error"
-  onClick={handleLeaveGame}
-  disabled={loadingAction}
->
-  Leave Game
-</Button>
+        variant="outlined"
+        color="error"
+        onClick={handleLeaveGame}
+        disabled={loadingAction}
+      >
+        Leave Game
+      </Button>
     </Box>
   );
 }
