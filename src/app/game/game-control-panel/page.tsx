@@ -84,7 +84,7 @@ export default function GameControlPanelPage() {
   );
   /** --- REDIRECT NON-ADMINS --- */
   useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
+    if (!isLoggedIn) router.replace("/account/login");
     else if (role !== "Admin" && role !== "Gamemaster") router.replace("/");
   }, [isLoggedIn, role, router]);
 
@@ -516,7 +516,7 @@ export default function GameControlPanelPage() {
                         Select killer
                       </MenuItem>
                       {currentGame?.players.map((p) => (
-                        <MenuItem key={p.playerId} value={p.playerId}>
+                        <MenuItem key={`${p.playerId}-${p.username}`} value={p.playerId}>
                           {p.username}
                         </MenuItem>
                       ))}

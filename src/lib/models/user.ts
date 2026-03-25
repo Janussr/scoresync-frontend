@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   username: string;
+  role: UserRole;
 }
 
 export interface Player {
@@ -14,3 +15,4 @@ export interface SetUserRoleResponse {
   message: string;
   user: User;
 }
+

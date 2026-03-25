@@ -1,37 +1,40 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Box, Tabs, Tab, useTheme, useMediaQuery } from "@mui/material";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function GameLayout({ children }: { children: ReactNode }) {
-  const { isLoggedIn, role, hydrated, activeGameId  } = useAuth();
+  const { activeGameId, hydrated, isLoggedIn, role } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const router = useRouter();
   const pathname = usePathname();
 
   if (!hydrated) return null;
 
+  // Redirect hvis user er på active-game men ikke har et aktivt game
+  useEffect(() => {
+    if (pathname === "/game/active-game" && !activeGameId) {
+      router.replace("/game/lobby");
+    }
+  }, [pathname, activeGameId, router]);
+
+  // Definer tabs dynamisk
   const links = [
-      {
-    label: activeGameId ? "Active game" : "Lobby",
-    href: activeGameId ? "/game/active-game" : "/game/lobby",
-  },
+    {
+      label: activeGameId ? "Active game" : "Lobby",
+      href: activeGameId ? "/game/active-game" : "/game/lobby",
+    },
     { label: "Game history", href: "/game/game-history" },
     { label: "Hall of Fame", href: "/game/hall-of-fame" },
     { label: "Bounty board", href: "/game/knockout-leaderboard" },
+    ...(isLoggedIn && (role === "Admin" || role === "Gamemaster")
+      ? [{ label: "Game panel", href: "/game/game-control-panel" }]
+      : []),
   ];
-
-  if (isLoggedIn) {
-    if (role === "Admin" || role === "Gamemaster") {
-      links.push({ label: "Game panel", href: "/game/game-control-panel" });
-    }
-    // if (role === "Admin") {
-    //   links.push({ label: "Admin panel", href: "/account/admin-panel" });
-    // }
-  }
 
   const cleanPath = pathname.replace(/\/$/, "");
   const activeIndex = links.findIndex(

@@ -47,3 +47,34 @@ export const registerUser = (username: string, password: string) =>
     method: "POST",
     body: { username, password } as any,
   });
+
+export const getActiveGame = async (userId: number): Promise<number | null> => {
+  try {
+    return await apiFetch<number | null>(`/users/active-game/${userId}`, { method: "GET" });
+  } catch {
+    return null;
+  }
+};
+
+
+export const updatePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<{ message: string }> => {
+  try {
+    return await apiFetch("/users/update-password", {
+      method: "POST",
+      body: { currentPassword, newPassword }as any,
+    });
+  } catch (err: any) {
+    throw new Error(err?.message || "Failed to update password");
+  }
+};
+
+
+export const updateUsername = async (newUsername: string): Promise<{ message: string; user: User }> => {
+  return apiFetch("/users/update-username", {
+    method: "POST",
+    body: { newUsername } as any,
+  });
+};

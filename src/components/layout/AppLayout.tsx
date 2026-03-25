@@ -25,11 +25,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
 
     const navLinks = [
+        { label: "♣ Black Jack ♣", href: "/game/blackjack" },
         { label: "♦ Poker ♦", href: "/game/poker" },
         { label: "♥ Roulette ♥", href: "/game/roulette" },
-        { label: "♣ Black Jack ♣", href: "/game/blackjack" },
-        { label: "♠ Profile ♠", href: "/" },
     ];
+
+     if (isLoggedIn) {
+        navLinks.push({ label: "♠ Profile ♠", href: "/account/profile" });
+    }
+
 
     if (isLoggedIn && role === "Admin") {
         navLinks.push({ label: "Admin panel", href: "/account/admin-panel" });
