@@ -43,30 +43,32 @@ export default function GameLayout({ children }: { children: ReactNode }) {
   return (
     <Box>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={activeIndex === -1 ? false : activeIndex}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          centered={!isMobile}
-          textColor="inherit"
-          indicatorColor="secondary"
-          sx={{
-            "& .MuiTabs-scroller": {
-              scrollBehavior: "smooth",
-            },
-          }}
-        >
-          {links.map((link) => (
-            <Tab
-              key={link.href}
-              label={link.label}
-              component={Link}
-              href={link.href}
-              sx={{ minWidth: isMobile ? 120 : 160 }}
-            />
-          ))}
-        </Tabs>
+      <Tabs
+  value={activeIndex === -1 ? false : activeIndex}
+  variant="scrollable"
+  scrollButtons="auto"
+  allowScrollButtonsMobile
+  textColor="inherit"
+  indicatorColor="secondary"
+  sx={{
+    "& .MuiTabs-flexContainer": {
+      justifyContent: isMobile ? "flex-start" : "center", 
+    },
+    "& .MuiTabs-scroller": {
+      scrollBehavior: "smooth",
+    },
+  }}
+>
+  {links.map((link) => (
+    <Tab
+      key={link.href}
+      label={link.label}
+      component={Link}
+      href={link.href}
+      sx={{ minWidth: isMobile ? 120 : 160 }}
+    />
+  ))}
+</Tabs>
       </Box>
 
       <Box mt={3}>{children}</Box>
