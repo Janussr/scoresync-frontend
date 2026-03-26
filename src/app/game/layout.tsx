@@ -22,7 +22,6 @@ export default function GameLayout({ children }: { children: ReactNode }) {
     }
   }, [pathname, activeGameId, router]);
 
-  // Definer tabs dynamisk
   const links = [
     {
       label: activeGameId ? "Active game" : "Lobby",
@@ -46,11 +45,17 @@ export default function GameLayout({ children }: { children: ReactNode }) {
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
           value={activeIndex === -1 ? false : activeIndex}
-          variant={isMobile ? "scrollable" : "standard"}
-          scrollButtons={isMobile ? "auto" : undefined}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
           centered={!isMobile}
           textColor="inherit"
           indicatorColor="secondary"
+          sx={{
+            "& .MuiTabs-scroller": {
+              scrollBehavior: "smooth",
+            },
+          }}
         >
           {links.map((link) => (
             <Tab

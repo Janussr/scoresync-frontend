@@ -60,30 +60,34 @@ export default function LobbyPage() {
         </Button>
       </Stack>
       {lobbyGames && lobbyGames.length > 0 ? (
-        <Stack spacing={2} mt={2}>
-          {lobbyGames.map(game => (
-            <Card key={game.id}>
-              <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Typography>Game #{game.gameNumber}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {game.type}
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => handleJoinGame(game.id)}
-                  disabled={joiningGameId === game.id}
-                >
-                  {joiningGameId === game.id ? "Joining..." : "Join Game"}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-      ) : (
-        <Typography mt={2} textAlign="center">
-          Click "Show Lobby" to refresh.
-        </Typography>
-      )}
+  <Stack spacing={2} mt={2}>
+    {lobbyGames.map(game => (
+      <Card key={game.id}>
+        <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography>Game #{game.gameNumber}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {game.type}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => handleJoinGame(game.id)}
+            disabled={joiningGameId === game.id}
+          >
+            {joiningGameId === game.id ? "Joining..." : "Join Game"}
+          </Button>
+        </CardContent>
+      </Card>
+    ))}
+  </Stack>
+) : lobbyGames && lobbyGames.length === 0 ? (
+  <Typography mt={2} textAlign="center" color="text.secondary">
+    There are currently no active games.
+  </Typography>
+) : (
+  <Typography mt={2} textAlign="center" color="text.secondary">
+    Click "Show Lobby" to refresh.
+  </Typography>
+)}
     </Box>
   );
 }

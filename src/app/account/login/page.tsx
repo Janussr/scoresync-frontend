@@ -32,10 +32,10 @@ const handleLogin = async () => {
     if (success) {
       router.push("/"); 
     } else {
-      setError("Ugyldigt brugernavn eller password");
+      setError("Invalid username or password");
     }
   } catch (err: any) {
-    setError(err.message ?? "Login fejlede");
+    setError(err.message ?? "Login error");
   } finally {
     setLoading(false);
   }
@@ -70,7 +70,7 @@ const handleLogin = async () => {
             sx={{
               textAlign: "center",
               fontWeight: "bold",
-              color: "#8b0000",
+              color: "gold",
               mb: 3,
             }}
           >

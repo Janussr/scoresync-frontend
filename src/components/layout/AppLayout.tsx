@@ -30,10 +30,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         { label: "♥ Roulette ♥", href: "/game/roulette" },
     ];
 
-     if (isLoggedIn) {
-        navLinks.push({ label: "♠ Profile ♠", href: "/account/profile" });
+    if (isLoggedIn) {
+        navLinks.push({ label: " Profile ", href: "/account/profile" });
     }
-
+// ♠♠
 
     if (isLoggedIn && role === "Admin") {
         navLinks.push({ label: "Admin panel", href: "/account/admin-panel" });
@@ -44,11 +44,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <AppBar
                 position="sticky"
                 sx={{
-                    background: "#0b3d0b",
+
+                    background: "linear-gradient(180deg, #0b3d0b 0%, #072a07 100%)",
                     borderBottom: "2px solid gold",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
                 }}
             >
                 <Toolbar sx={{ justifyContent: "space-between" }}>
+
                     <Typography
                         component={Link}
                         href="/"
@@ -99,13 +102,42 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </AppBar>
 
             {/* Mobile Drawer */}
-            <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
-                <Box sx={{ width: 250, p: 2 }}>
+            <Drawer anchor="left" open={open} onClose={() => setOpen(false)}>
+                <Box
+
+                    sx={{
+                        width: 260,
+                        height: "100%",
+                        p: 2,
+                        background: `linear-gradient(180deg, #0b3d0b 0%, #0d4d0d 100%)`,
+                        boxShadow: "inset 0 1px 0 rgba(255,215,0,0.2)",
+                        color: "gold",
+                    }}
+
+                >
                     <Stack spacing={2}>
-                        {isLoggedIn && <Typography sx={{ fontStyle: "italic" }}>Logged in as {username}</Typography>}
+                        {isLoggedIn &&
+
+                            <Box sx={{ textAlign: "center", mb: 2 }}>
+                                <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                                    Logged in as
+                                </Typography>
+
+                                <Typography sx={{ fontWeight: "bold" }}>
+                                    {username}
+                                </Typography>
+                            </Box>
+
+                        }
 
                         {navLinks.map((link) => (
                             <Button
+                                sx={{
+                                    color: "gold",
+                                    "&:hover": {
+                                        backgroundColor: "rgba(255,215,0,0.1)",
+                                    },
+                                }}
                                 key={link.href}
                                 component={Link}
                                 href={link.href}
@@ -116,11 +148,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         ))}
 
                         {!isLoggedIn ? (
-                            <Button component={Link} href="/account/login">
+                            <Button
+                                component={Link}
+                                href="/account/login"
+                                onClick={() => setOpen(false)}
+                                sx={{
+                                    color: "gold",
+                                    "&:hover": {
+                                        backgroundColor: "rgba(255,215,0,0.1)",
+                                    },
+                                }}>
                                 Login
                             </Button>
                         ) : (
-                            <Button onClick={logout}>Logout</Button>
+                            <Button onClick={() => {
+                                logout();
+                                setOpen(false);
+                            }}
+                                sx={{
+                                    color: "gold",
+                                    "&:hover": {
+                                        backgroundColor: "rgba(255,215,0,0.1)",
+                                    },
+                                }}>Logout</Button>
                         )}
                     </Stack>
                 </Box>

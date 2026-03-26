@@ -74,8 +74,9 @@ export default function AdminPanelPage() {
   if (!isLoggedIn || role !== "Admin") return null;
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", mt: 4 }}>
-      <Typography mb={3} sx={{ fontSize: "2rem", fontWeight: 500 }}>
+    <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", mt: 4, px: 2 }}>
+      {/* Centered title */}
+      <Typography mb={3} sx={{ fontSize: "2rem", fontWeight: 500, textAlign: "center" }}>
         Admin panel
       </Typography>
 
@@ -89,11 +90,16 @@ export default function AdminPanelPage() {
               <Typography>Set User Role</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                alignItems={{ xs: "stretch", sm: "center" }}
+              >
                 <Select
                   value={selectedUserId}
                   displayEmpty
                   onChange={(e) => setSelectedUserId(Number(e.target.value))}
+                  fullWidth
                   sx={{ width: { xs: "100%", sm: 220 } }}
                 >
                   <MenuItem value="" disabled>
@@ -110,6 +116,7 @@ export default function AdminPanelPage() {
                   value={selectedRole || ""}
                   displayEmpty
                   onChange={(e) => setSelectedRole(e.target.value as UserRole)}
+                  fullWidth
                   sx={{ width: { xs: "100%", sm: 220 } }}
                 >
                   <MenuItem value="" disabled>
@@ -124,6 +131,9 @@ export default function AdminPanelPage() {
                   variant="contained"
                   color="primary"
                   disabled={!selectedUserId || !selectedRole || roleUpdateLoading}
+                  sx={{
+                    width: { xs: "100%", sm: "auto" }
+                  }}
                   onClick={() => setRoleConfirmOpen(true)}
                 >
                   Set Role
@@ -138,11 +148,16 @@ export default function AdminPanelPage() {
               <Typography>Reset User Password</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                alignItems={{ xs: "stretch", sm: "center" }}
+              >
                 <Select
                   value={adminResetUserId}
                   displayEmpty
                   onChange={(e) => setAdminResetUserId(Number(e.target.value))}
+                  fullWidth
                   sx={{ width: { xs: "100%", sm: 220 } }}
                 >
                   <MenuItem value="" disabled>
@@ -161,6 +176,7 @@ export default function AdminPanelPage() {
                   type="password"
                   value={adminResetPassword}
                   onChange={(e) => setAdminResetPassword(e.target.value)}
+                  fullWidth
                   sx={{ width: { xs: "100%", sm: 220 } }}
                 />
 
@@ -168,6 +184,9 @@ export default function AdminPanelPage() {
                   variant="contained"
                   color="error"
                   disabled={!adminResetUserId || !adminResetPassword || adminResetLoading}
+                  sx={{
+                    width: { xs: "100%", sm: "auto" }
+                  }}
                   onClick={() => setAdminResetConfirmOpen(true)}
                 >
                   Reset Password

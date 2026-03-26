@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { registerUser } from "@/lib/api/users"; 
+import { registerUser } from "@/lib/api/users";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function RegisterPage() {
   const handleRegister = async () => {
     setError("");
 
-    if (!username || !username || !password) {
+    if (!username || !password || !confirmPassword) {
       setError("All fields are required");
       return;
     }
@@ -40,9 +40,7 @@ export default function RegisterPage() {
 
     try {
       setLoading(true);
-
       await registerUser(username, password);
-
       router.push("/account/login");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -50,38 +48,40 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      handleRegister();
-    }
-  };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") handleRegister();
+  };
 
   return (
     <Box
       sx={{
-        minHeight: "80vh",
+        height: "100%",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        // background: "radial-gradient(circle at center, #8b0000, #1a0000)",
+        px: 2,
+        overflow: "hidden",
       }}
     >
       <Card
         sx={{
-          width: 450,
+          width: "100%",
+          maxWidth: 450,
+          maxHeight: "90vh",
           borderRadius: 4,
           boxShadow: "0 0 25px rgba(255, 215, 0, 0.4)",
           border: "2px solid gold",
+          overflowY: "auto",
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Typography
             variant="h4"
             sx={{
               textAlign: "center",
               fontWeight: "bold",
-              color: "#8b0000",
+              color: "gold",
               mb: 3,
             }}
           >
@@ -100,7 +100,7 @@ export default function RegisterPage() {
             margin="normal"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            onKeyDown={handleKeyDown} 
+            onKeyDown={handleKeyDown}
           />
 
           <TextField
@@ -110,7 +110,7 @@ export default function RegisterPage() {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={handleKeyDown} 
+            onKeyDown={handleKeyDown}
           />
 
           <TextField
@@ -120,7 +120,7 @@ export default function RegisterPage() {
             margin="normal"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            onKeyDown={handleKeyDown} 
+            onKeyDown={handleKeyDown}
           />
 
           <Button
@@ -131,9 +131,7 @@ export default function RegisterPage() {
             sx={{
               mt: 3,
               backgroundColor: "#8b0000",
-              "&:hover": {
-                backgroundColor: "#a30000",
-              },
+              "&:hover": { backgroundColor: "#a30000" },
               fontWeight: "bold",
             }}
           >
@@ -142,7 +140,11 @@ export default function RegisterPage() {
 
           <Typography sx={{ mt: 2, textAlign: "center" }}>
             Already have an account?{" "}
-            <MuiLink component={Link} href="/account/login" underline="hover">
+            <MuiLink
+              component={Link}
+              href="/account/login"
+              underline="hover"
+            >
               Login
             </MuiLink>
           </Typography>

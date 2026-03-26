@@ -52,13 +52,6 @@ export interface GamePanel {
   rounds: RoundDto[];
 }
 
-
-// export interface RoundDto {
-//   id: number;
-//   roundNumber: number;
-//   scores: Score[];
-// }
-
 export interface Player {
   playerId: number;
   userId: number

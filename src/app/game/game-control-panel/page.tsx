@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Stack,
@@ -12,7 +12,6 @@ import {
   TextField,
   MenuItem,
   Select,
-  SelectChangeEvent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,7 +20,6 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  getActiveGames,
   getAllGames,
   cancelGame,
   startGame,
@@ -34,7 +32,7 @@ import {
 import { addPointsBulk, removePoints, addScoreAdmin, rebuyAsAdmin } from "@/lib/api/scores";
 import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
-import { adminResetPwd, getAllUsers } from "@/lib/api/users";
+import {  getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Player, RoundDto } from "@/lib/models/game";
 import { User } from "@/lib/models/user";
@@ -177,16 +175,6 @@ export default function GameControlPanelPage() {
     }
   };
 
-  // const handleEndRound = async () => {
-  //   if (!currentRound) return;
-  //   try {
-  //     await endRound(currentRound.id);
-  //     fetchCurrentActiveGame();
-  //   } catch (err: any) {
-  //     showError(err.message || "Failed to end round");
-  //   }
-  // };
-
   const addScoreHandler = async (targetPlayerId: number) => {
     if (!currentGame) return;
 
@@ -197,10 +185,8 @@ export default function GameControlPanelPage() {
       setLoadingAction(true);
       await addScoreAdmin(currentGame.id, targetPlayerId, value);
 
-      // Nulstil inputfelt
       setScoreInputs({ ...scoreInputs, [targetPlayerId]: "" });
 
-      // Opdater spillet
       fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to add score");
@@ -230,10 +216,8 @@ export default function GameControlPanelPage() {
 
     try {
       if ((currentGame.scores?.length ?? 0) === 0) {
-        // Ingen scores endnu → cancel game
         await cancelGame(currentGame.id);
       } else {
-        // Der er scores → end game
         await endGame(currentGame.id);
       }
       setCurrentGame(null);
@@ -257,7 +241,7 @@ export default function GameControlPanelPage() {
         : prev
       );
       setActiveGameId(currentGame.id);
-      setSelectedUserIds([]); // reset selection
+      setSelectedUserIds([]); 
     } catch (err: any) {
       showError(err.message || "Failed to add players");
     }
@@ -330,11 +314,6 @@ export default function GameControlPanelPage() {
     }
   };
 
-  // const handleRemovePlayerClick = (player: Player) => {
-  //   setPlayerToRemove(player);
-  //   setRemovePlayerConfirmOpen(true);
-  // };
-
   const handleCancelRemovePlayer = () => {
     setRemovePlayerConfirmOpen(false);
     setPlayerToRemove(null);
@@ -397,14 +376,21 @@ export default function GameControlPanelPage() {
             <Typography>
               Started: {new Date(currentGame.startedAt).toLocaleString("da-DK")}
             </Typography>
+
+            {/* --- Current Round --- */}
+            {currentGame?.rounds?.length ? (
+              <Typography color="primary" mt={1}>
+                Current Round #{currentGame.rounds[currentGame.rounds.length - 1].roundNumber}
+              </Typography>
+            ) : (
+              <Typography color="text.secondary" mt={1}>
+                No rounds started yet
+              </Typography>
+            )}
+
             <Divider sx={{ my: 2 }} />
 
-            {/* --- START/END ROUND --- */}
-            <Stack direction="row" spacing={2} mt={2}>
-              <Button variant="contained" color="primary" onClick={handleStartRound} disabled={!!currentRound}>
-                Start Round {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
-              </Button>
-            </Stack>
+          
 
             {/* --- Accordion for Game Rules --- */}
             <Accordion>
@@ -557,9 +543,33 @@ export default function GameControlPanelPage() {
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>Players ({activePlayers.length})</Typography>
               </AccordionSummary>
+
               <AccordionDetails>
+
+  {/* SINGLE BUTTON */}
+  <Box
+  mb={2}
+  display="flex"
+  justifyContent="space-between"
+  alignItems="center"
+>
+  <Typography variant="subtitle2">
+    Add multiple scores:
+  </Typography>
+    <Button
+      variant="contained"
+      color="success"
+      onClick={addAllScoresHandler}
+      disabled={
+        Object.values(scoreInputs).filter(v => Number(v) > 0).length === 0
+      }
+    >
+      Bulk Add Points
+    </Button>
+  </Box>
+
                 {activePlayers.map((p) => (
-                  <Box key={p.playerId} sx={{ width: "100%", overflowX: "auto", mb: 1 }}>
+                  <Box key={p.playerId} sx={{ width: "100%", overflowX: "auto", mb: 1, borderBottom: "1px solid #eee" ,p:1 ,borderRadius: 2 }}>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={2}
@@ -567,7 +577,7 @@ export default function GameControlPanelPage() {
                     >
                       {/* Player Name */}
                       <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                        {p.username}
+                        {p.username.charAt(0).toUpperCase() + p.username.slice(1)}
                       </Typography>
 
                       {/* Points Input */}
@@ -687,8 +697,9 @@ export default function GameControlPanelPage() {
 
             {/* Action Buttons */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-              <Button variant="contained" color="success" onClick={addAllScoresHandler}>
-                Add All Scores
+               {/* --- START/END ROUND --- */}
+              <Button variant="contained" color="primary" onClick={handleStartRound} disabled={!!currentRound}>
+                Start Next Round:  {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
               </Button>
               <Button
                 color={currentGame.scores.length === 0 ? "warning" : "error"}
@@ -702,7 +713,17 @@ export default function GameControlPanelPage() {
         </Card>
       )}
 
-      {/* Fetch All Games Button */}
+   
+
+      {/* All Games List */}
+      <Typography
+        sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
+        mb={2}
+      >
+        All Games
+      </Typography>
+
+         {/* Fetch All Games Button */}
       <Box mt={2} mb={2}>
         <Button
           variant="contained"
@@ -713,14 +734,6 @@ export default function GameControlPanelPage() {
           Fetch All Games
         </Button>
       </Box>
-
-      {/* All Games List */}
-      <Typography
-        sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
-        mb={2}
-      >
-        All Games
-      </Typography>
 
       {[...games]
         .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())

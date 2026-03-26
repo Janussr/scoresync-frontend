@@ -44,6 +44,10 @@ export default function PlayerGamePage() {
 
         // Ellers sæt spillet
         setCurrentGame(game);
+
+        const runningRound = game.rounds?.find(r => !r.endedAt);
+        setCurrentRound(runningRound ?? null);
+
         setActiveGameId(game.id);
       } catch (err: any) {
         showError(err.message || "Failed to load active game");
@@ -204,23 +208,25 @@ export default function PlayerGamePage() {
         Game #{currentGame.gameNumber}
       </Typography>
 
-      {currentRound && (
-        <Card sx={{ my: 2, p: 2, bgcolor: "info.light" }}>
-          <Typography variant="h6">Round #{currentRound.roundNumber} started</Typography>
-        </Card>
-      )}
-
       <Card>
         <CardContent>
           <Typography mb={2} fontWeight="bold">
             Playing as: {me.username}
           </Typography>
 
-          <Box sx={{ p: 2, borderRadius: 2, bgcolor: "background.paper", border: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
+          <Box sx={{ p: 1, borderRadius: 2, bgcolor: "background.paper", border: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
             <Typography fontWeight="bold">Your game status</Typography>
+            <Typography color="primary">
+              Current Round: #{currentRound?.roundNumber}
+            </Typography>
             <Typography>Total points: <b>{myTotal}</b></Typography>
-            <Typography>Rebuys: <b>{myRebuys}</b></Typography>
-            <Typography>Bounties: <b>{myBounties}</b></Typography>
+            {(currentGame.bountyValue ?? 0) > 0 && (
+              <Typography>Bounties: <b>{myBounties}</b></Typography>
+            )}
+
+            {(currentGame.rebuyValue ?? 0) > 0 && (
+              <Typography>Rebuys: <b>{myRebuys}</b></Typography>
+            )}
           </Box>
 
           <Stack spacing={2}>
@@ -255,44 +261,52 @@ export default function PlayerGamePage() {
             )}
 
             <Divider sx={{ my: 2 }} />
-            <Typography fontWeight="bold">Your game status</Typography>
-            <Typography>Total points: <b>{myTotal}</b></Typography>
+            <Typography fontWeight="bold">Rounds</Typography>
 
-          {(currentGame.rounds ?? [])
-  .slice()
-  .sort((a, b) => a.roundNumber - b.roundNumber)
-  .map(round => {
-    const myScores = round.scores.filter(s => s.playerId === me.playerId);
-    if (myScores.length === 0) return null;
+            {(currentGame.rounds ?? [])
+              .slice()
+              .sort((a, b) => a.roundNumber - b.roundNumber)
+              .map(round => {
+                const myScores = round.scores.filter(s => s.playerId === me.playerId);
 
-    return (
-      <Accordion key={round.id}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography fontWeight="bold">
-            Round {round.roundNumber}
-          </Typography>
-        </AccordionSummary>
+                return (
+                  <Accordion key={round.id}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography fontWeight="bold">
+                          Round {round.roundNumber}
+                        </Typography>
 
-        <AccordionDetails>
-          {myScores.map(score => (
-            <Typography
-              key={score.id}
-              sx={{
-                ml: 1,
-                color: score.points >= 0 ? "success.main" : "error.main"
-              }}
-            >
-              {score.points >= 0 ? "+" : ""}
-              {score.points}{" "}
-              <span style={{ opacity: 0.6 }}>
-                ({score.type})
-              </span>
-            </Typography>
-          ))}
-        </AccordionDetails>
-      </Accordion>
-    );
-  })}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ ml: 1 }}
+                        >
+                          ({myScores.length} score{myScores.length !== 1 ? "s" : ""})
+                        </Typography>
+                      </Stack>
+                    </AccordionSummary>
+
+                    <AccordionDetails>
+                      {myScores.map(score => (
+                        <Typography
+                          key={score.id}
+                          sx={{
+                            ml: 1,
+                            color: score.points >= 0 ? "success.main" : "error.main"
+                          }}
+                        >
+                          {score.points >= 0 ? "+" : ""}
+                          {score.points}{" "}
+                          <span style={{ opacity: 0.6 }}>
+                            ({score.type})
+                          </span>
+                        </Typography>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              })}
           </Stack>
         </CardContent>
       </Card>
