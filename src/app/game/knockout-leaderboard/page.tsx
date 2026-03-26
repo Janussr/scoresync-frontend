@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -25,7 +25,21 @@ export default function BountyLeaderboardPage() {
     const fetchLeaderboard = async () => {
       try {
         const rows = await getKnockoutLeaderboard();
-        setData(rows);
+
+        // Summer total bounty points pr spiller
+        const totalMap: Record<number, BountyRow> = {};
+
+        rows.forEach(row => {
+          if (!totalMap[row.userId]) {
+            totalMap[row.userId] = { ...row };
+          } else {
+            totalMap[row.userId].knockouts += row.knockouts;
+            totalMap[row.userId].timesKnockedOut += row.timesKnockedOut;
+            totalMap[row.userId].totalBountyPoints += row.totalBountyPoints;
+          }
+        });
+
+        setData(Object.values(totalMap));
       } catch (err: any) {
         showError(err.message || "Failed to fetch leaderboard");
       }
