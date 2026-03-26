@@ -13,6 +13,7 @@ import { registerPlayerKnockout } from "@/lib/api/bounties";
 import { GameDetails, RoundDto } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useGameHub } from "@/lib/hooks/useGameHub";
 
 export default function PlayerGamePage() {
   const router = useRouter();
@@ -25,7 +26,6 @@ export default function PlayerGamePage() {
   const [knockoutPlayerId, setKnockoutPlayerId] = useState<number | "">("");
   const [loadingAction, setLoadingAction] = useState(false);
 
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   // ----- Fetch active game for this player -----
   useEffect(() => {
@@ -60,38 +60,30 @@ export default function PlayerGamePage() {
     fetchGame();
   }, [userId, router, showError, setActiveGameId]);
 
-  // ----- Setup SignalR once -----
-  useEffect(() => {
-    if (!currentGame) return;
-    if (connectionRef.current) return; // prevent multiple connections
+   // ----- Setup GameHub -----
+  useGameHub({
+    gameId: currentGame?.id,
+    onRoundStarted: (round) => setCurrentRound(round),
+    onRoundEnded: (endedRound) => {
+      setCurrentGame(prev => prev ? {
+        ...prev,
+        rounds: prev.rounds?.map(r => r.id === endedRound.id ? { ...r, endedAt: endedRound.endedAt } : r)
+      } : prev);
 
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${process.env.NEXT_PUBLIC_HUB_URL!}`, { withCredentials: true })
-      .withAutomaticReconnect()
-      .build();
+      if (currentRound?.id === endedRound.id) setCurrentRound(null);
+    },
+    // onGameUpdated: (game) => {
+    //   setCurrentGame(game);
+    //   if (game.isFinished) router.push(`/game-results/${game.id}`);
+    // },
 
-    connectionRef.current = connection;
+    onGameFinished: () => {
+    if (currentGame) {
+      router.push(`/game/game-results/${currentGame.id}`);
+    }
+  }
+  });
 
-    connection.start()
-      .then(() => connection.invoke("JoinGameGroup", currentGame.id))
-      .catch(console.error);
-
-    connection.on("RoundStarted", (round: RoundDto) => setCurrentRound(round));
-    connection.on("RoundEnded", () => setCurrentRound(null));
-    connection.on("GameUpdated", (game: GameDetails) => {
-      if (game.isFinished) {
-        router.push(`/game/${game.id}/results`);
-      }
-    });
-
-    const gameId = currentGame.id;
-    return () => {
-      if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-        connectionRef.current.invoke("LeaveGameGroup", gameId).catch(() => { });
-        connectionRef.current.stop().catch(() => { });
-      }
-    };
-  }, [currentGame, router]);
 
   // ----- Actions -----
   const me = currentGame?.players?.find(p => p.userId === userId);
@@ -169,11 +161,6 @@ export default function PlayerGamePage() {
 
       setCurrentGame(null);
       setActiveGameId(null);
-
-      if (connectionRef.current) {
-        await connectionRef.current.stop();
-        connectionRef.current = null;
-      }
 
       router.push("/game/lobby");
     } catch (err: any) {

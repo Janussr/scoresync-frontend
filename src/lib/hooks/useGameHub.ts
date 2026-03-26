@@ -1,14 +1,15 @@
+// useGameHub.ts
 "use client";
 
-import { useEffect, useRef } from "react";
-import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
+import { useEffect } from "react";
 import { Game, RoundDto } from "@/lib/models/game";
+import { gameHubConnection } from "./gameHubConnection";
 
 type UseGameHubProps = {
   gameId?: number;
   onGameUpdated?: (game: Game) => void;
   onRoundStarted?: (round: RoundDto) => void;
-  onRoundEnded?: () => void;
+  onRoundEnded?: (round: RoundDto) => void;
   onGameFinished?: (gameId: number) => void;
 };
 
@@ -19,74 +20,67 @@ export function useGameHub({
   onRoundEnded,
   onGameFinished,
 }: UseGameHubProps) {
-  const connectionRef = useRef<HubConnection | null>(null);
-
   useEffect(() => {
-  if (!gameId) {
-      if (connectionRef.current) {
-        connectionRef.current.stop().catch(() => {});
-        connectionRef.current = null;
-      }
-      return;
-    }
+    if (!gameId) return;
 
     let isMounted = true;
 
-    const connection = new HubConnectionBuilder()
-      .withUrl(`${process.env.NEXT_PUBLIC_HUB_URL!}`, { withCredentials: true })
-      .withAutomaticReconnect()
-      .build();
-
-    connectionRef.current = connection;
-
     async function startConnection() {
       try {
-        await connection.start();
-        if (!isMounted) return;
-        console.log("✅ Connected to GameHub");
-        await connection.invoke("JoinGameGroup", gameId);
+        if (gameHubConnection.state === "Disconnected") {
+          await gameHubConnection.start();
+          console.log("✅ Connected to GameHub (singleton)");
+        }
+
+        // Join gruppen for dette gameId
+        await gameHubConnection.invoke("JoinGameGroup", gameId);
       } catch (err) {
         console.error("❌ SignalR start error:", err);
       }
     }
 
-    // EVENTS
-    connection.on("GameFinished", (finishedGameId: number) => {
+    startConnection();
+
+    // ----------------- EVENTS -----------------
+    const handleGameFinished = (finishedGameId: number) => {
       if (!isMounted) return;
       console.log("🏁 Game finished", finishedGameId);
       onGameFinished?.(finishedGameId);
-    });
+    };
 
-    if (onGameUpdated) {
-      connection.on("GameUpdated", (game: Game) => {
-        if (!isMounted) return;
-        onGameUpdated(game);
-      });
-    }
-
-    if (onRoundStarted) {
-      connection.on("RoundStarted", (round: RoundDto) => {
-        if (!isMounted) return;
-        onRoundStarted(round);
-      });
-    }
-
-    connection.on("RoundEnded", () => {
+    const handleGameUpdated = (game: Game) => {
       if (!isMounted) return;
-      console.log("⏹ Round ended");
-      onRoundEnded?.();
-    });
+      onGameUpdated?.(game);
+    };
 
-    startConnection();
+    const handleRoundStarted = (round: RoundDto) => {
+      if (!isMounted) return;
+      console.log("▶️ Round started:", round);
+      onRoundStarted?.(round);
+    };
+
+    const handleRoundEnded = (round: RoundDto) => {
+      if (!isMounted) return;
+      console.log("⏹ Round ended:", round);
+      onRoundEnded?.(round);
+    };
+
+    gameHubConnection.on("GameFinished", handleGameFinished);
+    gameHubConnection.on("GameUpdated", handleGameUpdated);
+    gameHubConnection.on("RoundStarted", handleRoundStarted);
+    gameHubConnection.on("RoundEnded", handleRoundEnded);
 
     return () => {
       isMounted = false;
-      if (connection.state === "Connected") {
-        connection.invoke("LeaveGameGroup", gameId).catch(() => {});
-      }
-      connection.stop().catch(() => {});
-    };
-  }, [gameId]);
+      gameHubConnection.off("GameFinished", handleGameFinished);
+      gameHubConnection.off("GameUpdated", handleGameUpdated);
+      gameHubConnection.off("RoundStarted", handleRoundStarted);
+      gameHubConnection.off("RoundEnded", handleRoundEnded);
 
-  return { connection: connectionRef.current };
+      // Leave group, men lad connection blive — singletonen reconnecter selv
+      if (gameHubConnection.state === "Connected") {
+        gameHubConnection.invoke("LeaveGameGroup", gameId).catch(() => {});
+      }
+    };
+  }, [gameId, onGameUpdated, onRoundStarted, onRoundEnded, onGameFinished]);
 }
