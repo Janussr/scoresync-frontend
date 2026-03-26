@@ -639,39 +639,45 @@ export default function GameControlPanelPage() {
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
-                     {(round.scores ?? []).map((s) => (
-  <Stack
-    key={s.id}
-    direction="row"
-    alignItems="center"
-    justifyContent="space-between"
-    sx={{ ml: 2, mb: 1 }}
-  >
-    <Box>
-      <Typography fontWeight="bold">
-        {s.userName}
-      </Typography>
+                      {(round.scores ?? []).map((s) => (
+                        <Stack
+                          key={s.id}
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          sx={{ ml: 2, mb: 1 }}
 
-      <Typography sx={{ ml: 1 }}>
-        {s.points >= 0 ? "+" : ""}
-        {s.points}{" "}
-        <span style={{ opacity: 0.6 }}>
-          ({s.type})
-        </span>
-      </Typography>
-    </Box>
+                        >
+                          <Box>
+                            <Typography fontWeight="bold">
+                              {s.userName}
+                            </Typography>
 
-    {s.points > 0 && (
-      <Button
-        variant="outlined"
-        color="error"
-        onClick={() => handleConfirmRemove(s)}
-      >
-        Remove
-      </Button>
-    )}
-  </Stack>
-))}
+                            <Typography
+                              sx={{
+                                ml: 1,
+                                color: s.points >= 0 ? "success.main" : "error.main"
+                              }}
+                            >
+                              {s.points >= 0 ? "+" : ""}
+                              {s.points}{" "}
+                              <span style={{ opacity: 0.6 }}>
+                                ({s.type})
+                              </span>
+                            </Typography>
+                          </Box>
+
+                          {s.points > 0 && (
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              onClick={() => handleConfirmRemove(s)}
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </Stack>
+                      ))}
                     </AccordionDetails>
                   </Accordion>
                 ))}

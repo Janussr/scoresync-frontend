@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Stack, Button, Typography, Card, CardContent, TextField, MenuItem, Divider } from "@mui/material";
+import { Box, Stack, Button, Typography, Card, CardContent, TextField, MenuItem, Divider, AccordionDetails, Accordion, AccordionSummary } from "@mui/material";
 import * as signalR from "@microsoft/signalr";
 
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +12,7 @@ import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
 import { registerPlayerKnockout } from "@/lib/api/bounties";
 import { GameDetails, RoundDto } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function PlayerGamePage() {
   const router = useRouter();
@@ -257,31 +258,41 @@ export default function PlayerGamePage() {
             <Typography fontWeight="bold">Your game status</Typography>
             <Typography>Total points: <b>{myTotal}</b></Typography>
 
-            {(currentGame.rounds ?? [])
-              .slice()
-              .sort((a, b) => a.roundNumber - b.roundNumber)
-              .map(round => {
-                const myScores = round.scores.filter(s => s.playerId === me.playerId);
-                if (myScores.length === 0) return null;
+          {(currentGame.rounds ?? [])
+  .slice()
+  .sort((a, b) => a.roundNumber - b.roundNumber)
+  .map(round => {
+    const myScores = round.scores.filter(s => s.playerId === me.playerId);
+    if (myScores.length === 0) return null;
 
-                return (
-                  <Box key={round.id} sx={{ mb: 2 }}>
-                    <Typography fontWeight="bold">
-                      Round {round.roundNumber}
-                    </Typography>
+    return (
+      <Accordion key={round.id}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography fontWeight="bold">
+            Round {round.roundNumber}
+          </Typography>
+        </AccordionSummary>
 
-                    {myScores.map(score => (
-                      <Typography key={score.id} sx={{ ml: 2 }}>
-                        {score.points >= 0 ? "+" : ""}
-                        {score.points}{" "}
-                        <span style={{ opacity: 0.6 }}>
-                          ({(score.type)})
-                        </span>
-                      </Typography>
-                    ))}
-                  </Box>
-                );
-              })}
+        <AccordionDetails>
+          {myScores.map(score => (
+            <Typography
+              key={score.id}
+              sx={{
+                ml: 1,
+                color: score.points >= 0 ? "success.main" : "error.main"
+              }}
+            >
+              {score.points >= 0 ? "+" : ""}
+              {score.points}{" "}
+              <span style={{ opacity: 0.6 }}>
+                ({score.type})
+              </span>
+            </Typography>
+          ))}
+        </AccordionDetails>
+      </Accordion>
+    );
+  })}
           </Stack>
         </CardContent>
       </Card>
