@@ -1,15 +1,10 @@
-// gameHubClient.ts
 import * as signalR from "@microsoft/signalr";
-import { Game, RoundDto } from "@/lib/models/game";
 
-type Handlers = {
-  onGameUpdated?: (game: Game) => void;
-  onRoundStarted?: (round: RoundDto) => void;
-  onRoundEnded?: (round: RoundDto) => void;
-  onGameFinished?: (gameId: number) => void;
-};
+let connectionStartCount = 0;
 
-let handlers: Handlers = {};
+// Holder styr på hvilke game groups der er joined globalt
+// key = gameId, value = antal aktive subscribers/hooks
+export const joinedGameRefs = new Map<number, number>();
 
 export const gameHubConnection = new signalR.HubConnectionBuilder()
   .withUrl(`${process.env.NEXT_PUBLIC_HUB_URL!}`, {
@@ -21,41 +16,48 @@ export const gameHubConnection = new signalR.HubConnectionBuilder()
   .configureLogging(signalR.LogLevel.Information)
   .build();
 
-// 🔥 START KUN ÉN GANG
 export async function startGameHub() {
-  if (gameHubConnection.state === "Disconnected") {
-    await gameHubConnection.start();
-    console.log("✅ GameHub connected (singleton)");
+  if (gameHubConnection.state === signalR.HubConnectionState.Connected) {
+    console.log("ℹ️ GameHub already connected, state: Connected");
+    return;
   }
+
+  if (gameHubConnection.state === signalR.HubConnectionState.Connecting) {
+    console.log("ℹ️ GameHub is currently connecting...");
+    return;
+  }
+
+  if (gameHubConnection.state === signalR.HubConnectionState.Reconnecting) {
+    console.log("ℹ️ GameHub is currently reconnecting...");
+    return;
+  }
+
+  connectionStartCount++;
+  console.log(`✅ GameHub connecting... (count=${connectionStartCount})`);
+
+  await gameHubConnection.start();
+
+  console.log("✅ GameHub connected (singleton)");
 }
 
-// 🔥 SET HANDLERS (hook styrer disse)
-export function setGameHubHandlers(newHandlers: Handlers) {
-  handlers = newHandlers;
-}
-
-// 🔥 EVENTS (kun registreret én gang!)
-gameHubConnection.on("GameFinished", (id: number) => {
-  console.log("🏁 Game finished", id);
-  handlers.onGameFinished?.(id);
+gameHubConnection.onreconnecting((error) => {
+  console.warn("⚠️ GameHub reconnecting...", error);
 });
 
-gameHubConnection.on("GameUpdated", (game: Game) => {
-  handlers.onGameUpdated?.(game);
-});
-
-gameHubConnection.on("RoundStarted", (round: RoundDto) => {
-  console.log("▶️ Round started", round);
-  handlers.onRoundStarted?.(round);
-});
-
-// gameHubConnection.on("RoundEnded", (round: RoundDto) => {
-//   console.log("⏹ Round ended", round);
-//   handlers.onRoundEnded?.(round);
-// });
-
-// 🔥 RECONNECT (kun én gang!)
 gameHubConnection.onreconnected(async () => {
   console.log("🔄 Reconnected to GameHub");
-  // vi re-joiner via hook (fordi gameId lever der)
+  console.log("Connection state after reconnect:", gameHubConnection.state);
+
+  for (const [gameId] of joinedGameRefs) {
+    try {
+      await gameHubConnection.invoke("JoinGameGroup", gameId);
+      console.log(`▶️ Re-joined GameGroup ${gameId} after reconnect`);
+    } catch (err) {
+      console.error(`❌ Failed to re-join GameGroup ${gameId}`, err);
+    }
+  }
+});
+
+gameHubConnection.onclose((error) => {
+  console.warn("🔌 GameHub closed", error);
 });

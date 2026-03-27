@@ -48,10 +48,23 @@ export const registerUser = (username: string, password: string) =>
     body: { username, password } as any,
   });
 
-export const getActiveGame = async (userId: number): Promise<number | null> => {
+  
+// export const getActiveGameIdForUser  = async (userId: number): Promise<number | null> => {
+//   try {
+//     return await apiFetch<number | null>(`/users/active-game/${userId}`, { method: "GET" });
+//   } catch {
+//     return null;
+//   }
+// };
+
+
+export const getActiveGameIdForUser = async (userId: number): Promise<number | null> => {
   try {
-    return await apiFetch<number | null>(`/users/active-game/${userId}`, { method: "GET" });
-  } catch {
+    const res = await apiFetch<{ activeGameId: number | null }>(`/users/active-game/${userId}`);
+    return res.activeGameId ?? null;
+  } catch (err: any) {
+    if (err.status === 404) return null; 
+    console.error("Failed to fetch active gameId", err);
     return null;
   }
 };

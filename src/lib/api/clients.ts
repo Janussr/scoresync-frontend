@@ -2,7 +2,6 @@ import { logoutUser } from "./users";
 
 export const getApiBaseUrl = () => {
   if (typeof window === "undefined") {
-    // server-side fallback (build)
     return process.env.NEXT_PUBLIC_API_URL_LAN!;
   }
 
@@ -13,15 +12,13 @@ export const getApiBaseUrl = () => {
   return process.env.NEXT_PUBLIC_API_URL_LOCAL!;
 };
 
-// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export const apiFetch = async <T>(
   url: string,
   options?: RequestInit
 ): Promise<T> => {
   const opts: RequestInit = {
     ...options,
-    credentials: "include", 
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(options?.headers || {}),
@@ -37,50 +34,57 @@ export const apiFetch = async <T>(
     ...(opts.headers as Record<string, string>),
   };
 
-  let token: string | null = null;
-
-  if (typeof window !== "undefined") {
-    token = localStorage.getItem("token");
-  }
-
-  
   const res = await fetch(`${getApiBaseUrl()}${url}`, {
-  ...opts,
-  headers,
-});
+    ...opts,
+    headers,
+  });
 
- if (res.status === 401) {
-  logoutUser();
+  if (res.status === 401) {
+    logoutUser();
 
-  if (typeof window !== "undefined") {
-    window.location.href = "/account/login"; 
+    if (typeof window !== "undefined") {
+      window.location.href = "/account/login";
+    }
+
+    throw {
+      status: 401,
+      message: "Session expired",
+    };
   }
 
-  throw {
-    status: 401,
-    message: "Session expired",
-  };
-}
+  const contentType = res.headers.get("content-type");
+  const isJson = contentType?.includes("application/json");
 
- if (!res.ok) {
-  let errorData: any = null;
+  if (!res.ok) {
+    let errorData: any = null;
 
-  try {
-    errorData = await res.json();
-  } catch {
-    errorData = await res.text();
+    if (isJson) {
+      errorData = await res.json().catch(() => null);
+    } else {
+      const text = await res.text().catch(() => "");
+      errorData = text ? { message: text } : null;
+    }
+
+    throw {
+      status: res.status,
+      message: errorData?.message ?? "API error",
+    };
   }
 
-  throw {
-    status: res.status,
-    message:
-      errorData?.title ||
-      errorData?.message ||
-      errorData ||
-      "API error",
-  };
-}
+  // 204 No Content / tom body
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  if (!isJson) {
+    const text = await res.text().catch(() => "");
+    return (text ? text : undefined) as T;
+  }
 
   const text = await res.text();
-  return text ? JSON.parse(text) : (null as unknown as T);
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text) as T;
 };

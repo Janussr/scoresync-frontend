@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { loginUser, logoutUser, getCurrentUser } from "@/lib/api/users";
+import { loginUser, logoutUser, getCurrentUser, getActiveGameIdForUser } from "@/lib/api/users";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import type { UserRole } from "@/lib/models/user";
 import { usePathname } from "next/navigation";
@@ -50,16 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRole(user.role);
 
       // 🔹 Fetch active game for this user
-      try {
-        const activeGame = await getActiveGameForPlayerPage();
-        if (activeGame?.players?.some(p => p.userId === user.id)) {
-          setActiveGameId(activeGame.id);
-        } else {
-          setActiveGameId(null);
-        }
-      } catch (err) {
-        setActiveGameId(null);
-      }
+     try {
+  if (user?.id) {
+    const activeGameId = await getActiveGameIdForUser(user.id);
+    setActiveGameId(activeGameId);
+  } else {
+    setActiveGameId(null);
+  }
+} catch (err) {
+  console.error("Failed to fetch active gameId", err);
+  setActiveGameId(null);
+}
 
     } catch (err: any) {
       if (err.message !== "Unauthorized") console.error("Failed to fetch current user", err);

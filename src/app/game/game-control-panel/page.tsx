@@ -66,7 +66,8 @@ export default function GameControlPanelPage() {
   const [killerPlayerId, setKillerPlayerId] = useState<number | "">("");
   const [victimPlayerId, setVictimPlayerId] = useState<number | "">("");
   const [knockoutLoading, setKnockoutLoading] = useState(false);
-const [startingRound, setStartingRound] = useState(false);
+  const [startingRound, setStartingRound] = useState(false);
+const [endingGame, setEndingGame] = useState(false);
 
   /** --- MODALS STATE --- */
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -151,14 +152,15 @@ const [startingRound, setStartingRound] = useState(false);
     gameId: currentGame?.id,
     // onRoundStarted: (round) => setCurrentRound(round),
 
-onRoundStarted: () => {
-    fetchCurrentActiveGame();
-  },
-
-    onGameFinished: () => {
+    onRoundStarted: () => {
       fetchCurrentActiveGame();
-      router.push(`/game/game-results/${currentGame?.id}`);
     },
+
+    onGameFinished: (finishedGameId) => {
+  setActiveGameId(null);
+  setCurrentGame(null);
+  router.push(`/game/game-results/${finishedGameId}`);
+},
   });
 
   /** --- HANDLERS --- */
@@ -166,27 +168,27 @@ onRoundStarted: () => {
     try {
       const game = await startGame();
       setCurrentGame({ ...game, players: game.players ?? [], scores: game.scores ?? [] });
-      fetchCurrentActiveGame();
+      await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to start game");
     }
   };
 
   const handleStartRound = async () => {
-  if (!currentGame) return;
+    if (!currentGame) return;
 
-  try {
-    setStartingRound(true);
+    try {
+      setStartingRound(true);
 
-    await startRound(currentGame.id);
+      await startRound(currentGame.id);
 
-    await fetchCurrentActiveGame();
-  } catch (err: any) {
-    showError(err.message || "Failed to start round");
-  } finally {
-    setStartingRound(false);
-  }
-};
+      await fetchCurrentActiveGame();
+    } catch (err: any) {
+      showError(err.message || "Failed to start round");
+    } finally {
+      setStartingRound(false);
+    }
+  };
 
   const addScoreHandler = async (targetPlayerId: number) => {
     if (!currentGame) return;
@@ -200,7 +202,7 @@ onRoundStarted: () => {
 
       setScoreInputs({ ...scoreInputs, [targetPlayerId]: "" });
 
-      fetchCurrentActiveGame();
+      await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to add score");
     } finally {
@@ -217,7 +219,7 @@ onRoundStarted: () => {
     try {
       await addPointsBulk(currentGame.id, scoresToAdd);
       setScoreInputs({});
-      fetchCurrentActiveGame();
+      await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to add bulk points");
     }
@@ -225,22 +227,27 @@ onRoundStarted: () => {
 
   const handleEndGameClick = () => setEndGameConfirmOpen(true);
   const confirmEndOrCancelGame = async () => {
-    if (!currentGame) return;
+  if (!currentGame || endingGame) return;
 
-    try {
-      if ((currentGame.scores?.length ?? 0) === 0) {
-        await cancelGame(currentGame.id);
-      } else {
-        await endGame(currentGame.id);
-      }
+  try {
+    const finishedGameId = currentGame.id;
+
+    if ((currentGame.scores?.length ?? 0) === 0) {
+      await cancelGame(currentGame.id);
+      setActiveGameId(null);
       setCurrentGame(null);
-
-    } catch (err: any) {
-      showError(err.message || "Failed to end/cancel game");
-    } finally {
-      setEndGameConfirmOpen(false);
+    } else {
+      await endGame(currentGame.id);
+      setActiveGameId(null);
+      setCurrentGame(null);
+      router.push(`/game/game-results/${finishedGameId}`);
     }
-  };
+  } catch (err: any) {
+    showError(err.message || "Failed to end/cancel game");
+  } finally {
+    setEndGameConfirmOpen(false);
+  }
+};
 
 
 
@@ -274,7 +281,7 @@ onRoundStarted: () => {
     if (!scoreToRemove) return;
     try {
       await removePoints(scoreToRemove.id);
-      fetchCurrentActiveGame();
+      await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to remove points");
     } finally {
@@ -290,7 +297,7 @@ onRoundStarted: () => {
 
       await rebuyAsAdmin(currentGame.id, targetPlayerId);
 
-      fetchCurrentActiveGame();
+      await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to rebuy");
     } finally {
@@ -303,7 +310,7 @@ onRoundStarted: () => {
     try {
       setSavingRules(true);
       await updateRules(currentGame.id, Number(rebuyValue), Number(bountyValue));
-      fetchCurrentActiveGame();
+     await fetchCurrentActiveGame();
     } catch (err: any) {
       showError(err.message || "Failed to save rules");
     } finally {
@@ -713,17 +720,18 @@ onRoundStarted: () => {
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
               {/* --- START/END ROUND --- */}
               <Button
-  variant="contained"
-  color="primary"
-  onClick={handleStartRound}
-  disabled={startingRound}
->
-  Start Next Round: {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
-</Button>
+                variant="contained"
+                color="primary"
+                onClick={handleStartRound}
+                disabled={startingRound}
+              >
+                Start Next Round: {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
+              </Button>
               <Button
                 color={currentGame.scores.length === 0 ? "warning" : "error"}
                 variant="contained"
                 onClick={handleEndGameClick}
+                 disabled={endingGame}
               >
                 {currentGame.scores.length === 0 ? "Cancel game" : "End game"}
               </Button>
@@ -842,7 +850,7 @@ onRoundStarted: () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEndGameConfirmOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={confirmEndOrCancelGame}>
+          <Button color="error" onClick={confirmEndOrCancelGame}  disabled={endingGame}>
             {currentGame?.scores.length === 0 ? "Cancel Game" : "End Game"}
           </Button>
         </DialogActions>

@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Stack, Button, Typography, Card, CardContent, TextField, MenuItem, Divider, AccordionDetails, Accordion, AccordionSummary } from "@mui/material";
-import * as signalR from "@microsoft/signalr";
-
+import { Box, Stack, Button, Typography, Card, CardContent, TextField, MenuItem, Divider, AccordionDetails, Accordion, AccordionSummary, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
 import { registerPlayerKnockout } from "@/lib/api/bounties";
-import { GameDetails, RoundDto } from "@/lib/models/game";
+import { GameDetails } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
@@ -22,11 +20,10 @@ export default function PlayerGamePage() {
 
   const [currentGame, setCurrentGame] = useState<GameDetails | null>(null);
   const activeRound = currentGame?.rounds?.find(r => !r.endedAt);
-  // const [currentRound, setCurrentRound] = useState<RoundDto | null>(null);
   const [points, setPoints] = useState("");
   const [knockoutPlayerId, setKnockoutPlayerId] = useState<number | "">("");
   const [loadingAction, setLoadingAction] = useState(false);
-
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
 
   // ----- Fetch active game for this player -----
   useEffect(() => {
@@ -58,20 +55,24 @@ export default function PlayerGamePage() {
     fetchGame();
   }, [userId, router, showError, setActiveGameId]);
 
-   // ----- Setup GameHub -----
-  useGameHub({
-    gameId: currentGame?.id,
 
-     onRoundStarted: async () => {
+  const currentGameId = currentGame?.id;
+
+  const handleRoundStarted = useCallback(async () => {
     const updated = await getActiveGameForPlayerPage();
     setCurrentGame(updated);
-  },
+  }, []);
 
-    onGameFinished: () => {
-    if (currentGame) {
-      router.push(`/game/game-results/${currentGame.id}`);
-    }
-  }
+  const handleGameFinished = useCallback((finishedGameId: number) => {
+    setCurrentGame(null);
+    router.push(`/game/game-results/${finishedGameId}`);
+  }, [router]);
+
+  // ----- Setup GameHub -----
+  useGameHub({
+    gameId: currentGameId,
+    onRoundStarted: handleRoundStarted,
+    onGameFinished: handleGameFinished,
   });
 
 
@@ -167,23 +168,31 @@ export default function PlayerGamePage() {
 
   if (!currentGame || !me) return <Typography>Loading...</Typography>;
 
-  const myScores = currentGame?.rounds
-    ?.flatMap(r => r.scores)
-    .filter(s => s.playerId === me?.playerId) ?? [];
+  const myScores =
+    currentGame?.rounds
+      ?.flatMap(r => r.scores)
+      .filter(s => s.playerId === me.playerId) ?? [];
 
-  const myRebuys = myScores.filter(s => s.type === "Rebuy").length;
-  const myBounties = myScores.filter(s => s.type === "Bounty").length;
-
-  const myTotal = currentGame?.rounds
-    ?.flatMap(r => r.scores)
-    .filter(s => s.playerId === me?.playerId)
-    .reduce((sum, s) => sum + s.points, 0) ?? 0;
+  const myRebuys = me.rebuyCount;
+  const myBounties = me.activeBounties;
+  const myTotal = myScores.reduce((sum, s) => sum + s.points, 0);
 
   return (
     <Box sx={{ width: "100%", maxWidth: { md: 800 }, mx: "auto", px: { xs: 1, md: 0 }, mt: 4 }}>
-      <Typography variant="h4" mb={3} textAlign="center" fontWeight="bold">
-        Game #{currentGame.gameNumber}
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          Game #{currentGame.gameNumber}
+        </Typography>
+
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={() => setLeaveDialogOpen(true)}
+          disabled={loadingAction}
+        >
+          Leave Game
+        </Button>
+      </Box>
 
       <Card>
         <CardContent>
@@ -287,15 +296,33 @@ export default function PlayerGamePage() {
           </Stack>
         </CardContent>
       </Card>
-
-      <Button
-        variant="outlined"
-        color="error"
-        onClick={handleLeaveGame}
-        disabled={loadingAction}
-      >
-        Leave Game
-      </Button>
+      <Dialog open={leaveDialogOpen} onClose={() => !loadingAction && setLeaveDialogOpen(false)}>
+        <DialogTitle>Leave game?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to leave this game? You will be returned to the lobby.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setLeaveDialogOpen(false)}
+            disabled={loadingAction}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={async () => {
+              setLeaveDialogOpen(false);
+              await handleLeaveGame();
+            }}
+            disabled={loadingAction}
+          >
+            Leave Game
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
