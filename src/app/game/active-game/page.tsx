@@ -21,7 +21,8 @@ export default function PlayerGamePage() {
   const { showError } = useError();
 
   const [currentGame, setCurrentGame] = useState<GameDetails | null>(null);
-  const [currentRound, setCurrentRound] = useState<RoundDto | null>(null);
+  const activeRound = currentGame?.rounds?.find(r => !r.endedAt);
+  // const [currentRound, setCurrentRound] = useState<RoundDto | null>(null);
   const [points, setPoints] = useState("");
   const [knockoutPlayerId, setKnockoutPlayerId] = useState<number | "">("");
   const [loadingAction, setLoadingAction] = useState(false);
@@ -45,9 +46,6 @@ export default function PlayerGamePage() {
         // Ellers sæt spillet
         setCurrentGame(game);
 
-        const runningRound = game.rounds?.find(r => !r.endedAt);
-        setCurrentRound(runningRound ?? null);
-
         setActiveGameId(game.id);
       } catch (err: any) {
         showError(err.message || "Failed to load active game");
@@ -63,19 +61,11 @@ export default function PlayerGamePage() {
    // ----- Setup GameHub -----
   useGameHub({
     gameId: currentGame?.id,
-    onRoundStarted: (round) => setCurrentRound(round),
-    onRoundEnded: (endedRound) => {
-      setCurrentGame(prev => prev ? {
-        ...prev,
-        rounds: prev.rounds?.map(r => r.id === endedRound.id ? { ...r, endedAt: endedRound.endedAt } : r)
-      } : prev);
 
-      if (currentRound?.id === endedRound.id) setCurrentRound(null);
-    },
-    // onGameUpdated: (game) => {
-    //   setCurrentGame(game);
-    //   if (game.isFinished) router.push(`/game-results/${game.id}`);
-    // },
+     onRoundStarted: async () => {
+    const updated = await getActiveGameForPlayerPage();
+    setCurrentGame(updated);
+  },
 
     onGameFinished: () => {
     if (currentGame) {
@@ -204,7 +194,7 @@ export default function PlayerGamePage() {
           <Box sx={{ p: 1, borderRadius: 2, bgcolor: "background.paper", border: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
             <Typography fontWeight="bold">Your game status</Typography>
             <Typography color="primary">
-              Current Round: #{currentRound?.roundNumber}
+              Current Round: #{activeRound?.roundNumber}
             </Typography>
             <Typography>Total points: <b>{myTotal}</b></Typography>
             {(currentGame.bountyValue ?? 0) > 0 && (

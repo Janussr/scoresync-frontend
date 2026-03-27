@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const [open, setOpen] = useState(false);
 
     if (!hydrated) {
-        return <div>Loading...</div>; // fallback UI, fx spinner
+        return <div>Loading...</div>; 
     }
 
     const navLinks = [

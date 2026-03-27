@@ -2,11 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { loginUser, logoutUser, getCurrentUser } from "@/lib/api/users";
+import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import type { UserRole } from "@/lib/models/user";
 import { usePathname } from "next/navigation";
-
-type CurrentGame = { id: number; name: string } | null;
-// i AuthContext
 
 type AuthContextType = {
   role: UserRole;
@@ -33,6 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = role === "Admin";
   const isLoggedIn = !!userId;
 
+  const pathname = usePathname();
+
+  // ----- Fetch current user & active game -----
   const fetchCurrentUser = async () => {
     try {
       const user = await getCurrentUser();
@@ -40,22 +41,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserId(null);
         setUsername(null);
         setRole(null);
+        setActiveGameId(null);
         return;
       }
+
       setUserId(user.id);
       setUsername(user.username);
       setRole(user.role);
+
+      // 🔹 Fetch active game for this user
+      try {
+        const activeGame = await getActiveGameForPlayerPage();
+        if (activeGame?.players?.some(p => p.userId === user.id)) {
+          setActiveGameId(activeGame.id);
+        } else {
+          setActiveGameId(null);
+        }
+      } catch (err) {
+        setActiveGameId(null);
+      }
+
     } catch (err: any) {
       if (err.message !== "Unauthorized") console.error("Failed to fetch current user", err);
       setUserId(null);
       setUsername(null);
       setRole(null);
+      setActiveGameId(null);
     } finally {
       setHydrated(true);
     }
   };
-
-  const pathname = usePathname();
 
   useEffect(() => {
     if (hydrated) return;
@@ -67,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetchCurrentUser();
-  }, [pathname]);
+  }, [pathname, hydrated]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -91,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserId(null);
       setUsername(null);
       setRole(null);
+      setActiveGameId(null);
     }
   };
 

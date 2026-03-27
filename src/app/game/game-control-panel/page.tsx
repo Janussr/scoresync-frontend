@@ -32,7 +32,7 @@ import {
 import { addPointsBulk, removePoints, addScoreAdmin, rebuyAsAdmin } from "@/lib/api/scores";
 import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
-import {  getAllUsers } from "@/lib/api/users";
+import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
 import { Game, Player, RoundDto } from "@/lib/models/game";
 import { User } from "@/lib/models/user";
@@ -53,7 +53,9 @@ export default function GameControlPanelPage() {
   const [activeGames, setActiveGames] = useState<Game[]>([]);
 
   const [currentGame, setCurrentGame] = useState<Game | null>(null);
-  const [currentRound, setCurrentRound] = useState<RoundDto | null>(null);
+  const activeRound = currentGame?.rounds?.find(r => !r.endedAt);
+
+  // const [currentRound, setCurrentRound] = useState<RoundDto | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [scoreInputs, setScoreInputs] = useState<{ [key: number]: string }>({});
@@ -64,6 +66,7 @@ export default function GameControlPanelPage() {
   const [killerPlayerId, setKillerPlayerId] = useState<number | "">("");
   const [victimPlayerId, setVictimPlayerId] = useState<number | "">("");
   const [knockoutLoading, setKnockoutLoading] = useState(false);
+const [startingRound, setStartingRound] = useState(false);
 
   /** --- MODALS STATE --- */
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -146,8 +149,12 @@ export default function GameControlPanelPage() {
   /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
   useGameHub({
     gameId: currentGame?.id,
-    onRoundStarted: (round) => setCurrentRound(round),
-    onRoundEnded: () => setCurrentRound(null),
+    // onRoundStarted: (round) => setCurrentRound(round),
+
+onRoundStarted: () => {
+    fetchCurrentActiveGame();
+  },
+
     onGameFinished: () => {
       fetchCurrentActiveGame();
       router.push(`/game/game-results/${currentGame?.id}`);
@@ -166,14 +173,20 @@ export default function GameControlPanelPage() {
   };
 
   const handleStartRound = async () => {
-    if (!currentGame) return;
-    try {
-      await startRound(currentGame.id);
-      await fetchCurrentActiveGame();
-    } catch (err: any) {
-      showError(err.message || "Failed to start round");
-    }
-  };
+  if (!currentGame) return;
+
+  try {
+    setStartingRound(true);
+
+    await startRound(currentGame.id);
+
+    await fetchCurrentActiveGame();
+  } catch (err: any) {
+    showError(err.message || "Failed to start round");
+  } finally {
+    setStartingRound(false);
+  }
+};
 
   const addScoreHandler = async (targetPlayerId: number) => {
     if (!currentGame) return;
@@ -241,7 +254,7 @@ export default function GameControlPanelPage() {
         : prev
       );
       setActiveGameId(currentGame.id);
-      setSelectedUserIds([]); 
+      setSelectedUserIds([]);
     } catch (err: any) {
       showError(err.message || "Failed to add players");
     }
@@ -354,6 +367,7 @@ export default function GameControlPanelPage() {
     }
   };
 
+
   if (!isLoggedIn || (role !== "Admin" && role !== "Gamemaster")) return null;
 
   /** --- RENDER --- */
@@ -390,7 +404,7 @@ export default function GameControlPanelPage() {
 
             <Divider sx={{ my: 2 }} />
 
-          
+
 
             {/* --- Accordion for Game Rules --- */}
             <Accordion>
@@ -546,30 +560,30 @@ export default function GameControlPanelPage() {
 
               <AccordionDetails>
 
-  {/* SINGLE BUTTON */}
-  <Box
-  mb={2}
-  display="flex"
-  justifyContent="space-between"
-  alignItems="center"
->
-  <Typography variant="subtitle2">
-    Add multiple scores:
-  </Typography>
-    <Button
-      variant="contained"
-      color="success"
-      onClick={addAllScoresHandler}
-      disabled={
-        Object.values(scoreInputs).filter(v => Number(v) > 0).length === 0
-      }
-    >
-      Bulk Add Points
-    </Button>
-  </Box>
+                {/* SINGLE BUTTON */}
+                <Box
+                  mb={2}
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Typography variant="subtitle2">
+                    Add multiple scores:
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={addAllScoresHandler}
+                    disabled={
+                      Object.values(scoreInputs).filter(v => Number(v) > 0).length === 0
+                    }
+                  >
+                    Bulk Add Points
+                  </Button>
+                </Box>
 
                 {activePlayers.map((p) => (
-                  <Box key={p.playerId} sx={{ width: "100%", overflowX: "auto", mb: 1, borderBottom: "1px solid #eee" ,p:1 ,borderRadius: 2 }}>
+                  <Box key={p.playerId} sx={{ width: "100%", overflowX: "auto", mb: 1, borderBottom: "1px solid #eee", p: 1, borderRadius: 2 }}>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={2}
@@ -697,10 +711,15 @@ export default function GameControlPanelPage() {
 
             {/* Action Buttons */}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-               {/* --- START/END ROUND --- */}
-              <Button variant="contained" color="primary" onClick={handleStartRound} disabled={!!currentRound}>
-                Start Next Round:  {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
-              </Button>
+              {/* --- START/END ROUND --- */}
+              <Button
+  variant="contained"
+  color="primary"
+  onClick={handleStartRound}
+  disabled={startingRound}
+>
+  Start Next Round: {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
+</Button>
               <Button
                 color={currentGame.scores.length === 0 ? "warning" : "error"}
                 variant="contained"
@@ -713,7 +732,7 @@ export default function GameControlPanelPage() {
         </Card>
       )}
 
-   
+
 
       {/* All Games List */}
       <Typography
@@ -723,7 +742,7 @@ export default function GameControlPanelPage() {
         All Games
       </Typography>
 
-         {/* Fetch All Games Button */}
+      {/* Fetch All Games Button */}
       <Box mt={2} mb={2}>
         <Button
           variant="contained"
