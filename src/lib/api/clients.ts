@@ -14,7 +14,7 @@ export const getApiBaseUrl = () => {
 
 export const apiFetch = async <T>(
   url: string,
-  options?: RequestInit
+  options?: RequestInit & { allow404?: boolean }
 ): Promise<T> => {
   const opts: RequestInit = {
     ...options,
@@ -52,6 +52,10 @@ export const apiFetch = async <T>(
     };
   }
 
+  if (res.status === 404 && options?.allow404) {
+    return null as T;
+  }
+
   const contentType = res.headers.get("content-type");
   const isJson = contentType?.includes("application/json");
 
@@ -71,7 +75,6 @@ export const apiFetch = async <T>(
     };
   }
 
-  // 204 No Content / tom body
   if (res.status === 204) {
     return undefined as T;
   }

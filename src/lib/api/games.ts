@@ -23,7 +23,7 @@ export const getActiveGameForGamePanel = () =>
   apiFetch<GamePanel | null>(`/games/game-panel/active`);
 
 export const getActiveGameForPlayerPage = () =>
-  apiFetch<GameDetails | null>(`/games/player-page/active`);
+  apiFetch<GameDetails | null>(`/games/player-page/active`, { allow404: true });
 
 export const getActiveLobbyGames = () =>
   apiFetch<Game[]>(`/games/lobby`);

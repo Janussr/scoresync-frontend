@@ -48,16 +48,6 @@ export const registerUser = (username: string, password: string) =>
     body: { username, password } as any,
   });
 
-  
-// export const getActiveGameIdForUser  = async (userId: number): Promise<number | null> => {
-//   try {
-//     return await apiFetch<number | null>(`/users/active-game/${userId}`, { method: "GET" });
-//   } catch {
-//     return null;
-//   }
-// };
-
-
 export const getActiveGameIdForUser = async (userId: number): Promise<number | null> => {
   try {
     const res = await apiFetch<{ activeGameId: number | null }>(`/users/active-game/${userId}`);
