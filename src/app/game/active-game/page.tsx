@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Stack, Button, Typography, Card, CardContent, TextField, MenuItem, Divider, AccordionDetails, Accordion, AccordionSummary, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { CircularProgress, Box, Stack, Button, Typography, Card, CardContent, TextField, MenuItem, Divider, AccordionDetails, Accordion, AccordionSummary, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
@@ -24,6 +24,7 @@ export default function PlayerGamePage() {
   const [knockoutPlayerId, setKnockoutPlayerId] = useState<number | "">("");
   const [loadingAction, setLoadingAction] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   // ----- Fetch active game for this player -----
   useEffect(() => {
@@ -33,22 +34,20 @@ export default function PlayerGamePage() {
       try {
         const game = await getActiveGameForPlayerPage();
 
-        // Hvis spillet ikke findes, eller der ikke er nogen spillere endnu, redirect
         if (!game || !game.players?.some(p => p.userId === userId)) {
-          setActiveGameId(null); // ryd global state
+          setActiveGameId(null);
           router.replace("/game/lobby");
           return;
         }
 
-        // Ellers sæt spillet
         setCurrentGame(game);
-
         setActiveGameId(game.id);
       } catch (err: any) {
         showError(err.message || "Failed to load active game");
-        // Hvis fetch fejler, redirect også
         setActiveGameId(null);
         router.replace("/game/lobby");
+      } finally {
+        setPageLoading(false);
       }
     };
 
@@ -166,7 +165,35 @@ export default function PlayerGamePage() {
     }
   };
 
-  if (!currentGame || !me) return <Typography>Loading...</Typography>;
+  if (pageLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          px: 2,
+        }}
+      >
+        <Card sx={{ width: "100%", maxWidth: 420, borderRadius: 3 }}>
+          <CardContent>
+            <Stack spacing={2} alignItems="center" py={2}>
+              <CircularProgress />
+              <Typography variant="h6" fontWeight="bold" textAlign="center">
+                Joining active game...
+              </Typography>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                Please wait while we load your game data.
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  if (!currentGame || !me) return null;
 
   const myScores =
     currentGame?.rounds
@@ -217,7 +244,9 @@ export default function PlayerGamePage() {
 
           <Stack spacing={2}>
             <TextField label="Points" type="number" value={points} onChange={(e) => setPoints(e.target.value)} />
-            <Button variant="contained" onClick={submitScore}>Add points</Button>
+            <Button variant="contained" onClick={submitScore} disabled={loadingAction}>
+              {loadingAction ? "Saving..." : "Add points"}
+            </Button>
 
             {((currentGame.rebuyValue ?? 0) > 0 || (currentGame.bountyValue ?? 0) > 0) && <Divider sx={{ my: 2 }} />}
 

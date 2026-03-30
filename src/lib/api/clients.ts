@@ -42,10 +42,6 @@ export const apiFetch = async <T>(
   if (res.status === 401) {
     logoutUser();
 
-    if (typeof window !== "undefined") {
-      window.location.href = "/account/login";
-    }
-
     throw {
       status: 401,
       message: "Session expired",
