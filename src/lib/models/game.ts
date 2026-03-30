@@ -30,6 +30,7 @@ export interface Game {
   startedAt: string;
   endedAt?: string;
   isFinished: boolean;
+  isOpenForPlayers: boolean;
   rebuyValue: number;
   bountyValue: number;
   players: Player[];
@@ -44,6 +45,7 @@ export interface GamePanel {
   gameNumber: number;
   startedAt: string;
   isFinished: boolean;
+  isOpenForPlayers: boolean;
   rebuyValue: number;
   bountyValue: number;
   players: Player[];

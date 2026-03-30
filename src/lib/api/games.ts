@@ -4,6 +4,9 @@ import {  Game, GameDetails, GamePanel, HallOfFameEntry  } from "@/lib/models/ga
 export const startGame = () =>
   apiFetch<Game>(`/games/start`, { method: "POST" });
 
+export const openGameForPlayers = (gameId: number) =>
+  apiFetch(`/games/${gameId}/open`, { method: "POST" });
+
 export const endGame = (gameId: number) =>
   apiFetch(`/games/${gameId}/end`, { method: "POST" });
 
@@ -21,6 +24,9 @@ export const getActiveGames = () =>
 
 export const getActiveGameForGamePanel = () =>
   apiFetch<GamePanel | null>(`/games/game-panel/active`);
+
+export const getAllActiveGamesForGamePanel = () =>
+  apiFetch<GamePanel[]>(`/games/game-panel/active/all`);
 
 export const getActiveGameForPlayerPage = () =>
   apiFetch<GameDetails | null>(`/games/player-page/active`, { allow404: true });

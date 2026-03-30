@@ -16,6 +16,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,82 +29,100 @@ import {
   endGame,
   removeGame,
   updateRules,
-  getActiveGameForGamePanel
-
+  getAllActiveGamesForGamePanel,
+  openGameForPlayers,
 } from "@/lib/api/games";
-import { addPointsBulk, removePoints, addScoreAdmin, rebuyAsAdmin } from "@/lib/api/scores";
+import {
+  addPointsBulk,
+  removePoints,
+  addScoreAdmin,
+  rebuyAsAdmin,
+} from "@/lib/api/scores";
 import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
-import { Game, Player, RoundDto } from "@/lib/models/game";
+import { Game, GamePanel, Player } from "@/lib/models/game";
 import { User } from "@/lib/models/user";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
-import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { startRound } from "@/lib/api/rounds";
 import { useGameHub } from "@/lib/hooks/useGameHub";
 
+
+type ScoreInputsState = Record<number, Record<number, string>>;
+type SelectedUsersState = Record<number, number[]>;
+type RulesState = Record<number, { rebuyValue: number | ""; bountyValue: number | "" }>;
+type KnockoutState = Record<number, { killerPlayerId: number | ""; victimPlayerId: number | "" }>;
+type LoadingByGameState = Record<number, boolean>;
+
 export default function GameControlPanelPage() {
   const router = useRouter();
-  const { isLoggedIn, role, activeGameId, setActiveGameId } = useAuth();
+  const { isLoggedIn, role, setActiveGameId } = useAuth();
   const { showError } = useError();
 
-  /** --- STATE --- */
   const [games, setGames] = useState<Game[]>([]);
-  const [activeGames, setActiveGames] = useState<Game[]>([]);
-
-  const [currentGame, setCurrentGame] = useState<Game | null>(null);
-  const activeRound = currentGame?.rounds?.find(r => !r.endedAt);
-
-  // const [currentRound, setCurrentRound] = useState<RoundDto | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
-  const [scoreInputs, setScoreInputs] = useState<{ [key: number]: string }>({});
-  const [rebuyValue, setRebuyValue] = useState<number | "">("");
-  const [bountyValue, setBountyValue] = useState<number | "">("");
-  const [savingRules, setSavingRules] = useState(false);
-  const [loadingAction, setLoadingAction] = useState(false);
-  const [killerPlayerId, setKillerPlayerId] = useState<number | "">("");
-  const [victimPlayerId, setVictimPlayerId] = useState<number | "">("");
-  const [knockoutLoading, setKnockoutLoading] = useState(false);
-  const [startingRound, setStartingRound] = useState(false);
-const [endingGame, setEndingGame] = useState(false);
+const [activeGames, setActiveGames] = useState<Game[]>([]);
+  const [selectedUserIdsByGame, setSelectedUserIdsByGame] = useState<SelectedUsersState>({});
+  const [scoreInputsByGame, setScoreInputsByGame] = useState<ScoreInputsState>({});
+  const [rulesByGame, setRulesByGame] = useState<RulesState>({});
+  const [knockoutByGame, setKnockoutByGame] = useState<KnockoutState>({});
+  const [openingGameByGame, setOpeningGameByGame] = useState<LoadingByGameState>({});
 
-  /** --- MODALS STATE --- */
+  const [savingRulesByGame, setSavingRulesByGame] = useState<LoadingByGameState>({});
+  const [loadingActionByGame, setLoadingActionByGame] = useState<LoadingByGameState>({});
+  const [knockoutLoadingByGame, setKnockoutLoadingByGame] = useState<LoadingByGameState>({});
+  const [startingRoundByGame, setStartingRoundByGame] = useState<LoadingByGameState>({});
+  const [endingGameByGame, setEndingGameByGame] = useState<LoadingByGameState>({});
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [scoreToRemove, setScoreToRemove] = useState<Score | null>(null);
+
   const [endGameConfirmOpen, setEndGameConfirmOpen] = useState(false);
+  const [gameToEnd, setGameToEnd] = useState<Game | null>(null);
+
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
+  const [gameIdForPlayerRemoval, setGameIdForPlayerRemoval] = useState<number | null>(null);
   const [removePlayerConfirmOpen, setRemovePlayerConfirmOpen] = useState(false);
+
   const [removeGameConfirmOpen, setRemoveGameConfirmOpen] = useState(false);
   const [gameToRemove, setGameToRemove] = useState<Game | null>(null);
 
-  const { userId } = useAuth();
 
-  const activePlayers = currentGame?.players.filter(p => p.isActive) ?? [];
-  const availableUsers = users.filter(
-    (u) => !(currentGame?.players.filter(p => p.isActive).some(p => p.userId === u.id))
-  );
-  /** --- REDIRECT NON-ADMINS --- */
+// /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
+// useGameHub({
+//   gameIds: activeGames.map((g) => g.id),
+//   onRoundStarted: () => {
+//     fetchActiveGames();
+//   },
+//   onGameFinished: () => {
+//     fetchActiveGames();
+//   },
+// });
+
+
   useEffect(() => {
     if (!isLoggedIn) router.replace("/account/login");
     else if (role !== "Admin" && role !== "Gamemaster") router.replace("/");
   }, [isLoggedIn, role, router]);
 
-  /** --- FETCH DATA --- */
   useEffect(() => {
-    fetchUsers();
-    fetchCurrentActiveGame();
-  }, []);
+    if (!isLoggedIn || (role !== "Admin" && role !== "Gamemaster")) return;
 
-  useEffect(() => {
-    if (currentGame) {
-      setRebuyValue(currentGame.rebuyValue ?? "");
-      setBountyValue(currentGame.bountyValue ?? "");
-    }
-  }, [currentGame]);
+    fetchUsers();
+    fetchActiveGames();
+  }, [isLoggedIn, role]);
+
+  const normalizePanelGame = (game: GamePanel): Game => ({
+    ...game,
+    players: game.players ?? [],
+    rounds: game.rounds ?? [],
+    scores: game.rounds?.flatMap((r) => r.scores ?? []) ?? [],
+  });
+
+  
 
   const fetchUsers = async () => {
     try {
@@ -112,31 +133,51 @@ const [endingGame, setEndingGame] = useState(false);
     }
   };
 
-  const fetchCurrentActiveGame = async () => {
+  const fetchActiveGames = async () => {
     try {
-      const game = await getActiveGameForGamePanel(); // single GamePanel or null
-      if (game) {
-        // Flatten scores from rounds
-        const allScores = game.rounds.flatMap(r => r.scores ?? []);
+      const data = await getAllActiveGamesForGamePanel();
+      const normalized = data.map(normalizePanelGame);
 
-        setCurrentGame({
-          ...game,
-          players: game.players ?? [],
-          scores: allScores,
-        });
+      setActiveGames(normalized);
 
-        setActiveGames([game]);
-      } else {
-        setCurrentGame(null);
-        setActiveGames([]);
-      }
+      setRulesByGame((prev) => {
+        const next = { ...prev };
+        for (const game of normalized) {
+          next[game.id] ??= {
+            rebuyValue: game.rebuyValue ?? "",
+            bountyValue: game.bountyValue ?? "",
+          };
+        }
+        return next;
+      });
+
+      setSelectedUserIdsByGame((prev) => {
+        const next = { ...prev };
+        for (const game of normalized) {
+          next[game.id] ??= [];
+        }
+        return next;
+      });
+
+      setScoreInputsByGame((prev) => {
+        const next = { ...prev };
+        for (const game of normalized) {
+          next[game.id] ??= {};
+        }
+        return next;
+      });
+
+      setKnockoutByGame((prev) => {
+        const next = { ...prev };
+        for (const game of normalized) {
+          next[game.id] ??= { killerPlayerId: "", victimPlayerId: "" };
+        }
+        return next;
+      });
     } catch (err: any) {
-      showError(err.message || "Failed to fetch active game");
+      showError(err.message || "Failed to fetch active games");
     }
   };
-
-
-
 
   const fetchAllGames = async () => {
     try {
@@ -147,121 +188,144 @@ const [endingGame, setEndingGame] = useState(false);
     }
   };
 
-  /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
-  useGameHub({
-    gameId: currentGame?.id,
-    // onRoundStarted: (round) => setCurrentRound(round),
+  const getAvailableUsersForGame = (game: Game) => {
+    return users.filter((u) => {
+      const alreadyInThisGame = game.players?.some(
+        (p) => p.userId === u.id && p.isActive
+      );
 
-    onRoundStarted: () => {
-      fetchCurrentActiveGame();
-    },
+      const activeInAnotherGame = activeGames.some(
+        (g) =>
+          g.id !== game.id &&
+          g.players?.some((p) => p.userId === u.id && p.isActive)
+      );
 
-    onGameFinished: (finishedGameId) => {
-  setActiveGameId(null);
-  setCurrentGame(null);
-  router.push(`/game/game-results/${finishedGameId}`);
-},
-  });
+      return !alreadyInThisGame && !activeInAnotherGame;
+    });
+  };
 
-  /** --- HANDLERS --- */
   const startGameHandler = async () => {
     try {
-      const game = await startGame();
-      setCurrentGame({ ...game, players: game.players ?? [], scores: game.scores ?? [] });
-      await fetchCurrentActiveGame();
+      await startGame();
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to start game");
     }
   };
 
-  const handleStartRound = async () => {
-    if (!currentGame) return;
-
-    try {
-      setStartingRound(true);
-
-      await startRound(currentGame.id);
-
-      await fetchCurrentActiveGame();
-    } catch (err: any) {
-      showError(err.message || "Failed to start round");
-    } finally {
-      setStartingRound(false);
-    }
-  };
-
-  const addScoreHandler = async (targetPlayerId: number) => {
-    if (!currentGame) return;
-
-    const value = Number(scoreInputs[targetPlayerId]);
-    if (!value) return;
-
-    try {
-      setLoadingAction(true);
-      await addScoreAdmin(currentGame.id, targetPlayerId, value);
-
-      setScoreInputs({ ...scoreInputs, [targetPlayerId]: "" });
-
-      await fetchCurrentActiveGame();
-    } catch (err: any) {
-      showError(err.message || "Failed to add score");
-    } finally {
-      setLoadingAction(false);
-    }
-  };
-
-  const addAllScoresHandler = async () => {
-    if (!currentGame) return;
-    const scoresToAdd = Object.entries(scoreInputs)
-      .map(([playerId, points]) => ({ playerId: Number(playerId), points: Number(points) }))
-      .filter((s) => s.points > 0);
-    if (!scoresToAdd.length) return;
-    try {
-      await addPointsBulk(currentGame.id, scoresToAdd);
-      setScoreInputs({});
-      await fetchCurrentActiveGame();
-    } catch (err: any) {
-      showError(err.message || "Failed to add bulk points");
-    }
-  };
-
-  const handleEndGameClick = () => setEndGameConfirmOpen(true);
-  const confirmEndOrCancelGame = async () => {
-  if (!currentGame || endingGame) return;
-
+  const handleOpenGame = async (gameId: number) => {
   try {
-    const finishedGameId = currentGame.id;
-
-    if ((currentGame.scores?.length ?? 0) === 0) {
-      await cancelGame(currentGame.id);
-      setActiveGameId(null);
-      setCurrentGame(null);
-    } else {
-      await endGame(currentGame.id);
-      setActiveGameId(null);
-      setCurrentGame(null);
-      router.push(`/game/game-results/${finishedGameId}`);
-    }
+    setOpeningGameByGame((prev) => ({ ...prev, [gameId]: true }));
+    await openGameForPlayers(gameId);
+    await fetchActiveGames();
   } catch (err: any) {
-    showError(err.message || "Failed to end/cancel game");
+    showError(err.message || "Failed to open game");
   } finally {
-    setEndGameConfirmOpen(false);
+    setOpeningGameByGame((prev) => ({ ...prev, [gameId]: false }));
   }
 };
 
+  const handleStartRound = async (gameId: number) => {
+    try {
+      setStartingRoundByGame((prev) => ({ ...prev, [gameId]: true }));
+      await startRound(gameId);
+      await fetchActiveGames();
+    } catch (err: any) {
+      showError(err.message || "Failed to start round");
+    } finally {
+      setStartingRoundByGame((prev) => ({ ...prev, [gameId]: false }));
+    }
+  };
 
-
-  const handleAddPlayersAsAdmin = async () => {
-    if (!currentGame || selectedUserIds.length === 0) return;
+  const addScoreHandler = async (gameId: number, playerId: number) => {
+    const value = Number(scoreInputsByGame[gameId]?.[playerId]);
+    if (!value) return;
 
     try {
-      const newPlayers: Player[] = await AddPlayersToGameAsAdmin(currentGame.id, selectedUserIds);
-      setCurrentGame(prev => prev
-        ? { ...prev, players: [...prev.players, ...newPlayers] }
-        : prev
-      );
-      setActiveGameId(currentGame.id);
-      setSelectedUserIds([]);
+      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
+      await addScoreAdmin(gameId, playerId, value);
+
+      setScoreInputsByGame((prev) => ({
+        ...prev,
+        [gameId]: {
+          ...(prev[gameId] ?? {}),
+          [playerId]: "",
+        },
+      }));
+
+      await fetchActiveGames();
+    } catch (err: any) {
+      showError(err.message || "Failed to add score");
+    } finally {
+      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
+    }
+  };
+
+  const addAllScoresHandler = async (gameId: number) => {
+    const gameInputs = scoreInputsByGame[gameId] ?? {};
+    const scoresToAdd = Object.entries(gameInputs)
+      .map(([playerId, points]) => ({
+        playerId: Number(playerId),
+        points: Number(points),
+      }))
+      .filter((s) => s.points > 0);
+
+    if (!scoresToAdd.length) return;
+
+    try {
+      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
+      await addPointsBulk(gameId, scoresToAdd);
+      setScoreInputsByGame((prev) => ({
+        ...prev,
+        [gameId]: {},
+      }));
+      await fetchActiveGames();
+    } catch (err: any) {
+      showError(err.message || "Failed to add bulk points");
+    } finally {
+      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
+    }
+  };
+
+  const handleEndGameClick = (game: Game) => {
+    setGameToEnd(game);
+    setEndGameConfirmOpen(true);
+  };
+
+  const confirmEndOrCancelGame = async () => {
+    if (!gameToEnd || endingGameByGame[gameToEnd.id]) return;
+
+    const gameId = gameToEnd.id;
+    const hasScores = (gameToEnd.scores?.length ?? 0) > 0;
+
+    try {
+      setEndingGameByGame((prev) => ({ ...prev, [gameId]: true }));
+
+      if (!hasScores) {
+        await cancelGame(gameId);
+      } else {
+        await endGame(gameId);
+      }
+
+      setActiveGameId(null);
+      await fetchActiveGames();
+    } catch (err: any) {
+      showError(err.message || "Failed to end/cancel game");
+    } finally {
+      setEndingGameByGame((prev) => ({ ...prev, [gameId]: false }));
+      setEndGameConfirmOpen(false);
+      setGameToEnd(null);
+    }
+  };
+
+  const handleAddPlayersAsAdmin = async (gameId: number) => {
+    const selectedUserIds = selectedUserIdsByGame[gameId] ?? [];
+    if (selectedUserIds.length === 0) return;
+
+    try {
+      await AddPlayersToGameAsAdmin(gameId, selectedUserIds);
+      setSelectedUserIdsByGame((prev) => ({ ...prev, [gameId]: [] }));
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to add players");
     }
@@ -279,72 +343,87 @@ const [endingGame, setEndingGame] = useState(false);
 
   const handleRemovePoint = async () => {
     if (!scoreToRemove) return;
+
     try {
       await removePoints(scoreToRemove.id);
-      await fetchCurrentActiveGame();
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to remove points");
     } finally {
       setConfirmOpen(false);
+      setScoreToRemove(null);
     }
   };
 
-  const handleRebuy = async (targetPlayerId: number) => {
-    if (!currentGame || userId === null) return;
-
+  const handleRebuy = async (gameId: number, playerId: number) => {
     try {
-      setLoadingAction(true);
-
-      await rebuyAsAdmin(currentGame.id, targetPlayerId);
-
-      await fetchCurrentActiveGame();
+      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
+      await rebuyAsAdmin(gameId, playerId);
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to rebuy");
     } finally {
-      setLoadingAction(false);
+      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
     }
   };
 
-  const handleSaveRules = async () => {
-    if (!currentGame) return;
+  const handleSaveRules = async (gameId: number) => {
+    const rules = rulesByGame[gameId];
+    if (!rules) return;
+
     try {
-      setSavingRules(true);
-      await updateRules(currentGame.id, Number(rebuyValue), Number(bountyValue));
-     await fetchCurrentActiveGame();
+      setSavingRulesByGame((prev) => ({ ...prev, [gameId]: true }));
+      await updateRules(
+        gameId,
+        Number(rules.rebuyValue),
+        Number(rules.bountyValue)
+      );
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to save rules");
     } finally {
-      setSavingRules(false);
+      setSavingRulesByGame((prev) => ({ ...prev, [gameId]: false }));
     }
   };
 
-  const registerKnockoutHandler = async () => {
-    if (!currentGame || !killerPlayerId || !victimPlayerId) return;
+  const registerKnockoutHandler = async (gameId: number) => {
+    const knockout = knockoutByGame[gameId];
+    if (!knockout || !knockout.killerPlayerId || !knockout.victimPlayerId) return;
 
     try {
-      setKnockoutLoading(true);
-      await registerAdminKnockout(currentGame.id, killerPlayerId, victimPlayerId);
-      await fetchCurrentActiveGame();
-      setKillerPlayerId("");
-      setVictimPlayerId("");
+      setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: true }));
+      await registerAdminKnockout(
+        gameId,
+        knockout.killerPlayerId,
+        knockout.victimPlayerId
+      );
+
+      setKnockoutByGame((prev) => ({
+        ...prev,
+        [gameId]: { killerPlayerId: "", victimPlayerId: "" },
+      }));
+
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to register knockout");
     } finally {
-      setKnockoutLoading(false);
+      setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: false }));
     }
   };
 
   const handleCancelRemovePlayer = () => {
     setRemovePlayerConfirmOpen(false);
     setPlayerToRemove(null);
+    setGameIdForPlayerRemoval(null);
   };
 
   const handleConfirmRemovePlayer = async () => {
-    if (!currentGame || !playerToRemove) return;
+    if (!playerToRemove || gameIdForPlayerRemoval === null) return;
+
     try {
-      await removePlayer(currentGame.id, playerToRemove.playerId);
-      setCurrentGame(prev => prev ? { ...prev, players: prev.players.filter(p => p.playerId !== playerToRemove.playerId) } : prev);
+      await removePlayer(gameIdForPlayerRemoval, playerToRemove.playerId);
       setActiveGameId(null);
+      await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to remove player");
     } finally {
@@ -364,9 +443,10 @@ const [endingGame, setEndingGame] = useState(false);
 
   const handleConfirmRemoveGame = async () => {
     if (!gameToRemove) return;
+
     try {
       await removeGame(gameToRemove.id);
-      fetchAllGames();
+      await fetchAllGames();
     } catch (err: any) {
       showError(err.message || "Failed to remove game");
     } finally {
@@ -374,375 +454,440 @@ const [endingGame, setEndingGame] = useState(false);
     }
   };
 
-
   if (!isLoggedIn || (role !== "Admin" && role !== "Gamemaster")) return null;
 
-  /** --- RENDER --- */
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", px: 1, mt: 4 }}>
-      {/* --- PAGE HEADER --- */}
       <Typography mb={3} sx={{ fontSize: { xs: "1.5rem", md: "2.125rem" }, fontWeight: 500 }}>
         Poker Game Control
       </Typography>
 
-      {/* --- ACTIVE GAME PANEL --- */}
-      {!currentGame ? (
-        <Button variant="contained" color="success" onClick={startGameHandler}>
-          Start New Game
-        </Button>
+      <Button variant="contained" color="success" onClick={startGameHandler} sx={{ mb: 3 }}>
+        Start New Game
+      </Button>
+
+      {activeGames.length === 0 ? (
+        <Typography color="text.secondary" mb={4}>
+          No active games
+        </Typography>
       ) : (
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Typography variant="h6">Active Game #{currentGame.gameNumber}</Typography>
-            <Typography>
-              Started: {new Date(currentGame.startedAt).toLocaleString("da-DK")}
-            </Typography>
+        activeGames.map((game) => {
+          const activePlayers = game.players?.filter((p) => p.isActive) ?? [];
+          const availableUsers = getAvailableUsersForGame(game);
+          const rules = rulesByGame[game.id] ?? {
+            rebuyValue: game.rebuyValue ?? "",
+            bountyValue: game.bountyValue ?? "",
+          };
+          const knockout = knockoutByGame[game.id] ?? {
+            killerPlayerId: "",
+            victimPlayerId: "",
+          };
+          const scoreInputs = scoreInputsByGame[game.id] ?? {};
+          const selectedUserIds = selectedUserIdsByGame[game.id] ?? [];
+          const totalScores = game.scores?.length ?? 0;
 
-            {/* --- Current Round --- */}
-            {currentGame?.rounds?.length ? (
-              <Typography color="primary" mt={1}>
-                Current Round #{currentGame.rounds[currentGame.rounds.length - 1].roundNumber}
-              </Typography>
-            ) : (
-              <Typography color="text.secondary" mt={1}>
-                No rounds started yet
-              </Typography>
-            )}
-
-            <Divider sx={{ my: 2 }} />
-
-
-
-            {/* --- Accordion for Game Rules --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Game Rules</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={2}
-                  alignItems="flex-start"
-                  mb={2}
-                >
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Rebuy value"
-                    value={rebuyValue}
-                    onChange={(e) =>
-                      setRebuyValue(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    sx={{ width: { xs: "100%", sm: 150 } }}
-                  />
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Bounty value"
-                    value={bountyValue}
-                    onChange={(e) =>
-                      setBountyValue(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    sx={{ width: { xs: "100%", sm: 150 } }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={handleSaveRules}
-                    disabled={savingRules}
-                    color="success"
-                  >
-                    Save rules
-                  </Button>
-                </Stack>
-                <Typography variant="caption" color="text.secondary">
-                  Current rules: Rebuy = {currentGame.rebuyValue ?? "-"} / Bounty ={" "}
-                  {currentGame.bountyValue ?? "-"}
+          return (
+            <Card key={game.id} sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6">Active Game #{game.gameNumber}</Typography>
+                <Typography>
+                  Started: {new Date(game.startedAt).toLocaleString("da-DK")}
                 </Typography>
-              </AccordionDetails>
-            </Accordion>
 
-            {/* --- Accordion for Choose Player to Join --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Choose Players to Join</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={2}>
-                  <Select
-                    multiple
-                    value={selectedUserIds}
-                    onChange={(e) => setSelectedUserIds(e.target.value as number[])}
-                    renderValue={(selected) =>
-                      (selected as number[])
-                        .map((id) => {
-                          const user = users.find((u) => u.id === id);
-                          return user ? user.username : `Unknown (${id})`;
-                        })
-                        .join(", ")
-                    }
-                    sx={{ width: { xs: "100%", sm: 300 } }}
-                  >
-                    {availableUsers.map((u) => (
-                      <MenuItem key={u.id} value={u.id}>
-                        {u.username} ({u.username})
-                      </MenuItem>
+                <Typography color={game.isOpenForPlayers ? "success.main" : "warning.main"} mt={1}>
+  {game.isOpenForPlayers ? "Open for players" : "Setup only"}
+</Typography>
+
+                {game.rounds?.length ? (
+                  <Typography color="primary" mt={1}>
+                    Current Round #{game.rounds[game.rounds.length - 1].roundNumber}
+                  </Typography>
+                ) : (
+                  <Typography color="text.secondary" mt={1}>
+                    No rounds started yet
+                  </Typography>
+                )}
+
+                <Divider sx={{ my: 2 }} />
+
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Game Rules</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={2}
+                      alignItems="flex-start"
+                      mb={2}
+                    >
+                      <TextField
+                        size="small"
+                        type="number"
+                        label="Rebuy value"
+                        value={rules.rebuyValue}
+                        onChange={(e) =>
+                          setRulesByGame((prev) => ({
+                            ...prev,
+                            [game.id]: {
+                              ...(prev[game.id] ?? { rebuyValue: "", bountyValue: "" }),
+                              rebuyValue: e.target.value === "" ? "" : Number(e.target.value),
+                            },
+                          }))
+                        }
+                        sx={{ width: { xs: "100%", sm: 150 } }}
+                      />
+                      <TextField
+                        size="small"
+                        type="number"
+                        label="Bounty value"
+                        value={rules.bountyValue}
+                        onChange={(e) =>
+                          setRulesByGame((prev) => ({
+                            ...prev,
+                            [game.id]: {
+                              ...(prev[game.id] ?? { rebuyValue: "", bountyValue: "" }),
+                              bountyValue: e.target.value === "" ? "" : Number(e.target.value),
+                            },
+                          }))
+                        }
+                        sx={{ width: { xs: "100%", sm: 150 } }}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={() => handleSaveRules(game.id)}
+                        disabled={!!savingRulesByGame[game.id]}
+                        color="success"
+                      >
+                        Save rules
+                      </Button>
+                    </Stack>
+
+                    <Typography variant="caption" color="text.secondary">
+                      Current rules: Rebuy = {game.rebuyValue ?? "-"} / Bounty ={" "}
+                      {game.bountyValue ?? "-"}
+                    </Typography>
+                  </AccordionDetails>
+                </Accordion>
+
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Choose Players to Join</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={2}>
+                      <Select
+                        multiple
+                        value={selectedUserIds}
+                        onChange={(e) =>
+                          setSelectedUserIdsByGame((prev) => ({
+                            ...prev,
+                            [game.id]: e.target.value as number[],
+                          }))
+                        }
+                        renderValue={(selected) =>
+                          (selected as number[])
+                            .map((id) => {
+                              const user = users.find((u) => u.id === id);
+                              return user ? user.username : `Unknown (${id})`;
+                            })
+                            .join(", ")
+                        }
+                        sx={{ width: { xs: "100%", sm: 300 } }}
+                      >
+                        {availableUsers.map((u) => (
+                          <MenuItem key={u.id} value={u.id}>
+                            {u.username}
+                          </MenuItem>
+                        ))}
+                      </Select>
+
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleAddPlayersAsAdmin(game.id)}
+                        disabled={selectedUserIds.length === 0}
+                      >
+                        Add Players
+                      </Button>
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+
+                {game.bountyValue > 0 && (
+                  <Accordion>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>Register Knockout</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={2}
+                        alignItems="flex-start"
+                      >
+                        <Select
+                          value={knockout.killerPlayerId}
+                          displayEmpty
+                          onChange={(e) =>
+                            setKnockoutByGame((prev) => ({
+                              ...prev,
+                              [game.id]: {
+                                ...(prev[game.id] ?? {
+                                  killerPlayerId: "",
+                                  victimPlayerId: "",
+                                }),
+                                killerPlayerId: Number(e.target.value),
+                              },
+                            }))
+                          }
+                          sx={{ width: { xs: "100%", sm: 180 } }}
+                        >
+                          <MenuItem value="" disabled>
+                            Select killer
+                          </MenuItem>
+                          {activePlayers.map((p) => (
+                            <MenuItem key={`${p.playerId}-${p.username}`} value={p.playerId}>
+                              {p.username}
+                            </MenuItem>
+                          ))}
+                        </Select>
+
+                        <Select
+                          value={knockout.victimPlayerId}
+                          displayEmpty
+                          onChange={(e) =>
+                            setKnockoutByGame((prev) => ({
+                              ...prev,
+                              [game.id]: {
+                                ...(prev[game.id] ?? {
+                                  killerPlayerId: "",
+                                  victimPlayerId: "",
+                                }),
+                                victimPlayerId: Number(e.target.value),
+                              },
+                            }))
+                          }
+                          sx={{ width: { xs: "100%", sm: 180 } }}
+                        >
+                          <MenuItem value="" disabled>
+                            Select victim
+                          </MenuItem>
+                          {activePlayers
+                            .filter((p) => p.playerId !== knockout.killerPlayerId)
+                            .map((p) => (
+                              <MenuItem key={p.playerId} value={p.playerId}>
+                                {p.username}
+                              </MenuItem>
+                            ))}
+                        </Select>
+
+                        <Button
+                          variant="contained"
+                          onClick={() => registerKnockoutHandler(game.id)}
+                          disabled={
+                            !!knockoutLoadingByGame[game.id] ||
+                            !knockout.killerPlayerId ||
+                            !knockout.victimPlayerId
+                          }
+                        >
+                          Register Knockout
+                        </Button>
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
+                )}
+
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Players ({activePlayers.length})</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box
+                      mb={2}
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Typography variant="subtitle2">Add multiple scores:</Typography>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => addAllScoresHandler(game.id)}
+                        disabled={
+                          Object.values(scoreInputs).filter((v) => Number(v) > 0).length === 0
+                        }
+                      >
+                        Bulk Add Points
+                      </Button>
+                    </Box>
+
+                    {activePlayers.map((p) => (
+                      <Box
+                        key={p.playerId}
+                        sx={{
+                          width: "100%",
+                          overflowX: "auto",
+                          mb: 1,
+                          borderBottom: "1px solid #eee",
+                          p: 1,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Stack
+                          direction={{ xs: "column", sm: "row" }}
+                          spacing={2}
+                          alignItems={{ xs: "stretch", sm: "center" }}
+                        >
+                          <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
+                            {p.username.charAt(0).toUpperCase() + p.username.slice(1)}
+                          </Typography>
+
+                          <TextField
+                            size="small"
+                            label="Type points to add"
+                            value={scoreInputs[p.playerId] || ""}
+                            onChange={(e) =>
+                              setScoreInputsByGame((prev) => ({
+                                ...prev,
+                                [game.id]: {
+                                  ...(prev[game.id] ?? {}),
+                                  [p.playerId]: e.target.value,
+                                },
+                              }))
+                            }
+                            sx={{ width: { xs: "100%", sm: 150 } }}
+                          />
+
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            sx={{
+                              flexShrink: 0,
+                              overflowX: "auto",
+                            }}
+                          >
+                            <Button
+                              variant="contained"
+                              onClick={() => addScoreHandler(game.id, p.playerId)}
+                            >
+                              Add Points
+                            </Button>
+
+                            {game.rebuyValue > 0 && (
+                              <Button
+                                variant="outlined"
+                                color="warning"
+                                onClick={() => handleRebuy(game.id, p.playerId)}
+                                disabled={!!loadingActionByGame[game.id] || game.isFinished}
+                              >
+                                Rebuy (-{game.rebuyValue})
+                              </Button>
+                            )}
+
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              onClick={() => {
+                                setPlayerToRemove(p);
+                                setGameIdForPlayerRemoval(game.id);
+                                setRemovePlayerConfirmOpen(true);
+                              }}
+                            >
+                              Remove Player
+                            </Button>
+                          </Stack>
+                        </Stack>
+                      </Box>
                     ))}
-                  </Select>
+                  </AccordionDetails>
+                </Accordion>
+
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Score Entries ({totalScores})</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {(game.rounds ?? []).map((round) => (
+                      <Accordion key={round.id} sx={{ mb: 1 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography>
+                            Round {round.roundNumber} ({round.scores?.length ?? 0} scores)
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
+                          {(round.scores ?? []).map((s) => (
+                            <Stack
+                              key={s.id}
+                              direction="row"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              sx={{ ml: 2, mb: 1 }}
+                            >
+                              <Box>
+                                <Typography fontWeight="bold">{s.userName}</Typography>
+
+                                <Typography
+                                  sx={{
+                                    ml: 1,
+                                    color: s.points >= 0 ? "success.main" : "error.main",
+                                  }}
+                                >
+                                  {s.points >= 0 ? "+" : ""}
+                                  {s.points} <span style={{ opacity: 0.6 }}>({s.type})</span>
+                                </Typography>
+                              </Box>
+
+                              {s.points > 0 && (
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => handleConfirmRemove(s)}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </Stack>
+                          ))}
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </AccordionDetails>
+                </Accordion>
+
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
+                   <Button
+    variant="contained"
+    color="success"
+    onClick={() => handleOpenGame(game.id)}
+    disabled={game.isOpenForPlayers || !!openingGameByGame[game.id]}
+  >
+    {game.isOpenForPlayers ? "Game is Open" : "Open Game"}
+  </Button>
 
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={handleAddPlayersAsAdmin}
-                    disabled={selectedUserIds.length === 0}
+                    onClick={() => handleStartRound(game.id)}
+                    disabled={!game.isOpenForPlayers || !!startingRoundByGame[game.id]}
                   >
-                    Add Players
+                    Start Next Round: {game.rounds?.length ? game.rounds.length + 1 : 1}
+                  </Button>
+
+                  <Button
+                    color={totalScores === 0 ? "warning" : "error"}
+                    variant="contained"
+                    onClick={() => handleEndGameClick(game)}
+                    disabled={!!endingGameByGame[game.id]}
+                  >
+                    {totalScores === 0 ? "Cancel game" : "End game"}
                   </Button>
                 </Stack>
-              </AccordionDetails>
-            </Accordion>
-
-            {/* --- Accordion for Admin Knockout --- */}
-            {currentGame.bountyValue > 0 && (
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>Register Knockout</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    alignItems="flex-start"
-                  >
-                    <Select
-                      value={killerPlayerId}
-                      displayEmpty
-                      onChange={(e) => setKillerPlayerId(Number(e.target.value))}
-                      sx={{ width: { xs: "100%", sm: 180 } }}
-                    >
-                      <MenuItem value="" disabled>
-                        Select killer
-                      </MenuItem>
-                      {currentGame?.players.map((p) => (
-                        <MenuItem key={`${p.playerId}-${p.username}`} value={p.playerId}>
-                          {p.username}
-                        </MenuItem>
-                      ))}
-                    </Select>
-
-                    <Select
-                      value={victimPlayerId}
-                      displayEmpty
-                      onChange={(e) => setVictimPlayerId(Number(e.target.value))}
-                      sx={{ width: { xs: "100%", sm: 180 } }}
-                    >
-                      <MenuItem value="" disabled>
-                        Select victim
-                      </MenuItem>
-                      {currentGame?.players
-                        .filter((p) => p.playerId !== killerPlayerId)
-                        .map((p) => (
-                          <MenuItem key={p.playerId} value={p.playerId}>
-                            {p.username}
-                          </MenuItem>
-                        ))}
-                    </Select>
-
-                    <Button
-                      variant="contained"
-                      onClick={registerKnockoutHandler}
-                      disabled={knockoutLoading || !killerPlayerId || !victimPlayerId}
-                    >
-                      Register Knockout
-                    </Button>
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-            )}
-
-            {/* --- Accordion for Players --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Players ({activePlayers.length})</Typography>
-              </AccordionSummary>
-
-              <AccordionDetails>
-
-                {/* SINGLE BUTTON */}
-                <Box
-                  mb={2}
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography variant="subtitle2">
-                    Add multiple scores:
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    onClick={addAllScoresHandler}
-                    disabled={
-                      Object.values(scoreInputs).filter(v => Number(v) > 0).length === 0
-                    }
-                  >
-                    Bulk Add Points
-                  </Button>
-                </Box>
-
-                {activePlayers.map((p) => (
-                  <Box key={p.playerId} sx={{ width: "100%", overflowX: "auto", mb: 1, borderBottom: "1px solid #eee", p: 1, borderRadius: 2 }}>
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={2}
-                      alignItems={{ xs: "stretch", sm: "center" }}
-                    >
-                      {/* Player Name */}
-                      <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                        {p.username.charAt(0).toUpperCase() + p.username.slice(1)}
-                      </Typography>
-
-                      {/* Points Input */}
-                      <TextField
-                        size="small"
-                        label="Type points to add"
-                        value={scoreInputs[p.playerId] || ""}
-                        onChange={(e) =>
-                          setScoreInputs({ ...scoreInputs, [p.playerId]: e.target.value })
-                        }
-                        sx={{ width: { xs: "100%", sm: 150 } }}
-                      />
-
-                      {/* Buttons in one row */}
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{
-                          flexShrink: 0,
-                          overflowX: "auto",
-                        }}
-                      >
-                        <Button
-                          variant="contained"
-                          onClick={() => addScoreHandler(p.playerId)}
-                        >
-                          Add Points
-                        </Button>
-
-                        {currentGame.rebuyValue > 0 && (
-                          <Button
-                            variant="outlined"
-                            color="warning"
-                            onClick={() => handleRebuy(p.playerId)}
-                            disabled={loadingAction || currentGame.isFinished}
-                          >
-                            Rebuy (-{currentGame.rebuyValue})
-                          </Button>
-                        )}
-
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => {
-                            setPlayerToRemove(p);
-                            setRemovePlayerConfirmOpen(true);
-                          }}
-                        >
-                          Remove Player
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </Box>
-                ))}
-              </AccordionDetails>
-            </Accordion>
-
-            {/* --- Accordion for Score Entries --- */}
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography>Score Entries ({currentGame.scores.length})</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {currentGame.rounds.map((round) => (
-                  <Accordion key={round.id} sx={{ mb: 1 }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>
-                        Round {round.roundNumber} ({round.scores?.length ?? 0} scores)
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails sx={{ maxHeight: 300, overflowY: "auto" }}>
-                      {(round.scores ?? []).map((s) => (
-                        <Stack
-                          key={s.id}
-                          direction="row"
-                          alignItems="center"
-                          justifyContent="space-between"
-                          sx={{ ml: 2, mb: 1 }}
-
-                        >
-                          <Box>
-                            <Typography fontWeight="bold">
-                              {s.userName}
-                            </Typography>
-
-                            <Typography
-                              sx={{
-                                ml: 1,
-                                color: s.points >= 0 ? "success.main" : "error.main"
-                              }}
-                            >
-                              {s.points >= 0 ? "+" : ""}
-                              {s.points}{" "}
-                              <span style={{ opacity: 0.6 }}>
-                                ({s.type})
-                              </span>
-                            </Typography>
-                          </Box>
-
-                          {s.points > 0 && (
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleConfirmRemove(s)}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </Stack>
-                      ))}
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </AccordionDetails>
-            </Accordion>
-
-
-            {/* Action Buttons */}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-              {/* --- START/END ROUND --- */}
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleStartRound}
-                disabled={startingRound}
-              >
-                Start Next Round: {currentGame?.rounds?.length ? currentGame.rounds.length + 1 : 1}
-              </Button>
-              <Button
-                color={currentGame.scores.length === 0 ? "warning" : "error"}
-                variant="contained"
-                onClick={handleEndGameClick}
-                 disabled={endingGame}
-              >
-                {currentGame.scores.length === 0 ? "Cancel game" : "End game"}
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          );
+        })
       )}
 
-
-
-      {/* All Games List */}
       <Typography
         sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
         mb={2}
@@ -750,14 +895,8 @@ const [endingGame, setEndingGame] = useState(false);
         All Games
       </Typography>
 
-      {/* Fetch All Games Button */}
       <Box mt={2} mb={2}>
-        <Button
-          variant="contained"
-          color="success"
-          onClick={fetchAllGames}
-        // sx={{ width: { xs: "100%", sm: "auto" } }}
-        >
+        <Button variant="contained" color="success" onClick={fetchAllGames}>
           Fetch All Games
         </Button>
       </Box>
@@ -783,7 +922,8 @@ const [endingGame, setEndingGame] = useState(false);
                     Game results
                   </Button>
                 </Link>
-                {g.isFinished && (role === "Admin") && (
+
+                {g.isFinished && role === "Admin" && (
                   <Button
                     variant="outlined"
                     color="error"
@@ -799,15 +939,7 @@ const [endingGame, setEndingGame] = useState(false);
           </Card>
         ))}
 
-
-
-
-
-      {/* Remove Player Confirmation Modal */}
-      <Dialog
-        open={removePlayerConfirmOpen}
-        onClose={handleCancelRemovePlayer}
-      >
+      <Dialog open={removePlayerConfirmOpen} onClose={handleCancelRemovePlayer}>
         <DialogTitle>Remove Player</DialogTitle>
         <DialogContent>
           Are you sure you want to remove {playerToRemove?.username} from the game?
@@ -820,50 +952,53 @@ const [endingGame, setEndingGame] = useState(false);
         </DialogActions>
       </Dialog>
 
-      {/* Remove Points Confirmation Modal */}
-      <Dialog
-        open={confirmOpen}
-        onClose={handleCancelRemove}
-      >
+      <Dialog open={confirmOpen} onClose={handleCancelRemove}>
         <DialogTitle>Remove Points</DialogTitle>
         <DialogContent>
-          Are you sure you want to remove {scoreToRemove?.points} points from {scoreToRemove?.userName}?
+          Are you sure you want to remove {scoreToRemove?.points} points from{" "}
+          {scoreToRemove?.userName}?
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelRemove}>Cancel</Button>
-          <Button color="error" onClick={handleRemovePoint}>Remove</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* End / Cancel Game Confirmation Modal */}
-      <Dialog
-        open={endGameConfirmOpen}
-        onClose={() => setEndGameConfirmOpen(false)}
-      >
-        <DialogTitle>
-          {currentGame?.scores.length === 0 ? "Cancel Game" : "End Game"}
-        </DialogTitle>
-        <DialogContent>
-          {currentGame?.scores.length === 0
-            ? "Are you sure you want to cancel this game? All progress will be lost."
-            : "Are you sure you want to end this game?"}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEndGameConfirmOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={confirmEndOrCancelGame}  disabled={endingGame}>
-            {currentGame?.scores.length === 0 ? "Cancel Game" : "End Game"}
+          <Button color="error" onClick={handleRemovePoint}>
+            Remove
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Remove Game Confirmation Modal */}
-      <Dialog
-        open={removeGameConfirmOpen}
-        onClose={handleCancelRemoveGame}
-      >
+      <Dialog open={endGameConfirmOpen} onClose={() => setEndGameConfirmOpen(false)}>
+        <DialogTitle>
+          {(gameToEnd?.scores?.length ?? 0) === 0 ? "Cancel Game" : "End Game"}
+        </DialogTitle>
+        <DialogContent>
+          {(gameToEnd?.scores?.length ?? 0) === 0
+            ? "Are you sure you want to cancel this game? All progress will be lost."
+            : "Are you sure you want to end this game?"}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setEndGameConfirmOpen(false);
+              setGameToEnd(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            onClick={confirmEndOrCancelGame}
+            disabled={!!(gameToEnd && endingGameByGame[gameToEnd.id])}
+          >
+            {(gameToEnd?.scores?.length ?? 0) === 0 ? "Cancel Game" : "End Game"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={removeGameConfirmOpen} onClose={handleCancelRemoveGame}>
         <DialogTitle>Delete Game Permanently</DialogTitle>
         <DialogContent>
-          Are you sure you want to permanently delete Game #{gameToRemove?.gameNumber}? This action cannot be undone.
+          Are you sure you want to permanently delete Game #{gameToRemove?.gameNumber}? This
+          action cannot be undone.
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelRemoveGame}>Cancel</Button>
