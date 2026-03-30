@@ -19,6 +19,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,7 +44,7 @@ import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
-import { Game, GamePanel, Player } from "@/lib/models/game";
+import { Game, GamePanel, GameType, Player } from "@/lib/models/game";
 import { User } from "@/lib/models/user";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
@@ -64,7 +66,7 @@ export default function GameControlPanelPage() {
 
   const [games, setGames] = useState<Game[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-const [activeGames, setActiveGames] = useState<Game[]>([]);
+  const [activeGames, setActiveGames] = useState<Game[]>([]);
   const [selectedUserIdsByGame, setSelectedUserIdsByGame] = useState<SelectedUsersState>({});
   const [scoreInputsByGame, setScoreInputsByGame] = useState<ScoreInputsState>({});
   const [rulesByGame, setRulesByGame] = useState<RulesState>({});
@@ -76,6 +78,7 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
   const [knockoutLoadingByGame, setKnockoutLoadingByGame] = useState<LoadingByGameState>({});
   const [startingRoundByGame, setStartingRoundByGame] = useState<LoadingByGameState>({});
   const [endingGameByGame, setEndingGameByGame] = useState<LoadingByGameState>({});
+  const [newGameType, setNewGameType] = useState<GameType>("Poker");
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [scoreToRemove, setScoreToRemove] = useState<Score | null>(null);
@@ -91,16 +94,16 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
   const [gameToRemove, setGameToRemove] = useState<Game | null>(null);
 
 
-// /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
-// useGameHub({
-//   gameIds: activeGames.map((g) => g.id),
-//   onRoundStarted: () => {
-//     fetchActiveGames();
-//   },
-//   onGameFinished: () => {
-//     fetchActiveGames();
-//   },
-// });
+  // /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
+  // useGameHub({
+  //   gameIds: activeGames.map((g) => g.id),
+  //   onRoundStarted: () => {
+  //     fetchActiveGames();
+  //   },
+  //   onGameFinished: () => {
+  //     fetchActiveGames();
+  //   },
+  // });
 
 
   useEffect(() => {
@@ -122,7 +125,7 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
     scores: game.rounds?.flatMap((r) => r.scores ?? []) ?? [],
   });
 
-  
+
 
   const fetchUsers = async () => {
     try {
@@ -206,7 +209,7 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
 
   const startGameHandler = async () => {
     try {
-      await startGame();
+      await startGame(newGameType);
       await fetchActiveGames();
     } catch (err: any) {
       showError(err.message || "Failed to start game");
@@ -214,16 +217,16 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
   };
 
   const handleOpenGame = async (gameId: number) => {
-  try {
-    setOpeningGameByGame((prev) => ({ ...prev, [gameId]: true }));
-    await openGameForPlayers(gameId);
-    await fetchActiveGames();
-  } catch (err: any) {
-    showError(err.message || "Failed to open game");
-  } finally {
-    setOpeningGameByGame((prev) => ({ ...prev, [gameId]: false }));
-  }
-};
+    try {
+      setOpeningGameByGame((prev) => ({ ...prev, [gameId]: true }));
+      await openGameForPlayers(gameId);
+      await fetchActiveGames();
+    } catch (err: any) {
+      showError(err.message || "Failed to open game");
+    } finally {
+      setOpeningGameByGame((prev) => ({ ...prev, [gameId]: false }));
+    }
+  };
 
   const handleStartRound = async (gameId: number) => {
     try {
@@ -461,10 +464,39 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
       <Typography mb={3} sx={{ fontSize: { xs: "1.5rem", md: "2.125rem" }, fontWeight: 500 }}>
         Poker Game Control
       </Typography>
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h6" mb={2}>
+            Create New Game
+          </Typography>
 
-      <Button variant="contained" color="success" onClick={startGameHandler} sx={{ mb: 3 }}>
-        Start New Game
-      </Button>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            justifyContent="space-between"
+          >
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel id="new-game-type-label">Game Type</InputLabel>
+              <Select
+                labelId="new-game-type-label"
+                value={newGameType}
+                label="Game Type"
+                onChange={(e) => setNewGameType(e.target.value as GameType)}
+              >
+                <MenuItem value="Poker">Poker</MenuItem>
+                <MenuItem value="BlackJack">BlackJack</MenuItem>
+                <MenuItem value="Roulette">Roulette</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button variant="contained" color="success" onClick={startGameHandler}>
+              Start New Game
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
 
       {activeGames.length === 0 ? (
         <Typography color="text.secondary" mb={4}>
@@ -495,8 +527,8 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
                 </Typography>
 
                 <Typography color={game.isOpenForPlayers ? "success.main" : "warning.main"} mt={1}>
-  {game.isOpenForPlayers ? "Open for players" : "Setup only"}
-</Typography>
+                  {game.isOpenForPlayers ? "Open for players" : "Setup only"}
+                </Typography>
 
                 {game.rounds?.length ? (
                   <Typography color="primary" mt={1}>
@@ -855,14 +887,16 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
                 </Accordion>
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-                   <Button
-    variant="contained"
-    color="success"
-    onClick={() => handleOpenGame(game.id)}
-    disabled={game.isOpenForPlayers || !!openingGameByGame[game.id]}
-  >
-    {game.isOpenForPlayers ? "Game is Open" : "Open Game"}
-  </Button>
+                  {!game.isOpenForPlayers && (
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => handleOpenGame(game.id)}
+                      disabled={!!openingGameByGame[game.id]}
+                    >
+                      Activate Game
+                    </Button>
+                  )}
 
                   <Button
                     variant="contained"
@@ -908,32 +942,52 @@ const [activeGames, setActiveGames] = useState<Game[]>([]);
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                spacing={1}
-                alignItems={{ xs: "flex-start", sm: "center" }}
+                spacing={1.5}
                 justifyContent="space-between"
-                sx={{ width: "100%", overflowX: "auto" }}
+                alignItems={{ xs: "stretch", sm: "center" }}
               >
                 <Typography sx={{ flex: 1 }}>
                   Game #{g.gameNumber} — {g.isFinished ? "Finished" : "Active"}
                 </Typography>
 
-                <Link href={`/game/game-results/${g.id}`} passHref>
-                  <Button variant="outlined" size="small" sx={{ mt: { xs: 1, sm: 0 } }}>
-                    Game results
-                  </Button>
-                </Link>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    width: { xs: "100%", sm: "auto" },
+                  }}
+                >
+                  <Box sx={{ flex: { xs: 1, sm: "0 0 auto" } }}>
+                    <Link
+                      href={`/game/game-results/${g.id}`}
+                      passHref
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        fullWidth={false}
+                        sx={{ width: { xs: "100%", sm: "auto" } }}
+                      >
+                        Game results
+                      </Button>
+                    </Link>
+                  </Box>
 
-                {g.isFinished && role === "Admin" && (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    sx={{ mt: { xs: 1, sm: 0 } }}
-                    onClick={() => handleRemoveGameClick(g)}
-                  >
-                    Delete permanently
-                  </Button>
-                )}
+                  {g.isFinished && role === "Admin" && (
+                    <Box sx={{ flex: { xs: 1, sm: "0 0 auto" } }}>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleRemoveGameClick(g)}
+                        sx={{ width: { xs: "100%", sm: "auto" } }}
+                      >
+                        Delete permanently
+                      </Button>
+                    </Box>
+                  )}
+                </Stack>
               </Stack>
             </CardContent>
           </Card>

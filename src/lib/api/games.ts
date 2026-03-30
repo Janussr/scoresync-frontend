@@ -1,8 +1,11 @@
 import { apiFetch } from "./clients";
-import {  Game, GameDetails, GamePanel, HallOfFameEntry  } from "@/lib/models/game";
+import {  Game, GameDetails, GamePanel, GameType, HallOfFameEntry  } from "@/lib/models/game";
 
-export const startGame = () =>
-  apiFetch<Game>(`/games/start`, { method: "POST" });
+export const startGame = (type: GameType) =>
+  apiFetch<Game>(`/games/start`, {
+    method: "POST",
+    body: { type } as any,
+  });
 
 export const openGameForPlayers = (gameId: number) =>
   apiFetch(`/games/${gameId}/open`, { method: "POST" });
