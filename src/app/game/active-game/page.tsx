@@ -223,9 +223,36 @@ export default function PlayerGamePage() {
 
       <Card>
         <CardContent>
-          <Typography mb={2} fontWeight="bold">
-            Playing as: {me.username}
-          </Typography>
+
+        <Stack
+  direction="row"
+  justifyContent="space-between"
+  alignItems="center"
+ 
+>
+  <Typography fontWeight="bold"
+  
+   sx={{
+    borderBottom: "1px solid",
+    borderColor: "divider",
+    mb: 1,
+    textTransform: "capitalize",
+  }}
+  
+  >
+    {me.username}
+  </Typography>
+
+  <Typography fontWeight="bold"
+   sx={{
+    borderBottom: "1px solid",
+    borderColor: "divider",
+    mb: 1,
+  }}
+  >
+    {currentGame.type}
+  </Typography>
+</Stack>
 
           <Box sx={{ p: 1, borderRadius: 2, bgcolor: "background.paper", border: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
             <Typography fontWeight="bold">Your game status</Typography>

@@ -74,7 +74,9 @@ export default function HallOfFamePage() {
                     <ListItemText
                       primary={
                         <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="h6">
+                          <Typography variant="h6"
+                          sx={{textTransform: "capitalize"}}
+                          >
                             {getMedal(i)} {entry.playerName}
                           </Typography>
                         </Stack>

@@ -130,7 +130,7 @@ export default function GameResultspage() {
             })}
 
           {game.winner && (
-            <Typography sx={{ mt: 2, textAlign: "center", fontWeight: "bold", fontSize: { xs: "1rem", md: "1.25rem" } }}>
+            <Typography sx={{ mt: 2, textAlign: "center", textTransform: "capitalize", fontWeight: "bold", fontSize: { xs: "1rem", md: "1.25rem" } }}>
               🏆 Winner: {game.winner.userName} ({game.winner.winningScore} pts)
             </Typography>
           )}
@@ -139,7 +139,7 @@ export default function GameResultspage() {
 
       {/* Modal */}
 <Dialog open={modalOpen} onClose={closeModal} maxWidth="sm" fullWidth>
-  <DialogTitle>{playerScores?.userName} – Score Details</DialogTitle>
+  <DialogTitle sx={{textTransform: "capitalize"}}>{playerScores?.userName} – Score Details</DialogTitle>
   <DialogContent dividers>
     {playerScores?.rounds.map((round) => (
       <Box key={round.roundId} sx={{ mb: 2 }}>

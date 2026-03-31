@@ -85,6 +85,7 @@ export default function GameHistoryPage() {
                     justifyContent="space-between"
                     alignItems="center"
                     width="100%"
+                    sx={{textTransform: "capitalize",}}
                   >
                     <ListItemText
                       primary={`Game #${entry.gameNumber} — ${entry.winnerName} — ${entry.totalScore} points`}

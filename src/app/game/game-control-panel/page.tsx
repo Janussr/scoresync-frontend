@@ -521,7 +521,8 @@ export default function GameControlPanelPage() {
           return (
             <Card key={game.id} sx={{ mb: 4 }}>
               <CardContent>
-                <Typography variant="h6">Active Game #{game.gameNumber}</Typography>
+                <Typography variant="h6">Game #{game.gameNumber}</Typography>
+                <Typography >{game.type}</Typography>
                 <Typography>
                   Started: {new Date(game.startedAt).toLocaleString("da-DK")}
                 </Typography>

@@ -28,12 +28,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         { label: "♣ Black Jack ♣", href: "/game/blackjack" },
         { label: "♦ Poker ♦", href: "/game/poker" },
         { label: "♥ Roulette ♥", href: "/game/roulette" },
+// ♠♠
     ];
 
     if (isLoggedIn) {
         navLinks.push({ label: " Profile ", href: "/account/profile" });
     }
-// ♠♠
 
     if (isLoggedIn && role === "Admin") {
         navLinks.push({ label: "Admin panel", href: "/account/admin-panel" });
@@ -75,7 +75,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         ))}
 
                         {isLoggedIn && (
-                            <Typography sx={{ color: "gold", fontStyle: "italic" }}>
+                            <Typography sx={{ color: "gold", fontStyle: "italic",  textTransform: "capitalize"}}>
                                 {username}
                             </Typography>
                         )}
@@ -119,11 +119,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         {isLoggedIn &&
 
                             <Box sx={{ textAlign: "center", mb: 2 }}>
-                                <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                                {/* <Typography variant="body2" sx={{ opacity: 0.7 }}>
                                     Logged in as
-                                </Typography>
+                                </Typography> */}
 
-                                <Typography sx={{ fontWeight: "bold" }}>
+                                <Typography sx={{ fontWeight: "bold", textTransform: "capitalize" }}>
                                     {username}
                                 </Typography>
                             </Box>

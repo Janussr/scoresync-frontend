@@ -47,7 +47,8 @@ export default function BountyLeaderboardPage() {
 
     fetchLeaderboard();
   }, [showError]);
-
+const capitalize = (str: string) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
   return (
     <Box
       sx={{
@@ -81,7 +82,7 @@ export default function BountyLeaderboardPage() {
             <TableBody>
               {data.map((row) => (
                 <TableRow key={row.userId}>
-                  <TableCell>{row.userName}</TableCell>
+                  <TableCell>{capitalize(row.userName)}</TableCell>
                   <TableCell>{row.knockouts}</TableCell>
                   <TableCell>{row.timesKnockedOut}</TableCell>
                   <TableCell>{row.totalBountyPoints}</TableCell>
