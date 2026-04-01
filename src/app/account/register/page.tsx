@@ -56,12 +56,11 @@ export default function RegisterPage() {
   return (
     <Box
       sx={{
-        height: "100%",
+        minHeight: "80vh",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         px: 2,
-        overflow: "hidden",
       }}
     >
       <Card
@@ -130,8 +129,6 @@ export default function RegisterPage() {
             disabled={loading}
             sx={{
               mt: 3,
-              backgroundColor: "#8b0000",
-              "&:hover": { backgroundColor: "#a30000" },
               fontWeight: "bold",
             }}
           >

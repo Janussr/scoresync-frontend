@@ -105,8 +105,6 @@ const handleLogin = async () => {
             variant="contained"
             sx={{
               mt: 3,
-              backgroundColor: "#8b0000",
-              "&:hover": { backgroundColor: "#a30000" },
               fontWeight: "bold",
               letterSpacing: "1px",
             }}

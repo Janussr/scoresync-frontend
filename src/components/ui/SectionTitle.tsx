@@ -11,26 +11,39 @@ type SectionTitleProps = {
 
 export default function SectionTitle({
   children,
-  color = "white",
+  color,
   size = "medium",
 }: SectionTitleProps) {
   const fontSizeMap = {
     small: { xs: "1rem", sm: "1.2rem" },
-    medium: { xs: "1.2rem", sm: "1.5rem" },
-    large: { xs: "1.5rem", sm: "2rem" },
+    medium: { xs: "1.3rem", sm: "1.6rem" },
+    large: { xs: "1.6rem", sm: "2.2rem" },
   };
 
   return (
     <Typography
-      variant="h6"
       sx={{
-        fontWeight: "bold",
-        mb: 1,
+        fontWeight: 700,
+        mb: 1.5,
         fontSize: fontSizeMap[size],
-        borderBottom: `2px solid ${color}`,
+        fontFamily: "Playfair Display, serif",
+        letterSpacing: "0.05em",
+        color: color || "primary.main",
+
         display: "inline-block",
+        position: "relative",
         pb: 0.5,
-        color: color,
+
+        // 🔥 elegant underline (meget bedre end border)
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          width: "100%",
+          height: "2px",
+          background: "linear-gradient(90deg, #d4af37, transparent)",
+        },
       }}
     >
       {children}

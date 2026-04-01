@@ -984,7 +984,7 @@ export default function GameControlPanelPage() {
                         onClick={() => handleRemoveGameClick(g)}
                         sx={{ width: { xs: "100%", sm: "auto" } }}
                       >
-                        Delete permanently
+                        Delete
                       </Button>
                     </Box>
                   )}

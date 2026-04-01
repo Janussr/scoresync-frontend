@@ -78,30 +78,60 @@ export default function GameHistoryPage() {
         <CardContent>
           <List>
             {history.map((entry, i) => (
-              <Box key={entry.id}>
-                <ListItem>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    width="100%"
-                    sx={{textTransform: "capitalize",}}
-                  >
-                    <ListItemText
-                      primary={`Game #${entry.gameNumber} — ${entry.winnerName} — ${entry.totalScore} points`}
-                      secondary={`${new Date(entry.date).toLocaleString("da-DK")} • ${entry.playerCount} players`}
-                    />
+             <Box key={entry.id}>
+  <ListItem sx={{ px: 0 }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={2}
+      justifyContent="space-between"
+      alignItems={{ xs: "stretch", sm: "center" }}
+      width="100%"
+    >
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontWeight: 600,
+            textTransform: "capitalize",
+            color: "primary.main",
+            pr: { sm: 2 },
+          }}
+        >
+          {`Game #${entry.gameNumber} — ${entry.winnerName} — ${entry.totalScore} points`}
+        </Typography>
 
-                    <Link href={`/game/game-results/${entry.id}`} passHref>
-                      <Button variant="outlined" size="small" >
-                        Game results
-                      </Button>
-                    </Link>
-                  </Stack>
-                </ListItem>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 0.5 }}
+        >
+          {new Date(entry.date).toLocaleString("da-DK")} • {entry.playerCount} players
+        </Typography>
+      </Box>
 
-                {i < history.length - 1 && <Divider />}
-              </Box>
+      <Box
+  sx={{
+    width: { xs: "100%", sm: "auto" },
+    display: "flex",
+    justifyContent: { xs: "center", sm: "flex-end" },
+  }}
+>
+  <Button
+    component={Link}
+    href={`/game/game-results/${entry.id}`}
+    variant="outlined"
+    size="small"
+    sx={{
+      width: { xs: "50%", sm: "auto" },
+    }}
+  >
+    Game results
+  </Button>
+</Box>
+    </Stack>
+  </ListItem>
+
+  {i < history.length - 1 && <Divider />}
+</Box>
             ))}
           </List>
         </CardContent>
