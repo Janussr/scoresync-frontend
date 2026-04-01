@@ -1,6 +1,6 @@
 "use client";
 
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -11,13 +11,14 @@ import {
   TableRow,
   Card,
   CardContent,
+  TableContainer,
 } from "@mui/material";
-
 import { getKnockoutLeaderboard } from "@/lib/api/bounties";
 import { BountyRow } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
+import SectionTitle from "@/components/ui/SectionTitle";
 
-export default function BountyLeaderboardPage() {
+export default function BountyLeaderboard() {
   const [data, setData] = useState<BountyRow[]>([]);
   const { showError } = useError();
 
@@ -26,10 +27,9 @@ export default function BountyLeaderboardPage() {
       try {
         const rows = await getKnockoutLeaderboard();
 
-        // Summer total bounty points pr spiller
         const totalMap: Record<number, BountyRow> = {};
 
-        rows.forEach(row => {
+        rows.forEach((row) => {
           if (!totalMap[row.userId]) {
             totalMap[row.userId] = { ...row };
           } else {
@@ -39,57 +39,63 @@ export default function BountyLeaderboardPage() {
           }
         });
 
-        setData(Object.values(totalMap));
+        const sorted = Object.values(totalMap).sort(
+          (a, b) => b.totalBountyPoints - a.totalBountyPoints
+        );
+
+        setData(sorted);
       } catch (err: any) {
-        showError(err.message || "Failed to fetch leaderboard");
+        showError(err.message || "Failed to fetch bounty leaderboard");
       }
     };
 
     fetchLeaderboard();
   }, [showError]);
-const capitalize = (str: string) =>
-  str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
+  const capitalize = (str: string) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
   return (
-    <Box
-      sx={{
-        width: "100%",
-        maxWidth: { md: 800 },
-        mx: "auto",
-        px: { xs: 1, md: 0 },
-        mt: 4,
-      }}
-    >
+    <Box sx={{ mt: 2 }}>
       <Typography
-        variant="h4"
-        mb={3}
+        variant="h5"
         textAlign="center"
-        fontWeight="bold"
       >
-        Bounty Leaderboard
+        <SectionTitle size="large">Bounty board</SectionTitle>
       </Typography>
 
       <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
         <CardContent sx={{ px: { xs: 1, md: 2 }, py: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Player</TableCell>
-                <TableCell>Knockouts</TableCell>
-                <TableCell>Times Knocked Out</TableCell>
-                <TableCell>Total Bounty Points</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.map((row) => (
-                <TableRow key={row.userId}>
-                  <TableCell>{capitalize(row.userName)}</TableCell>
-                  <TableCell>{row.knockouts}</TableCell>
-                  <TableCell>{row.timesKnockedOut}</TableCell>
-                  <TableCell>{row.totalBountyPoints}</TableCell>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Player</strong></TableCell>
+                  <TableCell><strong>Knockouts</strong></TableCell>
+                  <TableCell><strong>Times Knocked Out</strong></TableCell>
+                  <TableCell><strong>Total Bounty Points</strong></TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {data.map((row) => (
+                  <TableRow key={row.userId}>
+                    <TableCell>{capitalize(row.userName)}</TableCell>
+                    <TableCell>{row.knockouts}</TableCell>
+                    <TableCell>{row.timesKnockedOut}</TableCell>
+                    <TableCell>{row.totalBountyPoints}</TableCell>
+                  </TableRow>
+                ))}
+
+                {data.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      No bounty data yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </CardContent>
       </Card>
     </Box>

@@ -16,14 +16,16 @@ import {
   TextField,
   MenuItem,
 } from "@mui/material";
-import { HallOfFameEntry } from "@/lib/models/game";
+import { HallOfFameEntry, GameType } from "@/lib/models/game";
 import { getHallOfFame } from "@/lib/api/games";
 import { useError } from "@/context/ErrorContext";
+
+type HallOfFameFilter = "ALL" | GameType;
 
 export default function HallOfFamePage() {
   const [hallOfFame, setHallOfFame] = useState<HallOfFameEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGameType, setSelectedGameType] = useState("ALL");
+  const [selectedGameType, setSelectedGameType] = useState<HallOfFameFilter>("ALL");
   const { showError } = useError();
 
   useEffect(() => {
@@ -48,17 +50,42 @@ export default function HallOfFamePage() {
     return "🎖️";
   };
 
-  const gameTypes = useMemo(() => {
+  const formatGameType = (gameType: HallOfFameFilter) => {
+    if (gameType === "ALL") return "All Game Types";
+    if (gameType === "BlackJack") return "BlackJack";
+    if (gameType === "Poker") return "Poker";
+    if (gameType === "Roullette") return "Roullette";
+    return gameType;
+  };
+
+  const gameTypes = useMemo<HallOfFameFilter[]>(() => {
     const uniqueTypes = [...new Set(hallOfFame.map((entry) => entry.gameType))];
     return ["ALL", ...uniqueTypes];
   }, [hallOfFame]);
 
   const filteredHallOfFame = useMemo(() => {
-    if (selectedGameType === "ALL") {
-      return hallOfFame;
+    if (selectedGameType !== "ALL") {
+      return hallOfFame
+        .filter((entry) => entry.gameType === selectedGameType)
+        .sort((a, b) => b.wins - a.wins);
     }
 
-    return hallOfFame.filter((entry) => entry.gameType === selectedGameType);
+    const grouped = new Map<number, HallOfFameEntry>();
+
+    for (const entry of hallOfFame) {
+      const existing = grouped.get(entry.userId);
+
+      if (existing) {
+        existing.wins += entry.wins;
+      } else {
+        grouped.set(entry.userId, {
+          ...entry,
+          gameType: "Poker", // midlertidig gyldig enum-værdi, bruges ikke visuelt i ALL-view
+        });
+      }
+    }
+
+    return Array.from(grouped.values()).sort((a, b) => b.wins - a.wins);
   }, [hallOfFame, selectedGameType]);
 
   return (
@@ -85,12 +112,12 @@ export default function HallOfFamePage() {
             fullWidth
             label="Game Type"
             value={selectedGameType}
-            onChange={(e) => setSelectedGameType(e.target.value)}
+            onChange={(e) => setSelectedGameType(e.target.value as HallOfFameFilter)}
             sx={{ mb: 3 }}
           >
             {gameTypes.map((type) => (
               <MenuItem key={type} value={type}>
-                {type === "ALL" ? "All Game Types" : type}
+                {formatGameType(type)}
               </MenuItem>
             ))}
           </TextField>
@@ -99,29 +126,39 @@ export default function HallOfFamePage() {
             <Stack alignItems="center" py={4}>
               <CircularProgress />
             </Stack>
+          ) : filteredHallOfFame.length === 0 ? (
+            <Typography sx={{ textAlign: "center", py: 3 }}>
+              No hall of fame entries found
+            </Typography>
           ) : (
             <List>
               {filteredHallOfFame.map((entry, i) => (
-                <Box key={`${entry.userId}-${entry.gameType}`}>
+                <Box
+                  key={`${entry.userId}-${selectedGameType === "ALL" ? "ALL" : entry.gameType}`}
+                >
                   <ListItem>
                     <ListItemText
                       primary={
-                        <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                           <Typography
                             variant="h6"
                             sx={{ textTransform: "capitalize" }}
                           >
                             {getMedal(i)} {entry.playerName}
                           </Typography>
-                          <Chip
-                            size="small"
-                            label={entry.gameType}
-                            variant="outlined"
-                          />
+
+                          {selectedGameType !== "ALL" && (
+                            <Chip
+                              size="small"
+                              label={formatGameType(entry.gameType)}
+                              variant="outlined"
+                            />
+                          )}
                         </Stack>
                       }
                       secondary={`${entry.wins} wins`}
                     />
+
                     <Chip
                       label={`${entry.wins}`}
                       color={
@@ -129,6 +166,7 @@ export default function HallOfFamePage() {
                       }
                     />
                   </ListItem>
+
                   {i < filteredHallOfFame.length - 1 && <Divider />}
                 </Box>
               ))}

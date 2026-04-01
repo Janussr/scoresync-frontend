@@ -1032,19 +1032,19 @@ export default function GameControlPanelPage() {
         </DialogContent>
         <DialogActions>
           <Button
+            color="error"
+            onClick={confirmEndOrCancelGame}
+            disabled={!!(gameToEnd && endingGameByGame[gameToEnd.id])}
+          >
+            {(gameToEnd?.scores?.length ?? 0) === 0 ? "Yes" : "End Game"}
+          </Button>
+          <Button
             onClick={() => {
               setEndGameConfirmOpen(false);
               setGameToEnd(null);
             }}
           >
             Cancel
-          </Button>
-          <Button
-            color="error"
-            onClick={confirmEndOrCancelGame}
-            disabled={!!(gameToEnd && endingGameByGame[gameToEnd.id])}
-          >
-            {(gameToEnd?.scores?.length ?? 0) === 0 ? "Cancel Game" : "End Game"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1056,10 +1056,10 @@ export default function GameControlPanelPage() {
           action cannot be undone.
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelRemoveGame}>Cancel</Button>
           <Button color="error" onClick={handleConfirmRemoveGame}>
             Delete
           </Button>
+          <Button onClick={handleCancelRemoveGame}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>
