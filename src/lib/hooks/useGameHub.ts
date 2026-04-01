@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Game, RoundDto } from "@/lib/models/game";
 import {
-  gameHubConnection,
+  getGameHubConnection,
   joinedGameRefs,
   startGameHub,
 } from "./gameHubClient";
@@ -30,7 +30,6 @@ export function useGameHub({
     onGameFinished,
   });
 
-  // Hold callbacks opdateret uden at trigge leave/join
   useEffect(() => {
     handlersRef.current = {
       onGameUpdated,
@@ -40,8 +39,9 @@ export function useGameHub({
     };
   }, [onGameUpdated, onRoundStarted, onRoundEnded, onGameFinished]);
 
-  // Registrer SignalR event handlers én gang
   useEffect(() => {
+    const connection = getGameHubConnection();
+
     const handleGameUpdated = (game: Game) => {
       handlersRef.current.onGameUpdated?.(game);
     };
@@ -61,23 +61,23 @@ export function useGameHub({
       handlersRef.current.onGameFinished?.(finishedGameId);
     };
 
-    gameHubConnection.on("GameUpdated", handleGameUpdated);
-    gameHubConnection.on("RoundStarted", handleRoundStarted);
-    gameHubConnection.on("RoundEnded", handleRoundEnded);
-    gameHubConnection.on("GameFinished", handleGameFinished);
+    connection.on("GameUpdated", handleGameUpdated);
+    connection.on("RoundStarted", handleRoundStarted);
+    connection.on("RoundEnded", handleRoundEnded);
+    connection.on("GameFinished", handleGameFinished);
 
     return () => {
-      gameHubConnection.off("GameUpdated", handleGameUpdated);
-      gameHubConnection.off("RoundStarted", handleRoundStarted);
-      gameHubConnection.off("RoundEnded", handleRoundEnded);
-      gameHubConnection.off("GameFinished", handleGameFinished);
+      connection.off("GameUpdated", handleGameUpdated);
+      connection.off("RoundStarted", handleRoundStarted);
+      connection.off("RoundEnded", handleRoundEnded);
+      connection.off("GameFinished", handleGameFinished);
     };
   }, []);
 
-  // Join/leave kun når gameId ændrer sig
   useEffect(() => {
     if (!gameId) return;
 
+    const connection = getGameHubConnection();
     let cancelled = false;
 
     const init = async () => {
@@ -88,7 +88,7 @@ export function useGameHub({
       joinedGameRefs.set(gameId, currentRefCount + 1);
 
       if (currentRefCount === 0) {
-        await gameHubConnection.invoke("JoinGameGroup", gameId);
+        await connection.invoke("JoinGameGroup", gameId);
         console.log(`▶️ Joined GameGroup ${gameId}`);
       } else {
         console.log(
@@ -110,14 +110,16 @@ export function useGameHub({
       if (currentRefCount === 1) {
         joinedGameRefs.delete(gameId);
 
-        gameHubConnection
-          .invoke("LeaveGameGroup", gameId)
-          .then(() => {
-            console.log(`👋 Left GameGroup ${gameId}`);
-          })
-          .catch((err) => {
-            console.error(`❌ Failed to leave GameGroup ${gameId}`, err);
-          });
+        if (connection.state === "Connected") {
+          connection
+            .invoke("LeaveGameGroup", gameId)
+            .then(() => {
+              console.log(`👋 Left GameGroup ${gameId}`);
+            })
+            .catch((err) => {
+              console.error(`❌ Failed to leave GameGroup ${gameId}`, err);
+            });
+        }
       } else {
         joinedGameRefs.set(gameId, currentRefCount - 1);
         console.log(

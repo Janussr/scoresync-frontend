@@ -462,12 +462,12 @@ export default function GameControlPanelPage() {
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", px: 1, mt: 4 }}>
       <Typography mb={3} sx={{ fontSize: { xs: "1.5rem", md: "2.125rem" }, fontWeight: 500 }}>
-        Poker Game Control
+        Game Control Panel
       </Typography>
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Typography variant="h6" mb={2}>
-            Create New Game
+            New Game
           </Typography>
 
           <Stack
@@ -521,27 +521,157 @@ export default function GameControlPanelPage() {
           return (
             <Card key={game.id} sx={{ mb: 4 }}>
               <CardContent>
-                <Typography variant="h6">Game #{game.gameNumber}</Typography>
-                <Typography >{game.type}</Typography>
-                <Typography>
-                  Started: {new Date(game.startedAt).toLocaleString("da-DK")}
-                </Typography>
+                <Box sx={{ mb: 2.5 }}>
+  <Stack
+    direction={{ xs: "column", md: "row" }}
+    justifyContent="space-between"
+    alignItems={{ xs: "flex-start", md: "center" }}
+    spacing={1.5}
+    sx={{ mb: 2 }}
+  >
+    <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 700,
+          color: "primary.main",
+          fontFamily: "Playfair Display, Georgia, serif",
+        }}
+      >
+        Game #{game.gameNumber}
+      </Typography>
 
-                <Typography color={game.isOpenForPlayers ? "success.main" : "warning.main"} mt={1}>
-                  {game.isOpenForPlayers ? "Open for players" : "Setup only"}
-                </Typography>
+      <Box
+        sx={{
+          px: 1.2,
+          py: 0.35,
+          borderRadius: 1.5,
+          border: "1px solid rgba(212, 175, 55, 0.28)",
+          backgroundColor: "rgba(212, 175, 55, 0.06)",
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: "0.78rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "primary.main",
+            fontWeight: 700,
+          }}
+        >
+          {game.type}
+        </Typography>
+      </Box>
 
-                {game.rounds?.length ? (
-                  <Typography color="primary" mt={1}>
-                    Current Round #{game.rounds[game.rounds.length - 1].roundNumber}
-                  </Typography>
-                ) : (
-                  <Typography color="text.secondary" mt={1}>
-                    No rounds started yet
-                  </Typography>
-                )}
+      <Stack direction="row" spacing={0.75} alignItems="center">
+        <Box
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            bgcolor: game.isOpenForPlayers ? "success.main" : "warning.main",
+            boxShadow: game.isOpenForPlayers
+              ? "0 0 10px rgba(76, 175, 80, 0.5)"
+              : "0 0 10px rgba(244, 185, 66, 0.5)",
+          }}
+        />
+        <Typography
+          sx={{
+            color: game.isOpenForPlayers ? "success.main" : "warning.main",
+            fontWeight: 600,
+          }}
+        >
+          {game.isOpenForPlayers ? "Open" : "Setup only"}
+        </Typography>
+      </Stack>
+    </Stack>
 
-                <Divider sx={{ my: 2 }} />
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{ whiteSpace: "nowrap" }}
+    >
+      Started: {new Date(game.startedAt).toLocaleString("da-DK")}
+    </Typography>
+  </Stack>
+
+  <Box
+    sx={{
+      display: "grid",
+      gridTemplateColumns: {
+        xs: "repeat(3, minmax(0, 1fr))",
+        sm: "repeat(3, minmax(0, 1fr))",
+        md: "repeat(6, minmax(0, 1fr))",
+      },
+      gap: 1,
+    }}
+  >
+    {[
+      {
+        label: "Round",
+        value: game.rounds?.length
+          ? `#${game.rounds[game.rounds.length - 1].roundNumber}`
+          : "-",
+        color: "primary.main",
+      },
+      // {
+      //   label: "Players",
+      //   value: String(activePlayers.length),
+      // },
+      {
+        label: "Rebuy",
+        value: game.rebuyValue ? `${game.rebuyValue}` : "-",
+      },
+      {
+        label: "Bounty",
+        value: game.bountyValue ? `${game.bountyValue}` : "-",
+      },
+      // {
+      //   label: "Scores",
+      //   value: String(totalScores),
+      // },
+    ].map((item) => (
+      <Box
+        key={item.label}
+         sx={{
+    px: 2,
+    py: 1.2,
+    borderRadius: 2,
+    border: "1px solid rgba(212, 175, 55, 0.16)",
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01))",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+      >
+      <Typography
+    sx={{
+      fontSize: "0.75rem",
+      letterSpacing: "0.06em",
+      color: "text.secondary",
+      textTransform: "uppercase",
+      mr: 0.75,
+    }}
+  >
+    {item.label}
+  </Typography>
+
+  <Typography
+    sx={{
+      fontWeight: 700,
+      color: item.color || "text.primary",
+      fontSize: "1rem",
+    }}
+  >
+    {item.value}
+  </Typography>
+      </Box>
+    ))}
+  </Box>
+</Box>
+
+<Divider sx={{ my: 2 }} />
 
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -605,7 +735,7 @@ export default function GameControlPanelPage() {
 
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>Choose Players to Join</Typography>
+                    <Typography>Add players</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
                     <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={2}>
