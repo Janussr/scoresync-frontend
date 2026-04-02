@@ -897,7 +897,6 @@ export default function GameControlPanelPage() {
                           width: "100%",
                           overflowX: "auto",
                           mb: 1,
-                          borderBottom: "1px solid #eee",
                           p: 1,
                           borderRadius: 2,
                         }}

@@ -70,6 +70,8 @@ export interface HistoryEntry {
   totalScore: number;
   date: string;
   playerCount: number;
+   type: GameType;
+  roundCount: number;
 }
 
 export interface HallOfFameEntry {
