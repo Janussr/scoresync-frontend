@@ -28,7 +28,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     { label: "♣ Black Jack ♣", href: "/game/blackjack" },
     { label: "♦ Poker ♦", href: "/game/poker" },
     { label: "♥ Roulette ♥", href: "/game/roulette" },
-    // ♠♠
   ];
 
   if (isLoggedIn) {
@@ -49,10 +48,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           backdropFilter: "blur(6px)",
           borderBottom: "1px solid rgba(212, 175, 55, 0.25)",
           boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+          pt: "env(safe-area-inset-top)",
         }}
       >
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-
+        <Toolbar
+          sx={{
+            justifyContent: "space-between",
+            minHeight: { xs: 56, sm: 64 },
+            px: 2,
+          }}
+        >
           <Typography
             component={Link}
             href="/"
@@ -69,7 +74,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             ♠ Poker Pals ♦
           </Typography>
 
-          {/* Desktop menu */}
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 2 }}>
             {navLinks.map((link) => (
               <Button key={link.href} component={Link} href={link.href} sx={{ color: "gold" }}>
@@ -94,7 +98,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             )}
           </Box>
 
-          {/* Mobile menu button */}
           <IconButton
             sx={{ display: { xs: "flex", md: "none" }, color: "gold" }}
             onClick={() => setOpen(true)}
@@ -104,21 +107,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Toolbar>
       </AppBar>
 
-      {/* Mobile Drawer */}
       <Drawer anchor="left" open={open} onClose={() => setOpen(false)}>
         <Box
-
           sx={{
             width: 270,
             height: "100%",
             p: 2,
+            pt: "calc(env(safe-area-inset-top) + 16px)",
             background: `
-      linear-gradient(180deg, rgba(11,61,11,0.95), rgba(7,42,7,1))
-    `,
+              linear-gradient(180deg, rgba(11,61,11,0.95), rgba(7,42,7,1))
+            `,
             borderRight: "1px solid rgba(212, 175, 55, 0.25)",
             color: "#f5e6a8",
           }}
-
         >
           <Stack spacing={2}>
             {isLoggedIn && (
@@ -158,7 +159,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   py: 1.2,
                   borderRadius: "10px",
                   letterSpacing: "0.05em",
-
                   "&:hover": {
                     backgroundColor: "rgba(212, 175, 55, 0.08)",
                     color: "#f1c40f",
@@ -170,63 +170,60 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </Button>
             ))}
 
-           {!isLoggedIn ? (
-  <Button
-    component={Link}
-    href="/account/login"
-    onClick={() => setOpen(false)}
-    fullWidth
-    sx={{
-      justifyContent: "flex-start",
-      color: "#80e573",
-      fontWeight: 500,
-      px: 2,
-      py: 1.2,
-      borderRadius: "10px",
-      letterSpacing: "0.05em",
-      mt: 1,
-      pt: 2,
-
-      "&:hover": {
-        backgroundColor: "rgba(69, 231, 110, 0.08)",
-        transform: "translateX(4px)",
-      },
-    }}
-  >
-    Login
-  </Button>
-) : (
-  <Button
-    onClick={() => {
-      logout();
-      setOpen(false);
-    }}
-    fullWidth
-    sx={{
-      justifyContent: "flex-start",
-      color: "#e57373",
-      fontWeight: 500,
-      px: 2,
-      py: 1.2,
-      borderRadius: "10px",
-      letterSpacing: "0.05em",
-      mt: 1,
-      pt: 2,
-
-      "&:hover": {
-        backgroundColor: "rgba(229, 115, 115, 0.08)",
-        transform: "translateX(4px)",
-      },
-    }}
-  >
-    Logout
-  </Button>
-)}
+            {!isLoggedIn ? (
+              <Button
+                component={Link}
+                href="/account/login"
+                onClick={() => setOpen(false)}
+                fullWidth
+                sx={{
+                  justifyContent: "flex-start",
+                  color: "#80e573",
+                  fontWeight: 500,
+                  px: 2,
+                  py: 1.2,
+                  borderRadius: "10px",
+                  letterSpacing: "0.05em",
+                  mt: 1,
+                  pt: 2,
+                  "&:hover": {
+                    backgroundColor: "rgba(69, 231, 110, 0.08)",
+                    transform: "translateX(4px)",
+                  },
+                }}
+              >
+                Login
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  logout();
+                  setOpen(false);
+                }}
+                fullWidth
+                sx={{
+                  justifyContent: "flex-start",
+                  color: "#e57373",
+                  fontWeight: 500,
+                  px: 2,
+                  py: 1.2,
+                  borderRadius: "10px",
+                  letterSpacing: "0.05em",
+                  mt: 1,
+                  pt: 2,
+                  "&:hover": {
+                    backgroundColor: "rgba(229, 115, 115, 0.08)",
+                    transform: "translateX(4px)",
+                  },
+                }}
+              >
+                Logout
+              </Button>
+            )}
           </Stack>
         </Box>
       </Drawer>
 
-      {/* Page content */}
       <Container maxWidth="lg" disableGutters sx={{ mt: 0, pb: 1 }}>
         {children}
       </Container>
