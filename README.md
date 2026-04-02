@@ -1,29 +1,30 @@
-# Poker Score Tracking – Frontend
+# ScoreSync – Frontend
 
-This is the frontend application for the Poker Score Tracking project.  
-It provides a simple UI for tracking scores, viewing game history, and seeing winners from poker game nights with friends.
+Frontend for the ScoreSync project.
+
+Provides a simple interface for tracking scores during game nights, viewing results, and managing ongoing games.
+
+## Features
+
+- Live score updates
+- Game overview and history
+- Simple game management UI
+- Responsive layout
 
 ## Tech Stack
-- Next.js  
-- React  
-- TypeScript
 
+- Next.js
+- React
+- TypeScript
+- MUI (Material UI)
 
 ## Backend
-The backend API for this project can be found here:
-https://github.com/Janussr/casino-backend
 
-## Learn More
+API:  
+https://github.com/Janussr/scoresync-backend
 
-To learn more about Next.js, take a look at the following resources:
+## Notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The focus of this project is not visual design, but functionality and real-time interaction.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+It is built as a companion to the backend system and used in small private game sessions.
