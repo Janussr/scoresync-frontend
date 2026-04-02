@@ -224,53 +224,115 @@ export default function PlayerGamePage() {
       <Card>
         <CardContent>
 
-        <Stack
-  direction="row"
-  justifyContent="space-between"
-  alignItems="center"
- 
->
-  <Typography fontWeight="bold"
-  
-   sx={{
-    borderBottom: "1px solid",
-    borderColor: "divider",
-    mb: 1,
-    textTransform: "capitalize",
-  }}
-  
-  >
-    {me.username}
-  </Typography>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
 
-  <Typography fontWeight="bold"
-   sx={{
-    borderBottom: "1px solid",
-    borderColor: "divider",
-    mb: 1,
-  }}
-  >
-    {currentGame.type}
-  </Typography>
-</Stack>
+          >
+            <Typography fontWeight="bold"
 
-          <Box sx={{ p: 1, borderRadius: 2, bgcolor: "background.paper", border: "1px solid rgba(255,255,255,0.1)", mb: 2 }}>
-            <Typography fontWeight="bold">Your game status</Typography>
-            <Typography color="primary">
-              Current Round: #{activeRound?.roundNumber}
+              sx={{
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                mb: 1,
+                textTransform: "capitalize",
+              }}
+
+            >
+              {me.username}
             </Typography>
-            <Typography>Total points: <b>{myTotal}</b></Typography>
-            {(currentGame.bountyValue ?? 0) > 0 && (
-              <Typography>Bounties: <b>{myBounties}</b></Typography>
-            )}
 
-            {(currentGame.rebuyValue ?? 0) > 0 && (
-              <Typography>Rebuys: <b>{myRebuys}</b></Typography>
-            )}
+            <Typography fontWeight="bold"
+              sx={{
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                mb: 1,
+              }}
+            >
+              {currentGame.type}
+            </Typography>
+          </Stack>
+
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 1,
+              border: "1px solid rgba(212, 175, 55, 0.18)",
+              background:
+                "linear-gradient(180deg, rgba(15,55,20,0.6), rgba(7,32,12,0.9))",
+              mb: 2,
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 700,
+                mb: 1.5,
+                color: "primary.main",
+                letterSpacing: "0.05em",
+                textAlign: "center",
+              }}
+            >
+              Your Game Status
+            </Typography>
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "repeat(2, 1fr)",
+                  sm: "repeat(4, 1fr)",
+                },
+                gap: 1.5,
+              }}
+            >
+
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                <Typography variant="caption" color="text.secondary">
+                  Points
+                </Typography>
+                <Typography fontWeight={700} color="primary.main">
+                  {myTotal}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                <Typography variant="caption" color="text.secondary">
+                  Round
+                </Typography>
+                <Typography fontWeight={700}>
+                  #{activeRound?.roundNumber ?? "-"}
+                </Typography>
+              </Box>
+
+
+
+              {(currentGame.bountyValue ?? 0) > 0 && (
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Bounties
+                  </Typography>
+                  <Typography fontWeight={700}>
+                    {myBounties}
+                  </Typography>
+                </Box>
+              )}
+
+              {(currentGame.rebuyValue ?? 0) > 0 && (
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Rebuys
+                  </Typography>
+                  <Typography fontWeight={700}>
+                    {myRebuys}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
 
           <Stack spacing={2}>
-            <TextField label="Points" type="number" value={points} onChange={(e) => setPoints(e.target.value)} />
+            <TextField label="Enter Points" type="number" value={points} onChange={(e) => setPoints(e.target.value)} />
             <Button variant="contained" onClick={submitScore} disabled={loadingAction}>
               {loadingAction ? "Saving..." : "Add points"}
             </Button>
@@ -291,19 +353,29 @@ export default function PlayerGamePage() {
                   value={knockoutPlayerId}
                   onChange={(e) => setKnockoutPlayerId(Number(e.target.value))}
                 >
-                  {currentGame.players?.filter(p => p.playerId !== me.playerId).map(p => (
-                    <MenuItem key={p.playerId} value={p.playerId}>{p.username}</MenuItem>
-                  ))}
+                  {currentGame.players
+                    ?.filter((p) => p.playerId !== me.playerId)
+                    .map((p) => (
+                      <MenuItem key={p.playerId} value={p.playerId}>
+                        {p.username.charAt(0).toUpperCase() + p.username.slice(1)} {"-"} {p.activeBounties > 0 ? `(${p.activeBounties} bounties)` : "(no bounties)"}
+                        {" rewards"} ({p.activeBounties * (currentGame.bountyValue ?? 0)} points)
+                      </MenuItem>
+                    ))}
                 </TextField>
 
-                <Button variant="outlined" color="success" onClick={handleKnockout} disabled={!knockoutPlayerId || loadingAction}>
-                  Register Knockout (+{currentGame.bountyValue})
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={handleKnockout}
+                  disabled={!knockoutPlayerId || loadingAction}
+                >
+                  Register Knockout
                 </Button>
               </Stack>
             )}
 
             <Divider sx={{ my: 2 }} />
-            <Typography fontWeight="bold">Rounds</Typography>
+            <Typography fontWeight="bold">Round History</Typography>
 
             {(currentGame.rounds ?? [])
               .slice()

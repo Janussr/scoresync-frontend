@@ -461,7 +461,7 @@ export default function GameControlPanelPage() {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", px: 1, mt: 4 }}>
-      <Typography mb={3} sx={{ fontSize: { xs: "1.5rem", md: "2.125rem" }, fontWeight: 500 }}>
+      <Typography mb={3} sx={{ fontSize: { xs: "1.5rem", md: "2.125rem", textAlign: "center" }, fontWeight: 500 }}>
         Game Control Panel
       </Typography>
       <Card sx={{ mb: 4 }}>
@@ -518,160 +518,166 @@ export default function GameControlPanelPage() {
           const selectedUserIds = selectedUserIdsByGame[game.id] ?? [];
           const totalScores = game.scores?.length ?? 0;
 
+          const getPlayerTotalPoints = (playerId: number) => {
+            return (game.scores ?? [])
+              .filter((s) => s.playerId === playerId)
+              .reduce((sum, s) => sum + s.points, 0);
+          };
+
           return (
             <Card key={game.id} sx={{ mb: 4 }}>
               <CardContent>
                 <Box sx={{ mb: 2.5 }}>
-  <Stack
-    direction={{ xs: "column", md: "row" }}
-    justifyContent="space-between"
-    alignItems={{ xs: "flex-start", md: "center" }}
-    spacing={1.5}
-    sx={{ mb: 2 }}
-  >
-    <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
-      <Typography
-        variant="h5"
-        sx={{
-          fontWeight: 700,
-          color: "primary.main",
-          fontFamily: "Playfair Display, Georgia, serif",
-        }}
-      >
-        Game #{game.gameNumber}
-      </Typography>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "flex-start", md: "center" }}
+                    spacing={1.5}
+                    sx={{ mb: 2 }}
+                  >
+                    <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          color: "primary.main",
+                          fontFamily: "Playfair Display, Georgia, serif",
+                        }}
+                      >
+                        Game #{game.gameNumber}
+                      </Typography>
 
-      <Box
-        sx={{
-          px: 1.2,
-          py: 0.35,
-          borderRadius: 1.5,
-          border: "1px solid rgba(212, 175, 55, 0.28)",
-          backgroundColor: "rgba(212, 175, 55, 0.06)",
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: "0.78rem",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "primary.main",
-            fontWeight: 700,
-          }}
-        >
-          {game.type}
-        </Typography>
-      </Box>
+                      <Box
+                        sx={{
+                          px: 1.2,
+                          py: 0.35,
+                          borderRadius: 1.5,
+                          border: "1px solid rgba(212, 175, 55, 0.28)",
+                          backgroundColor: "rgba(212, 175, 55, 0.06)",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "0.78rem",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: "primary.main",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {game.type}
+                        </Typography>
+                      </Box>
 
-      <Stack direction="row" spacing={0.75} alignItems="center">
-        <Box
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            bgcolor: game.isOpenForPlayers ? "success.main" : "warning.main",
-            boxShadow: game.isOpenForPlayers
-              ? "0 0 10px rgba(76, 175, 80, 0.5)"
-              : "0 0 10px rgba(244, 185, 66, 0.5)",
-          }}
-        />
-        <Typography
-          sx={{
-            color: game.isOpenForPlayers ? "success.main" : "warning.main",
-            fontWeight: 600,
-          }}
-        >
-          {game.isOpenForPlayers ? "Open" : "Setup only"}
-        </Typography>
-      </Stack>
-    </Stack>
+                      <Stack direction="row" spacing={0.75} alignItems="center">
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            bgcolor: game.isOpenForPlayers ? "success.main" : "warning.main",
+                            boxShadow: game.isOpenForPlayers
+                              ? "0 0 10px rgba(76, 175, 80, 0.5)"
+                              : "0 0 10px rgba(244, 185, 66, 0.5)",
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            color: game.isOpenForPlayers ? "success.main" : "warning.main",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {game.isOpenForPlayers ? "Open" : "Setup only"}
+                        </Typography>
+                      </Stack>
+                    </Stack>
 
-    <Typography
-      variant="body2"
-      color="text.secondary"
-      sx={{ whiteSpace: "nowrap" }}
-    >
-      Started: {new Date(game.startedAt).toLocaleString("da-DK")}
-    </Typography>
-  </Stack>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ whiteSpace: "nowrap" }}
+                    >
+                      Started: {new Date(game.startedAt).toLocaleString("da-DK")}
+                    </Typography>
+                  </Stack>
 
-  <Box
-    sx={{
-      display: "grid",
-      gridTemplateColumns: {
-        xs: "repeat(3, minmax(0, 1fr))",
-        sm: "repeat(3, minmax(0, 1fr))",
-        md: "repeat(6, minmax(0, 1fr))",
-      },
-      gap: 1,
-    }}
-  >
-    {[
-      {
-        label: "Round",
-        value: game.rounds?.length
-          ? `#${game.rounds[game.rounds.length - 1].roundNumber}`
-          : "-",
-        color: "primary.main",
-      },
-      // {
-      //   label: "Players",
-      //   value: String(activePlayers.length),
-      // },
-      {
-        label: "Rebuy",
-        value: game.rebuyValue ? `${game.rebuyValue}` : "-",
-      },
-      {
-        label: "Bounty",
-        value: game.bountyValue ? `${game.bountyValue}` : "-",
-      },
-      // {
-      //   label: "Scores",
-      //   value: String(totalScores),
-      // },
-    ].map((item) => (
-      <Box
-        key={item.label}
-         sx={{
-    px: 2,
-    py: 1.2,
-    borderRadius: 2,
-    border: "1px solid rgba(212, 175, 55, 0.16)",
-    background:
-      "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01))",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
-      >
-      <Typography
-    sx={{
-      fontSize: "0.75rem",
-      letterSpacing: "0.06em",
-      color: "text.secondary",
-      textTransform: "uppercase",
-      mr: 0.75,
-    }}
-  >
-    {item.label}
-  </Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "repeat(3, minmax(0, 1fr))",
+                        sm: "repeat(3, minmax(0, 1fr))",
+                        md: "repeat(6, minmax(0, 1fr))",
+                      },
+                      gap: 1,
+                    }}
+                  >
+                    {[
+                      {
+                        label: "Round",
+                        value: game.rounds?.length
+                          ? `#${game.rounds[game.rounds.length - 1].roundNumber}`
+                          : "-",
+                        color: "primary.main",
+                      },
+                      // {
+                      //   label: "Players",
+                      //   value: String(activePlayers.length),
+                      // },
+                      {
+                        label: "Rebuy",
+                        value: game.rebuyValue ? `${game.rebuyValue}` : "-",
+                      },
+                      {
+                        label: "Bounty",
+                        value: game.bountyValue ? `${game.bountyValue}` : "-",
+                      },
+                      // {
+                      //   label: "Scores",
+                      //   value: String(totalScores),
+                      // },
+                    ].map((item) => (
+                      <Box
+                        key={item.label}
+                        sx={{
+                          px: 2,
+                          py: 1.2,
+                          borderRadius: 2,
+                          border: "1px solid rgba(212, 175, 55, 0.16)",
+                          background:
+                            "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01))",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "0.75rem",
+                            letterSpacing: "0.06em",
+                            color: "text.secondary",
+                            textTransform: "uppercase",
+                            mr: 0.75,
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
 
-  <Typography
-    sx={{
-      fontWeight: 700,
-      color: item.color || "text.primary",
-      fontSize: "1rem",
-    }}
-  >
-    {item.value}
-  </Typography>
-      </Box>
-    ))}
-  </Box>
-</Box>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            color: item.color || "text.primary",
+                            fontSize: "1rem",
+                          }}
+                        >
+                          {item.value}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
 
-<Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2 }} />
 
                 <Accordion>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -806,7 +812,7 @@ export default function GameControlPanelPage() {
                           sx={{ width: { xs: "100%", sm: 180 } }}
                         >
                           <MenuItem value="" disabled>
-                            Select killer
+                            Killer...
                           </MenuItem>
                           {activePlayers.map((p) => (
                             <MenuItem key={`${p.playerId}-${p.username}`} value={p.playerId}>
@@ -833,7 +839,7 @@ export default function GameControlPanelPage() {
                           sx={{ width: { xs: "100%", sm: 180 } }}
                         >
                           <MenuItem value="" disabled>
-                            Select victim
+                            Victim...
                           </MenuItem>
                           {activePlayers
                             .filter((p) => p.playerId !== knockout.killerPlayerId)
@@ -901,13 +907,16 @@ export default function GameControlPanelPage() {
                           spacing={2}
                           alignItems={{ xs: "stretch", sm: "center" }}
                         >
-                          <Typography sx={{ minWidth: { xs: "100%", sm: 140 } }}>
-                            {p.username.charAt(0).toUpperCase() + p.username.slice(1)}
+                          <Typography sx={{ minWidth: { xs: "100%", sm: 220 } }}>
+                            {p.username.charAt(0).toUpperCase() + p.username.slice(1)}{": score "}
+                            <Box component="span" sx={{ color: "primary.main", fontWeight: 700 }}>
+                              {getPlayerTotalPoints(p.playerId)}
+                            </Box>
                           </Typography>
 
                           <TextField
                             size="small"
-                            label="Type points to add"
+                            label="Points..."
                             value={scoreInputs[p.playerId] || ""}
                             onChange={(e) =>
                               setScoreInputsByGame((prev) => ({
@@ -956,7 +965,7 @@ export default function GameControlPanelPage() {
                                 setRemovePlayerConfirmOpen(true);
                               }}
                             >
-                              Remove Player
+                              Remove
                             </Button>
                           </Stack>
                         </Stack>
@@ -1035,7 +1044,7 @@ export default function GameControlPanelPage() {
                     onClick={() => handleStartRound(game.id)}
                     disabled={!game.isOpenForPlayers || !!startingRoundByGame[game.id]}
                   >
-                    Start Next Round: {game.rounds?.length ? game.rounds.length + 1 : 1}
+                    Start Round: {game.rounds?.length ? game.rounds.length + 1 : 1}
                   </Button>
 
                   <Button
@@ -1052,41 +1061,67 @@ export default function GameControlPanelPage() {
           );
         })
       )}
-
-      <Typography
-        sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
+      <Stack
+        mt={2}
         mb={2}
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
       >
-        All Games
-      </Typography>
+        <Typography
+          sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
+        >
+          All Games
+        </Typography>
 
-      <Box mt={2} mb={2}>
         <Button variant="contained" color="success" onClick={fetchAllGames}>
           Fetch All Games
         </Button>
-      </Box>
-
+      </Stack>
       {[...games]
         .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
         .map((g) => (
           <Card key={g.id} sx={{ mt: 1 }}>
             <CardContent>
+              {/* 🔝 HEADER */}
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={1}
+              >
+                <Typography sx={{ fontWeight: 500 }}>
+                  Game #{g.gameNumber} · {g.type} ·{" "}
+                  {new Date(g.startedAt).toLocaleDateString("da-DK", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </Typography>
+
+                <Typography
+                  sx={{
+                    fontWeight: 600,
+                    color: g.isFinished ? "error.main" : "success.main",
+                  }}
+                >
+                  {g.isFinished ? "Finished" : "Active"}
+                </Typography>
+              </Stack>
+
+              {/* 🔽 BUTTONS */}
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={1.5}
                 justifyContent="space-between"
                 alignItems={{ xs: "stretch", sm: "center" }}
               >
-                <Typography sx={{ flex: 1 }}>
-                  Game #{g.gameNumber} — {g.isFinished ? "Finished" : "Active"}
-                </Typography>
+                <Box sx={{ flex: 1 }} />
 
                 <Stack
                   direction="row"
                   spacing={1}
-                  sx={{
-                    width: { xs: "100%", sm: "auto" },
-                  }}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   <Box sx={{ flex: { xs: 1, sm: "0 0 auto" } }}>
                     <Link
@@ -1097,7 +1132,6 @@ export default function GameControlPanelPage() {
                       <Button
                         variant="outlined"
                         size="small"
-                        fullWidth={false}
                         sx={{ width: { xs: "100%", sm: "auto" } }}
                       >
                         Game results
