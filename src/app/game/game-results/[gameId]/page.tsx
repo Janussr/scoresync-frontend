@@ -392,7 +392,7 @@ export default function GameResultspage() {
                           mt: 0.35,
                         }}
                       >
-                        pts
+                      Points
                       </Typography>
                     </Box>
                   </Box>
@@ -495,7 +495,7 @@ export default function GameResultspage() {
             ))}
 
             <Typography sx={{ fontWeight: 700, textAlign: "right" }}>
-              Total: {playerScores?.totalPoints} pts
+              Total: {playerScores?.totalPoints} Points
             </Typography>
           </Stack>
         </DialogContent>

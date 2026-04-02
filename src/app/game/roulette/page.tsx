@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Box, Typography, Tabs, Tab, Stack } from "@mui/material";
 import Image from "next/image";
 import SectionTitle from "@/components/ui/SectionTitle";
+import RouletteFunWheel from "@/app/demo/roulette/page";
 
 export default function RoulettePage() {
   const [activeTab, setActiveTab] = useState(0);
@@ -30,6 +31,7 @@ export default function RoulettePage() {
         indicatorColor="primary"
       >
         <Tab label="Rules" />
+        <Tab label="Demo" />
         <Tab label="Cheatsheet" />
       </Tabs>
 
@@ -38,7 +40,7 @@ export default function RoulettePage() {
         <Box sx={{ mt: 2 }}>
 
           <SectionTitle>Bet Types</SectionTitle>
-           <Stack spacing={1} mb={3}>
+          <Stack spacing={1} mb={3}>
             <Typography><strong>Straight Up:</strong> Bet on a single number. Pays 35:1.</Typography>
             <Typography><strong>Split:</strong> Bet on two adjacent numbers. Pays 17:1.</Typography>
             <Typography><strong>Street:</strong> Bet on three numbers in a row. Pays 11:1.</Typography>
@@ -49,7 +51,7 @@ export default function RoulettePage() {
             <Typography><strong>High / Low:</strong> Bet on 1–18 or 19–36. Pays 1:1.</Typography>
             <Typography><strong>Dozens:</strong> Bet on 1–12, 13–24, or 25–36. Pays 2:1.</Typography>
             <Typography><strong>Columns:</strong> Bet on one of the three columns. Pays 2:1.</Typography>
-           </Stack>
+          </Stack>
 
           <SectionTitle>Rules</SectionTitle>
           <Stack spacing={0.5} mb={3} >
@@ -61,9 +63,15 @@ export default function RoulettePage() {
           </Stack>
         </Box>
       )}
-
-      {/* Cheatsheet Tab */}
       {activeTab === 1 && (
+        <Box sx={{ textAlign: { xs: "left", sm: "center" } }}>
+          <Stack spacing={1} mt={2} sx={{ mb: 2 }}>
+            <RouletteFunWheel />
+          </Stack>
+        </Box>
+      )}
+      {/* Cheatsheet Tab */}
+      {activeTab === 2 && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Image
             src="/images/French-Roulette-Rules.png"

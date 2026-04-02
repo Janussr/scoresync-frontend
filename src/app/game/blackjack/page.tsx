@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Box, Typography, Stack, Tabs, Tab } from "@mui/material";
 import Image from "next/image";
 import SectionTitle from "@/components/ui/SectionTitle";
+import BlackJackFunPage from "@/app/demo/blackjack/page";
 
 export default function BlackJackPage() {
     const [activeTab, setActiveTab] = useState(0);
@@ -30,7 +31,7 @@ export default function BlackJackPage() {
                 sx={{ mb: 3 }}
             >
                 <Tab label="Rules" />
-                <Tab label="Probability of busting" />
+                <Tab label="Demo" />
                 <Tab label="Cheatsheet" />
             </Tabs>
 
@@ -38,7 +39,7 @@ export default function BlackJackPage() {
             {activeTab === 0 && (
                 <Box>
                     <SectionTitle>Player Actions</SectionTitle>
-                    <Stack spacing={1}  mb={2}> 
+                    <Stack spacing={1} mb={2}>
                         <Typography><strong>Hit:</strong> Draw an additional card. Pays 1:1</Typography>
                         <Typography><strong>Stand:</strong> Keep your current hand. Pays 1:1</Typography>
                         <Typography><strong>Double Down:</strong> Double your bet, draw one card, and stand. Pays 1:1 per hand</Typography>
@@ -66,22 +67,11 @@ export default function BlackJackPage() {
 
             {activeTab === 1 && (
                 <Box sx={{ textAlign: { xs: "left", sm: "center" } }}>
-                    <SectionTitle>
-                        Probability of busting drawing cards
-                    </SectionTitle>
                     <Stack spacing={1} mt={2} sx={{ mb: 2 }}>
-                        <Typography><strong>Player Hand Total 21:</strong> Probability of Busting 100%</Typography>
-                        <Typography><strong>Player Hand Total 20:</strong> Probability of Busting 92%</Typography>
-                        <Typography><strong>Player Hand Total 19:</strong> Probability of Busting 85%</Typography>
-                        <Typography><strong>Player Hand Total 18:</strong> Probability of Busting 77%</Typography>
-                        <Typography><strong>Player Hand Total 17:</strong> Probability of Busting 69%</Typography>
-                        <Typography><strong>Player Hand Total 16:</strong> Probability of Busting 62%</Typography>
-                        <Typography><strong>Player Hand Total 15:</strong> Probability of Busting 58%</Typography>
-                        <Typography><strong>Player Hand Total 14:</strong> Probability of Busting 56%</Typography>
-                        <Typography><strong>Player Hand Total 13:</strong> Probability of Busting 39%</Typography>
-                        <Typography><strong>Player Hand Total 12:</strong> Probability of Busting 31%</Typography>
+                        <BlackJackFunPage />
                     </Stack>
-                </Box>)}
+                </Box>
+            )}
 
             {/* Cheatsheet Image Tab */}
             {activeTab === 2 && (
