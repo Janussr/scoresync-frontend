@@ -20,22 +20,19 @@ const RED_NUMBERS = new Set([
   1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
 ]);
 
-const BOARD_ROWS = [
-  [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
-  [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
-  [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
-] as const;
-
 const WHEEL_SIZE = 420;
 const CENTER = WHEEL_SIZE / 2;
 const OUTER_RADIUS = 190;
 const INNER_RADIUS = 118;
 const BALL_TRACK_RADIUS = 202;
+const POCKET_DROP_RADIUS = 187;
 const NUMBER_RING_TEXT_RADIUS = 155;
 const TOTAL_SEGMENTS = EUROPEAN_ROULETTE_ORDER.length;
 const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS;
-const POINTER_ANGLE = 0;
-const SPIN_DURATION_MS = 5200;
+
+const MAIN_SPIN_DURATION_MS = 4000;
+const SETTLING_DURATION_MS = 1300;
+const TOTAL_SPIN_DURATION_MS = MAIN_SPIN_DURATION_MS + SETTLING_DURATION_MS;
 
 function polarToCartesian(
   cx: number,
@@ -82,6 +79,14 @@ function normalizeRotation(rotation: number) {
   return ((rotation % 360) + 360) % 360;
 }
 
+function getWinningIndexFromAngles(wheelAngle: number, ballAngle: number) {
+  const relativeAngle = normalizeRotation(ballAngle - wheelAngle -1.1);
+  return (
+    Math.floor((relativeAngle + SEGMENT_ANGLE / 2) / SEGMENT_ANGLE) %
+    TOTAL_SEGMENTS
+  );
+}
+
 function getColumn(number: number) {
   if (number === 0) return null;
   return ((number - 1) % 3) + 1;
@@ -118,16 +123,22 @@ function getBetHits(number: number) {
 export default function RouletteFunWheel() {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [ballRotation, setBallRotation] = useState(0);
+  const [ballTrackRadius, setBallTrackRadius] = useState(BALL_TRACK_RADIUS);
+  const [ballVisualJitter, setBallVisualJitter] = useState(0);
+  const [ballSize, setBallSize] = useState(7);
+
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
   const [spinCount, setSpinCount] = useState(0);
-  const [hoveredBet, setHoveredBet] = useState<string | null>(null);
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (settleIntervalRef.current) clearInterval(settleIntervalRef.current);
     };
   }, []);
 
@@ -164,62 +175,124 @@ export default function RouletteFunWheel() {
   const lastFive = history.slice(0, 5);
   const hits = result === null ? null : getBetHits(result);
 
+  const effectiveBallAngle = ballRotation + ballVisualJitter;
+  const ballPos = polarToCartesian(CENTER, CENTER, ballTrackRadius, 0);
+
+  const clearTimers = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (settleIntervalRef.current) clearInterval(settleIntervalRef.current);
+    timeoutRef.current = null;
+    settleIntervalRef.current = null;
+  };
+
   const spinWheel = () => {
     if (isSpinning) return;
 
-    const winningIndex = Math.floor(Math.random() * TOTAL_SEGMENTS);
-    const winningNumber = EUROPEAN_ROULETTE_ORDER[winningIndex];
-    const segmentCenterAngle =
-      winningIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
-
-    const targetWheelNormalized = normalizeRotation(
-      POINTER_ANGLE - segmentCenterAngle
-    );
-    const currentWheelNormalized = normalizeRotation(wheelRotation);
-    const wheelDelta = normalizeRotation(
-      targetWheelNormalized - currentWheelNormalized
-    );
-
-    const currentBallNormalized = normalizeRotation(ballRotation);
-    const targetBallNormalized = POINTER_ANGLE;
-
-    let ballDelta = targetBallNormalized - currentBallNormalized;
-    if (ballDelta > 0) ballDelta -= 360;
-
-    const nextWheelRotation = wheelRotation + 6 * 360 + wheelDelta;
-    const nextBallRotation = ballRotation - 9 * 360 + ballDelta;
+    clearTimers();
 
     setIsSpinning(true);
     setResult(null);
-    setWheelRotation(nextWheelRotation);
-    setBallRotation(nextBallRotation);
     setSpinCount((prev) => prev + 1);
+    setBallTrackRadius(BALL_TRACK_RADIUS);
+    setBallVisualJitter(0);
+    setBallSize(6.6);
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    const wheelExtraSpins = 5 + Math.random() * 1.5;
+    const ballExtraSpins = 8 + Math.random() * 2.5;
+
+    const randomWheelStop = Math.random() * 360;
+    const randomBallStop = Math.random() * 360;
+
+    const nextWheelRotation =
+      wheelRotation + wheelExtraSpins * 360 + randomWheelStop;
+
+    const mainBallRotation =
+      ballRotation - ballExtraSpins * 360 - randomBallStop;
+
+    setWheelRotation(nextWheelRotation);
+    setBallRotation(mainBallRotation);
 
     timeoutRef.current = setTimeout(() => {
-      setResult(winningNumber);
-      setHistory((prev) => [winningNumber, ...prev].slice(0, 10));
-      setIsSpinning(false);
-    }, SPIN_DURATION_MS);
+      const settleSteps = 10 + Math.floor(Math.random() * 4);
+      const jitterSequence: number[] = [];
+      const radiusSequence: number[] = [];
+
+      for (let i = 0; i < settleSteps; i++) {
+        const progress = i / Math.max(1, settleSteps - 1);
+        const damping = 1 - progress;
+
+        const direction = i % 2 === 0 ? 1 : -1;
+        const angularJitter = direction * (2.8 * damping + 0.25);
+        jitterSequence.push(angularJitter);
+
+        const radiusDrop =
+          BALL_TRACK_RADIUS -
+          (BALL_TRACK_RADIUS - POCKET_DROP_RADIUS) * Math.pow(progress, 0.82);
+
+        const bounce =
+          Math.sin(progress * Math.PI * 3.2) * (2.8 * damping);
+
+        radiusSequence.push(radiusDrop + bounce);
+      }
+
+      jitterSequence.push(0);
+      radiusSequence.push(POCKET_DROP_RADIUS);
+
+      let stepIndex = 0;
+      const baseFinalBallRotation = mainBallRotation;
+      const stepDuration = Math.max(
+        70,
+        Math.floor(SETTLING_DURATION_MS / jitterSequence.length)
+      );
+
+      settleIntervalRef.current = setInterval(() => {
+        const currentJitter = jitterSequence[stepIndex] ?? 0;
+        const currentRadius = radiusSequence[stepIndex] ?? POCKET_DROP_RADIUS;
+        const progress = stepIndex / Math.max(1, jitterSequence.length - 1);
+
+        setBallVisualJitter(currentJitter);
+        setBallTrackRadius(currentRadius);
+        setBallSize(6.5 - progress * 0.9);
+
+        stepIndex += 1;
+
+        if (stepIndex >= jitterSequence.length) {
+          if (settleIntervalRef.current) {
+            clearInterval(settleIntervalRef.current);
+            settleIntervalRef.current = null;
+          }
+
+          setBallVisualJitter(0);
+          setBallTrackRadius(POCKET_DROP_RADIUS);
+          setBallSize(5.7);
+          setBallRotation(baseFinalBallRotation);
+
+          const finalWheel = normalizeRotation(nextWheelRotation);
+          const finalBall = normalizeRotation(baseFinalBallRotation);
+          const winningIndex = getWinningIndexFromAngles(finalWheel, finalBall);
+          const winningNumber = EUROPEAN_ROULETTE_ORDER[winningIndex];
+
+          setResult(winningNumber);
+          setHistory((prev) => [winningNumber, ...prev].slice(0, 10));
+          setIsSpinning(false);
+        }
+      }, stepDuration);
+    }, MAIN_SPIN_DURATION_MS);
   };
 
   const resetHistory = () => {
     if (isSpinning) return;
+
+    clearTimers();
     setHistory([]);
     setResult(null);
     setSpinCount(0);
-    setHoveredBet(null);
     setWheelRotation(0);
     setBallRotation(0);
+    setBallTrackRadius(BALL_TRACK_RADIUS);
+    setBallVisualJitter(0);
+    setBallSize(7);
   };
-
-  const pointerBallPos = polarToCartesian(
-    CENTER,
-    CENTER,
-    BALL_TRACK_RADIUS,
-    0
-  );
 
   return (
     <Box
@@ -289,8 +362,6 @@ export default function RouletteFunWheel() {
                     mx: "auto",
                   }}
                 >
-                 
-
                   <Box
                     sx={{
                       width: "100%",
@@ -313,7 +384,7 @@ export default function RouletteFunWheel() {
                       <g
                         style={{
                           transition: isSpinning
-                            ? "transform 5.2s cubic-bezier(0.12, 0.8, 0.18, 1)"
+                            ? `transform ${TOTAL_SPIN_DURATION_MS}ms cubic-bezier(0.12, 0.8, 0.18, 1)`
                             : "transform 0.3s ease-out",
                           transformOrigin: `${CENTER}px ${CENTER}px`,
                           transform: `rotate(${wheelRotation}deg)`,
@@ -397,16 +468,23 @@ export default function RouletteFunWheel() {
                       <g
                         style={{
                           transition: isSpinning
-                            ? "transform 5.2s cubic-bezier(0.12, 0.8, 0.18, 1)"
-                            : "transform 0.35s ease-out",
+                            ? `transform ${MAIN_SPIN_DURATION_MS}ms cubic-bezier(0.08, 0.82, 0.16, 1)`
+                            : "transform 0.2s ease-out",
                           transformOrigin: `${CENTER}px ${CENTER}px`,
-                          transform: `rotate(${ballRotation}deg)`,
+                          transform: `rotate(${effectiveBallAngle}deg)`,
                         }}
                       >
+                        <ellipse
+                          cx={ballPos.x}
+                          cy={ballPos.y + 4}
+                          rx={ballSize * 0.9}
+                          ry={ballSize * 0.45}
+                          fill="rgba(0,0,0,0.22)"
+                        />
                         <circle
-                          cx={pointerBallPos.x}
-                          cy={pointerBallPos.y}
-                          r={7}
+                          cx={ballPos.x}
+                          cy={ballPos.y}
+                          r={ballSize}
                           fill="url(#ballGradient)"
                           stroke="rgba(255,255,255,0.5)"
                           strokeWidth="1.25"
@@ -543,8 +621,6 @@ export default function RouletteFunWheel() {
               </Stack>
 
               <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
-           
-
                 <Card
                   sx={{
                     borderRadius: 3,
