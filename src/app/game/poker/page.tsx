@@ -53,18 +53,18 @@ export default function PokerPage() {
         variant={isMobile ? "scrollable" : "fullWidth"}
         scrollButtons={isMobile ? "auto" : undefined}
         centered={!isMobile}
-          allowScrollButtonsMobile
-          textColor="inherit"
-          indicatorColor="secondary"
-          sx={{
-            "& .MuiTabs-flexContainer": {
-              justifyContent: isMobile ? "flex-start" : "center",
-            },
-            "& .MuiTabs-scroller": {
-              scrollBehavior: "smooth",
-            },
-          }}
-        
+        allowScrollButtonsMobile
+        textColor="inherit"
+        indicatorColor="secondary"
+        sx={{
+          "& .MuiTabs-flexContainer": {
+            justifyContent: isMobile ? "flex-start" : "center",
+          },
+          "& .MuiTabs-scroller": {
+            scrollBehavior: "smooth",
+          },
+        }}
+
       >
         <Tab label="Rules" />
         <Tab label="Bounty Board" />
@@ -141,16 +141,21 @@ export default function PokerPage() {
         </Box>
       )}
       {activeTab === 2 && (
-        <Box sx={{ mt: 2, textAlign: "center" }}>
+        <Stack sx={{ mt: 2, textAlign: "center" }}>
           <Image
-            src="/images/poker-cheatsheet.jpg"
+            src="/images/poker-cheatsheet.png"
             alt="Black Jack Cheatsheet"
             width={500}
             height={300}
-            style={{ width: "100%", height: "auto", margin: "0 auto" }}
+            style={{
+              width: "100%",
+              height: "auto",
+              margin: "0 auto",
+              borderRadius: "12px",
+            }}
             priority
           />
-        </Box>
+        </Stack>
       )}
 
       {activeTab === 3 && (

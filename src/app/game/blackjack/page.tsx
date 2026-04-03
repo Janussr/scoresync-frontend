@@ -81,7 +81,13 @@ export default function BlackJackPage() {
                         alt="Black Jack Cheatsheet"
                         width={500}
                         height={300}
-                        style={{ width: "100%", height: "auto", margin: "0 auto" }}
+style={{
+  width: "100%",
+  height: "auto",
+  margin: "0 auto",
+  borderRadius: "12px",
+}}
+
                         priority
                     />
                 </Box>

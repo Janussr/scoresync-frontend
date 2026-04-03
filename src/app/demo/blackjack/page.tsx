@@ -140,7 +140,7 @@ function PlayingCardView({
         sx={{
           width: { xs: 54, sm: 78 },
           height: { xs: 78, sm: 112 },
-          borderRadius: 2.5,
+          borderRadius: 1,
           border: "1px solid rgba(212,175,55,0.24)",
           background:
             "linear-gradient(135deg, rgba(20,40,80,1), rgba(8,20,42,1))",
@@ -154,7 +154,7 @@ function PlayingCardView({
           sx={{
             position: "absolute",
             inset: 6,
-            borderRadius: 2,
+            borderRadius: 1,
             border: "1px solid rgba(255,255,255,0.12)",
             background:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 8px, rgba(255,255,255,0.02) 8px 16px)",
@@ -171,7 +171,7 @@ function PlayingCardView({
       sx={{
         width: { xs: 54, sm: 78 },
         height: { xs: 78, sm: 112 },
-        borderRadius: 2.5,
+        borderRadius: 1,
         border: "1px solid rgba(212,175,55,0.24)",
         bgcolor: "#fffdf8",
         color: red ? "#b71c1c" : "#111",
@@ -245,7 +245,7 @@ function HandSection({
   return (
     <Card
       sx={{
-        borderRadius: 3,
+        borderRadius: 2,
         border: highlight
           ? "1px solid rgba(245,230,168,0.7)"
           : "1px solid rgba(212,175,55,0.18)",
@@ -496,7 +496,7 @@ export default function BlackJackFunPage() {
           </Typography>
         </Box>
 
-        <Card sx={{ borderRadius: 4, overflow: "hidden" }}>
+        <Card sx={{ borderRadius: 3, overflow: "hidden" }}>
           <CardContent
             sx={{
               p: { xs: 1.25, md: 3 },
@@ -506,7 +506,7 @@ export default function BlackJackFunPage() {
             <Stack spacing={{ xs: 1.25, sm: 2 }}>
               <Box
                 sx={{
-                  borderRadius: 4,
+                  borderRadius: 3,
                   p: { xs: 1.1, sm: 2 },
                   background:
                     "radial-gradient(circle at top, rgba(26,92,46,0.95), rgba(10,39,20,1) 70%)",
@@ -537,7 +537,7 @@ export default function BlackJackFunPage() {
 
               <Card
                 sx={{
-                  borderRadius: 3,
+                  borderRadius: 2,
                   border: "1px solid rgba(212,175,55,0.18)",
                   background:
                     "linear-gradient(180deg, rgba(19,52,27,0.9), rgba(8,27,13,0.96))",

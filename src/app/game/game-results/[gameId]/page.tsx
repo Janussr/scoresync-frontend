@@ -97,14 +97,11 @@ export default function GameResultspage() {
     });
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .trim()
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("");
+   const getInitials = (name: string) => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   };
 
   const getRankLabel = (index: number) => {
@@ -134,7 +131,7 @@ export default function GameResultspage() {
     >
       <Box
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           border: "1px solid rgba(212, 175, 55, 0.18)",
           overflow: "hidden",
           boxShadow: 3,
@@ -186,7 +183,7 @@ export default function GameResultspage() {
           <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 2 }}>
             <Card
               sx={{
-                borderRadius: 2,
+                borderRadius: 1,
                 border: "1px solid rgba(212, 175, 55, 0.24)",
                 background:
                   "linear-gradient(90deg, rgba(24,70,22,0.82), rgba(9,34,14,0.96))",
@@ -250,7 +247,7 @@ export default function GameResultspage() {
         <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 2 }}>
           <Card
             sx={{
-              borderRadius: 1.5,
+              borderRadius: 1,
               overflow: "hidden",
             }}
           >

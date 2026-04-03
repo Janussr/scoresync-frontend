@@ -19,6 +19,7 @@ export default function HomePage() {
     { icon: "♣", title: "Black Jack", link: "/game/blackjack" },
     { icon: "♦", title: "Poker", link: "/game/poker" },
     { icon: "◉", title: "Roulette", link: "/game/roulette" },
+    { icon: "◉", title: "Lobby", link: "/game/lobby" },
   ];
 
   return (

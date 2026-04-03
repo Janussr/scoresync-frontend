@@ -16,8 +16,13 @@ export default function RoulettePage() {
   return (
     <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 2 }}>
       <Typography
-        variant="h4"
-        sx={{ mb: 0, textAlign: "center", fontWeight: "bold" }}
+          variant="h4"
+        sx={{
+          mb: 3,
+          textAlign: "center",
+          fontWeight: "bold",
+          fontSize: { xs: "1.5rem", sm: "2rem" },
+        }}
       >
         Roulette
       </Typography>
@@ -78,7 +83,12 @@ export default function RoulettePage() {
             alt="Roulette Cheatsheet"
             width={500}
             height={300}
-            style={{ width: "100%", height: "auto", margin: "0 auto" }}
+            style={{
+              width: "100%",
+              height: "auto",
+              margin: "0 auto",
+              borderRadius: "12px",
+            }}
             priority
           />
         </Box>
