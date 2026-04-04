@@ -31,8 +31,14 @@ It is built as a companion to the backend system and used in small private game 
 
 ## Screenshots
 
+### Game Control Panel
+![Game Panel](public/screenshots/game-control-panel.png)
+
 ### Active Game
 ![Active Game](public/screenshots/active-game.png)
+
+### Game Results
+![Game Results](public/screenshots/game-results.png)
 
 ### Hall of Fame
 ![Hall of Fame](public/screenshots/hof.png)
