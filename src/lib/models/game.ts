@@ -63,14 +63,13 @@ export interface Player {
   isActive: boolean;
 }
 
-export interface HistoryEntry {
+export interface GameHistoryEntry {
   id: number;
   gameNumber: number;
   winnerName: string;
-  totalScore: number;
   date: string;
   playerCount: number;
-   type: GameType;
+  type: GameType;
   roundCount: number;
 }
 

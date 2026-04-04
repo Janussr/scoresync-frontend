@@ -14,13 +14,13 @@ import {
   Button,
   Stack,
 } from "@mui/material";
-import { getAllGames } from "@/lib/api/games";
-import { GameDetails, HistoryEntry, Game } from "@/lib/models/game";
+import { getAllGames, getGamesHistoryPage } from "@/lib/api/games";
+import { GameDetails, GameHistoryEntry, Game } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
 
 
 export default function GameHistoryPage() {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [history, setHistory] = useState<GameHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const { showError } = useError();
 
@@ -28,32 +28,29 @@ export default function GameHistoryPage() {
     fetchGames();
   }, []);
 
-  const fetchGames = async () => {
-    setLoading(true);
-    try {
-      const games: Game[] = await getAllGames();
+const fetchGames = async () => {
+  setLoading(true);
+  try {
+    const games: GameHistoryEntry[] = await getGamesHistoryPage();
 
-      const finishedGames = games
-        .filter(g => g.isFinished && g.winner)
-        .map(g => ({
-          id: g.id,
-          gameNumber: g.gameNumber,
-          winnerName: g.winner!.userName,
-          totalScore: g.winner!.winningScore,
-          date: g.endedAt || g.winner!.winDate,
-          playerCount: g.players?.length ?? 0,
-          type: g.type,
-          roundCount: g.rounds?.length ?? 0,
-        }))
-        .sort((a, b) => b.date.localeCompare(a.date));
+    const finishedGames: GameHistoryEntry[] = games.map((g) => ({
+      id: g.id,
+      gameNumber: g.gameNumber,
+      winnerName: g.winnerName,
+      totalScore: 0,
+      date: g.date,
+      playerCount: g.playerCount,
+      type: g.type,
+      roundCount: g.roundCount,
+    }));
 
-      setHistory(finishedGames);
-    } catch (err: any) {
-      showError(err.message || "failed to fetch game history")
-    } finally {
-      setLoading(false);
-    }
-  };
+    setHistory(finishedGames);
+  } catch (err: any) {
+    showError(err.message || "failed to fetch game history");
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (loading)
     return (
@@ -196,20 +193,6 @@ export default function GameHistoryPage() {
 
                   <Typography variant="body2" color="text.secondary">
                     {entry.playerCount} players
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary">
-                    •
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "success.main",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {entry.totalScore.toLocaleString()} pts
                   </Typography>
                 </Stack>
               </Box>
