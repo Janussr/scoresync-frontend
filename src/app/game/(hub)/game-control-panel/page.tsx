@@ -300,11 +300,12 @@ export default function GameControlPanelPage() {
 
     const gameId = gameToEnd.id;
     const hasScores = (gameToEnd.scores?.length ?? 0) > 0;
+    const canCancelGame = !gameToEnd.isOpenForPlayers && !hasScores;
 
     try {
       setEndingGameByGame((prev) => ({ ...prev, [gameId]: true }));
 
-      if (!hasScores) {
+      if (canCancelGame) {
         await cancelGame(gameId);
       } else {
         await endGame(gameId);
@@ -517,6 +518,7 @@ export default function GameControlPanelPage() {
           const scoreInputs = scoreInputsByGame[game.id] ?? {};
           const selectedUserIds = selectedUserIdsByGame[game.id] ?? [];
           const totalScores = game.scores?.length ?? 0;
+          const canCancelGame = totalScores === 0 && !game.isOpenForPlayers;
 
           const getPlayerTotalPoints = (playerId: number) => {
             return (game.scores ?? [])
@@ -1047,12 +1049,13 @@ export default function GameControlPanelPage() {
                   </Button>
 
                   <Button
-                    color={totalScores === 0 ? "warning" : "error"}
+                    color={canCancelGame ? "warning" : "error"}
                     variant="contained"
                     onClick={() => handleEndGameClick(game)}
                     disabled={!!endingGameByGame[game.id]}
                   >
-                    {totalScores === 0 ? "Cancel game" : "End game"}
+                    {canCancelGame ? "Cancel game" : "End game"}
+
                   </Button>
                 </Stack>
               </CardContent>
@@ -1189,10 +1192,12 @@ export default function GameControlPanelPage() {
 
       <Dialog open={endGameConfirmOpen} onClose={() => setEndGameConfirmOpen(false)}>
         <DialogTitle>
-          {(gameToEnd?.scores?.length ?? 0) === 0 ? "Cancel Game" : "End Game"}
+          {gameToEnd && !gameToEnd.isOpenForPlayers && (gameToEnd.scores?.length ?? 0) === 0
+            ? "Cancel Game"
+            : "End Game"}
         </DialogTitle>
         <DialogContent>
-          {(gameToEnd?.scores?.length ?? 0) === 0
+          {gameToEnd && !gameToEnd.isOpenForPlayers && (gameToEnd.scores?.length ?? 0) === 0
             ? "Are you sure you want to cancel this game? All progress will be lost."
             : "Are you sure you want to end this game?"}
         </DialogContent>
@@ -1202,7 +1207,9 @@ export default function GameControlPanelPage() {
             onClick={confirmEndOrCancelGame}
             disabled={!!(gameToEnd && endingGameByGame[gameToEnd.id])}
           >
-            {(gameToEnd?.scores?.length ?? 0) === 0 ? "Yes" : "End Game"}
+            {gameToEnd && !gameToEnd.isOpenForPlayers && (gameToEnd.scores?.length ?? 0) === 0
+              ? "Yes"
+              : "End Game"}
           </Button>
           <Button
             onClick={() => {
