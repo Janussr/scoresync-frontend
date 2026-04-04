@@ -28,3 +28,11 @@ https://github.com/Janussr/scoresync-backend
 The focus of this project is not visual design, but functionality and real-time interaction.
 
 It is built as a companion to the backend system and used in small private game sessions.
+
+## Screenshots
+
+### Active Game
+![Active Game](public/screenshots/active-game.png)
+
+### Hall of Fame
+![Hall of Fame](public/screenshots/hof.png)
