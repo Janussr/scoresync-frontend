@@ -362,35 +362,35 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       </Button>
                     );
                   })}
-                 {accountLinks.map((link) => {
-  const isActive = pathname === link.href;
+                  {accountLinks.map((link) => {
+                    const isActive = pathname === link.href;
 
-  return (
-    <Button
-      key={link.href}
-      component={Link}
-      href={link.href}
-      onClick={closeDrawer}
-      fullWidth
-      sx={{
-        ...menuLinkSx,
-        backgroundColor: isActive ? "rgba(212,175,55,0.08)" : "transparent",
-        color: isActive ? "#ffd84d" : "#f1c40f",
-      }}
-    >
-      <Box
-        component="span"
-        sx={{
-          mr: 1.2,
-          color: "rgba(245,230,168,0.75)",
-        }}
-      >
-        —
-      </Box>
-      {link.label}
-    </Button>
-  );
-})}
+                    return (
+                      <Button
+                        key={link.href}
+                        component={Link}
+                        href={link.href}
+                        onClick={closeDrawer}
+                        fullWidth
+                        sx={{
+                          ...menuLinkSx,
+                          backgroundColor: isActive ? "rgba(212,175,55,0.08)" : "transparent",
+                          color: isActive ? "#ffd84d" : "#f1c40f",
+                        }}
+                      >
+                        <Box
+                          component="span"
+                          sx={{
+                            mr: 1.2,
+                            color: "rgba(245,230,168,0.75)",
+                          }}
+                        >
+                          —
+                        </Box>
+                        {link.label}
+                      </Button>
+                    );
+                  })}
                 </Stack>
               </Box>
 

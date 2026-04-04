@@ -25,7 +25,10 @@ export function ErrorProvider({ children }: { children: ReactNode }) {
         open={open}
         autoHideDuration={5000}
         onClose={() => setOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{
+          bottom: "calc(env(safe-area-inset-bottom) + 12px)",
+        }}
       >
         <Alert onClose={() => setOpen(false)} severity="error" sx={{ width: "100%" }}>
           {message}

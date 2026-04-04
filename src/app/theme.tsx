@@ -75,32 +75,31 @@ const theme = createTheme({
 
   components: {
     MuiCssBaseline: {
-      styleOverrides: {
-        html: {
-          height: "100%",
-        },
-        body: {
-          minHeight: "100%",
-          background: `
-            radial-gradient(circle at top, rgba(20,80,20,0.35), transparent 35%),
-            linear-gradient(180deg, #062b10 0%, #031a09 100%)
-          `,
-          color: "#f5e6a8",
-          WebkitFontSmoothing: "antialiased",
-          MozOsxFontSmoothing: "grayscale",
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "cover",
-          backgroundAttachment: "fixed",
-        },
-        a: {
-          color: "inherit",
-          textDecoration: "none",
-        },
-
-
-      },
-
+  styleOverrides: {
+    html: {
+      height: "100%",
     },
+    body: {
+      margin: 0,
+      minHeight: "100dvh",
+      paddingBottom: "env(safe-area-inset-bottom)",
+      background: `
+        radial-gradient(circle at top, rgba(20,80,20,0.35), transparent 35%),
+        linear-gradient(180deg, #062b10 0%, #031a09 100%)
+      `,
+      color: "#f5e6a8",
+      WebkitFontSmoothing: "antialiased",
+      MozOsxFontSmoothing: "grayscale",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "cover",
+      backgroundAttachment: "fixed",
+    },
+    a: {
+      color: "inherit",
+      textDecoration: "none",
+    },
+  },
+},
 
     MuiCard: {
       styleOverrides: {
