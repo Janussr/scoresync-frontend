@@ -167,7 +167,6 @@ export default function PokerPage() {
             <Typography><strong>Specific Pair (AA, KK, etc):</strong> 0.45% (1 in 221)</Typography>
             <Typography><strong>Suited Cards:</strong> 23.5%</Typography>
             <Typography><strong>Offsuit Cards:</strong> 70.6%</Typography>
-            <Typography><strong>AA:</strong> 0.45% (1 in 221)</Typography>
             <Typography><strong>AK Suited:</strong> 0.30% (1 in 332)</Typography>
             <Typography><strong>AK Offsuit:</strong> 0.90% (1 in 110)</Typography>
 

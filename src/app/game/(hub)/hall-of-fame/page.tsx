@@ -97,40 +97,36 @@ export default function HallOfFamePage() {
     if (rank === 1) return "#D4AF37";
     if (rank === 2) return "#BFC7D5";
     if (rank === 3) return "#B87333";
-    return "rgba(255,255,255,0.8)";
+    return "rgba(255,255,255,0.78)";
   };
-
-  const formatPlayerName = (name: string) => {
-  if (!name) return "";
-  return name.charAt(0).toUpperCase() + name.slice(1);
-};
 
   return (
     <Box
       sx={{
         width: "100%",
-        maxWidth: 980,
+        maxWidth: 820,
         mx: "auto",
-        px: { xs: 1, sm: 2 },
-        mt: 4,
+        px: { xs: 1, sm: 1.5 },
+        mt: { xs: 2, sm: 2.5 },
       }}
     >
       <Card
         sx={{
-          borderRadius: 4,
+          borderRadius: 3,
           color: "#F5E7A1",
-          border: "1px solid rgba(212,175,55,0.18)",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.35)",
+          border: "1px solid rgba(212,175,55,0.16)",
+          boxShadow: "0 12px 28px rgba(0,0,0,0.24)",
         }}
       >
-        <Box sx={{ px: { xs: 2, sm: 4 }, py: { xs: 2.5, sm: 4 } }}>
-          <Stack spacing={3}>
+        <Box sx={{ px: { xs: 1.25, sm: 2 }, py: { xs: 1.5, sm: 2 } }}>
+          <Stack spacing={1.75}>
             <Box textAlign="center">
               <Typography
                 sx={{
-                  fontSize: { xs: "1.9rem", sm: "2.5rem" },
+                  fontSize: { xs: "1.45rem", sm: "1.8rem" },
                   fontWeight: 700,
                   color: "#F7D64A",
+                  lineHeight: 1.1,
                 }}
               >
                 Hall of Fame
@@ -146,18 +142,18 @@ export default function HallOfFamePage() {
                 }}
                 sx={{
                   flexWrap: "wrap",
-                  gap: 1,
+                  gap: 0.65,
                   "& .MuiToggleButton-root": {
-                    px: { xs: 1.5, sm: 2.5 },
-                    py: 0.8,
-                    borderRadius: "14px !important",
-                    border: "1px solid rgba(255,255,255,0.16)",
-                    color: "rgba(255,255,255,0.88)",
+                    px: { xs: 1, sm: 1.5 },
+                    py: 0.55,
+                    borderRadius: "10px !important",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    color: "rgba(255,255,255,0.86)",
                     textTransform: "uppercase",
-                    letterSpacing: "0.08em",
+                    letterSpacing: "0.06em",
                     fontWeight: 700,
-                    fontSize: { xs: "0.72rem", sm: "0.85rem" },
-                    backgroundColor: "rgba(255,255,255,0.03)",
+                    fontSize: { xs: "0.64rem", sm: "0.74rem" },
+                    backgroundColor: "rgba(255,255,255,0.025)",
                     "&.Mui-selected": {
                       color: "#F7D64A",
                       backgroundColor: "rgba(212,175,55,0.10)",
@@ -175,22 +171,22 @@ export default function HallOfFamePage() {
             </Box>
 
             {loading ? (
-              <Stack alignItems="center" py={5}>
+              <Stack alignItems="center" py={4}>
                 <CircularProgress sx={{ color: "#D4AF37" }} />
               </Stack>
             ) : filteredHallOfFame.length === 0 ? (
-              <Typography sx={{ textAlign: "center", py: 4 }}>
+              <Typography sx={{ textAlign: "center", py: 3 }}>
                 No hall of fame entries found
               </Typography>
             ) : (
               <>
                 <Stack
                   direction="row"
-                  spacing={{ xs: 1, sm: 2 }}
+                  spacing={{ xs: 0.75, sm: 1.25 }}
                   justifyContent="center"
                   alignItems="end"
                   sx={{
-                    maxWidth: 560,
+                    maxWidth: 420,
                     mx: "auto",
                   }}
                 >
@@ -200,7 +196,7 @@ export default function HallOfFamePage() {
                       name={topThree[1].playerName}
                       wins={topThree[1].wins}
                       color={getRankColor(2)}
-                      height={44}
+                      height={34}
                       mobile={isMobile}
                     />
                   )}
@@ -211,7 +207,7 @@ export default function HallOfFamePage() {
                       name={topThree[0].playerName}
                       wins={topThree[0].wins}
                       color={getRankColor(1)}
-                      height={60}
+                      height={48}
                       mobile={isMobile}
                     />
                   )}
@@ -222,7 +218,7 @@ export default function HallOfFamePage() {
                       name={topThree[2].playerName}
                       wins={topThree[2].wins}
                       color={getRankColor(3)}
-                      height={36}
+                      height={30}
                       mobile={isMobile}
                     />
                   )}
@@ -231,13 +227,37 @@ export default function HallOfFamePage() {
                 <Card
                   elevation={0}
                   sx={{
-                    borderRadius: 3,
-                    border: "1px solid rgba(212,175,55,0.14)",
-                    backgroundColor: "rgba(0,0,0,0.14)",
+                    borderRadius: 2.5,
+                    border: "1px solid rgba(212,175,55,0.12)",
+                    backgroundColor: "rgba(0,0,0,0.12)",
                     overflow: "hidden",
                   }}
                 >
-                  <Box sx={{ px: { xs: 1.5, sm: 2.5 } }}>
+                  <Box
+                    sx={{
+                      px: { xs: 1.1, sm: 1.5 },
+                      py: 0.5,
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      sx={{
+                        px: { xs: 0.5, sm: 1 },
+                        py: 0.8,
+                        color: "rgba(212,175,55,0.62)",
+                        fontSize: "0.7rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.12em",
+                      }}
+                    >
+                      <Box sx={{ width: 34, flexShrink: 0 }}>#</Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>Player</Box>
+                      <Box sx={{ width: { xs: 70, sm: 84 }, textAlign: "right", flexShrink: 0 }}>
+                        Wins
+                      </Box>
+                    </Stack>
+
                     {filteredHallOfFame.map((entry, i) => {
                       const rank = i + 1;
                       const medal =
@@ -248,55 +268,65 @@ export default function HallOfFamePage() {
                         <Box key={`${entry.userId}-${entry.displayGameType}-${rank}`}>
                           <Stack
                             direction="row"
-                            justifyContent="space-between"
                             alignItems="center"
-                            spacing={2}
-                            sx={{ py: { xs: 1.5, sm: 2 } }}
+                            sx={{
+                              px: { xs: 0.5, sm: 1 },
+                              py: { xs: 1, sm: 1.1 },
+                            }}
                           >
-                            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-                              <Box
-                                sx={{
-                                  width: 28,
-                                  textAlign: "center",
-                                  fontWeight: 700,
-                                  color: rank > 3 ? "rgba(212,175,55,0.75)" : undefined,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {medal}
-                              </Box>
+                            <Box
+                              sx={{
+                                width: 34,
+                                flexShrink: 0,
+                                textAlign: "center",
+                                fontWeight: 700,
+                                color:
+                                  rank > 3 ? "rgba(212,175,55,0.75)" : undefined,
+                                fontSize: { xs: "0.88rem", sm: "0.95rem" },
+                              }}
+                            >
+                              {medal}
+                            </Box>
 
-                              <Box sx={{ minWidth: 0 }}>
-                                <Typography
-                                  sx={{
-                                    fontSize: { xs: "1rem", sm: "1.3rem" },
-                                    fontWeight: 700,
-                                    color: rank <= 3 ? "#F8E8B0" : "#F4F4F4",
-                                    whiteSpace: "nowrap",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                  }}
-                                >
-                                  {entry.playerName}
-                                </Typography>
-
-                                <Typography
-                                  sx={{
-                                    fontSize: { xs: "0.82rem", sm: "0.95rem" },
-                                    color: "rgba(212,175,55,0.7)",
-                                  }}
-                                >
-                                  {selectedGameType === "ALL"
-                                    ? "All game types"
-                                    : formatGameType(entry.gameType)}
-                                </Typography>
-                              </Box>
-                            </Stack>
-
-                            <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                            <Box sx={{ flex: 1, minWidth: 0, pr: 1 }}>
                               <Typography
                                 sx={{
-                                  fontSize: { xs: "1.25rem", sm: "1.8rem" },
+                                  fontSize: { xs: "0.92rem", sm: "1rem" },
+                                  fontWeight: 700,
+                                  color: rank <= 3 ? "#F8E8B0" : "#F4F4F4",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  lineHeight: 1.15,
+                                }}
+                              >
+                                {entry.playerName}
+                              </Typography>
+
+                              <Typography
+                                sx={{
+                                  mt: 0.15,
+                                  fontSize: { xs: "0.7rem", sm: "0.76rem" },
+                                  color: "rgba(212,175,55,0.68)",
+                                  lineHeight: 1.1,
+                                }}
+                              >
+                                {selectedGameType === "ALL"
+                                  ? "All game types"
+                                  : formatGameType(entry.gameType)}
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                width: { xs: 70, sm: 84 },
+                                textAlign: "right",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontSize: { xs: "1rem", sm: "1.2rem" },
                                   fontWeight: 800,
                                   color: rankColor,
                                   lineHeight: 1,
@@ -304,21 +334,11 @@ export default function HallOfFamePage() {
                               >
                                 {entry.wins}
                               </Typography>
-                              <Typography
-                                sx={{
-                                  fontSize: { xs: "0.68rem", sm: "0.8rem" },
-                                  textTransform: "uppercase",
-                                  letterSpacing: "0.18em",
-                                  color: "rgba(212,175,55,0.65)",
-                                }}
-                              >
-                                Wins
-                              </Typography>
                             </Box>
                           </Stack>
 
                           {i < filteredHallOfFame.length - 1 && (
-                            <Divider sx={{ borderColor: "rgba(212,175,55,0.10)" }} />
+                            <Divider sx={{ borderColor: "rgba(212,175,55,0.08)" }} />
                           )}
                         </Box>
                       );
@@ -355,19 +375,19 @@ function MiniPodiumCard({
     <Box
       sx={{
         flex: 1,
-        maxWidth: mobile ? 110 : 150,
+        maxWidth: mobile ? 86 : 108,
         textAlign: "center",
       }}
     >
       <Typography
         sx={{
-          fontSize: mobile ? "0.75rem" : "0.9rem",
+          fontSize: mobile ? "0.66rem" : "0.76rem",
           fontWeight: 700,
           color,
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
-          mb: 0.25,
+          mb: 0.15,
         }}
       >
         {name}
@@ -375,9 +395,10 @@ function MiniPodiumCard({
 
       <Typography
         sx={{
-          fontSize: mobile ? "0.72rem" : "0.82rem",
-          color: "rgba(255,255,255,0.72)",
-          mb: 0.75,
+          fontSize: mobile ? "0.64rem" : "0.7rem",
+          color: "rgba(255,255,255,0.7)",
+          mb: 0.45,
+          lineHeight: 1.1,
         }}
       >
         {wins} wins
@@ -396,9 +417,10 @@ function MiniPodiumCard({
       >
         <Typography
           sx={{
-            fontSize: mobile ? "1rem" : "1.2rem",
+            fontSize: mobile ? "0.88rem" : "0.98rem",
             fontWeight: 800,
             color,
+            lineHeight: 1,
           }}
         >
           {rank}
