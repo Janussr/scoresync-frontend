@@ -28,6 +28,7 @@ import { User, UserRole } from "@/lib/models/user";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { useEffect, useState } from "react";
+import DatabasePingToggle from "@/components/admin/DatabasePingToggle";
 
 export default function AdminPanelPage() {
   const router = useRouter();
@@ -196,6 +197,12 @@ export default function AdminPanelPage() {
           </Accordion>
         </CardContent>
       </Card>
+
+      <Card sx={{ mb: 4 }}>
+  <CardContent>
+    <DatabasePingToggle />
+  </CardContent>
+</Card>
 
       {/* Dialogs */}
       <Dialog open={adminResetConfirmOpen} onClose={() => setAdminResetConfirmOpen(false)}>
