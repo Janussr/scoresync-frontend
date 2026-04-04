@@ -112,7 +112,7 @@ export default function HallOfFamePage() {
     >
       <Card
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           color: "#F5E7A1",
           border: "1px solid rgba(212,175,55,0.16)",
           boxShadow: "0 12px 28px rgba(0,0,0,0.24)",
@@ -227,7 +227,7 @@ export default function HallOfFamePage() {
                 <Card
                   elevation={0}
                   sx={{
-                    borderRadius: 2.5,
+                    borderRadius: 1,
                     border: "1px solid rgba(212,175,55,0.12)",
                     backgroundColor: "rgba(0,0,0,0.12)",
                     overflow: "hidden",
@@ -251,7 +251,8 @@ export default function HallOfFamePage() {
                         letterSpacing: "0.12em",
                       }}
                     >
-                      <Box sx={{ width: 34, flexShrink: 0 }}>#</Box>
+                      <Box sx={{ width: 14, flexShrink: 0 }}></Box>
+                      <Box sx={{ width: 15, flexShrink: 0 }}>#</Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>Player</Box>
                       <Box sx={{ width: { xs: 70, sm: 84 }, textAlign: "right", flexShrink: 0 }}>
                         Wins
