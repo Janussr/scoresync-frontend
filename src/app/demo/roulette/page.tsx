@@ -34,6 +34,8 @@ const MAIN_SPIN_DURATION_MS = 4000;
 const SETTLING_DURATION_MS = 1300;
 const TOTAL_SPIN_DURATION_MS = MAIN_SPIN_DURATION_MS + SETTLING_DURATION_MS;
 
+type RouletteColor = "Red" | "Black" | "Green";
+
 function polarToCartesian(
   cx: number,
   cy: number,
@@ -75,12 +77,17 @@ function getPocketColor(value: number) {
   return RED_NUMBERS.has(value) ? "#b71c1c" : "#161616";
 }
 
+function getResultColor(value: number): RouletteColor {
+  if (value === 0) return "Green";
+  return RED_NUMBERS.has(value) ? "Red" : "Black";
+}
+
 function normalizeRotation(rotation: number) {
   return ((rotation % 360) + 360) % 360;
 }
 
 function getWinningIndexFromAngles(wheelAngle: number, ballAngle: number) {
-  const relativeAngle = normalizeRotation(ballAngle - wheelAngle -1.1);
+  const relativeAngle = normalizeRotation(ballAngle - wheelAngle - 1.1);
   return (
     Math.floor((relativeAngle + SEGMENT_ANGLE / 2) / SEGMENT_ANGLE) %
     TOTAL_SEGMENTS
@@ -112,7 +119,7 @@ function getHighLow(number: number) {
 function getBetHits(number: number) {
   return {
     straight: number,
-    color: number === 0 ? null : RED_NUMBERS.has(number) ? "Red" : "Black",
+    color: getResultColor(number),
     evenOdd: getEvenOdd(number),
     highLow: getHighLow(number),
     dozen: getDozen(number),
@@ -131,6 +138,9 @@ export default function RouletteFunWheel() {
   const [result, setResult] = useState<number | null>(null);
   const [history, setHistory] = useState<number[]>([]);
   const [spinCount, setSpinCount] = useState(0);
+
+  const [selectedColor, setSelectedColor] = useState<RouletteColor>("Red");
+  const [didWin, setDidWin] = useState<boolean | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -174,6 +184,7 @@ export default function RouletteFunWheel() {
 
   const lastFive = history.slice(0, 5);
   const hits = result === null ? null : getBetHits(result);
+  const resultColor = result === null ? null : getResultColor(result);
 
   const effectiveBallAngle = ballRotation + ballVisualJitter;
   const ballPos = polarToCartesian(CENTER, CENTER, ballTrackRadius, 0);
@@ -192,6 +203,7 @@ export default function RouletteFunWheel() {
 
     setIsSpinning(true);
     setResult(null);
+    setDidWin(null);
     setSpinCount((prev) => prev + 1);
     setBallTrackRadius(BALL_TRACK_RADIUS);
     setBallVisualJitter(0);
@@ -271,8 +283,10 @@ export default function RouletteFunWheel() {
           const finalBall = normalizeRotation(baseFinalBallRotation);
           const winningIndex = getWinningIndexFromAngles(finalWheel, finalBall);
           const winningNumber = EUROPEAN_ROULETTE_ORDER[winningIndex];
+          const winningColor = getResultColor(winningNumber);
 
           setResult(winningNumber);
+          setDidWin(winningColor === selectedColor);
           setHistory((prev) => [winningNumber, ...prev].slice(0, 10));
           setIsSpinning(false);
         }
@@ -286,6 +300,7 @@ export default function RouletteFunWheel() {
     clearTimers();
     setHistory([]);
     setResult(null);
+    setDidWin(null);
     setSpinCount(0);
     setWheelRotation(0);
     setBallRotation(0);
@@ -329,25 +344,24 @@ export default function RouletteFunWheel() {
           </Typography>
 
           <Typography color="text.secondary" sx={{ px: { xs: 1, sm: 0 } }}>
-            Spin the wheel, watch the ball race around the rim, and see what the
-            board would have hit.
+            Choose a color, spin the wheel, if you feel lucky!
           </Typography>
         </Box>
 
         <Card sx={{ borderRadius: 4, overflow: "hidden" }}>
           <CardContent
             sx={{
-              p: { xs: 1.5, md: 3 },
-              "&:last-child": { pb: { xs: 1.5, md: 3 } },
+              p: { xs: 0, md: 3 },
+              "&:last-child": { pb: { xs: 0, md: 3 } },
             }}
           >
             <Stack
               direction={{ xs: "column", xl: "row" }}
-              spacing={{ xs: 2, md: 3 }}
+              spacing={{ xs: 1, md: 3 }}
               alignItems="stretch"
             >
               <Stack
-                spacing={3}
+                spacing={1}
                 sx={{
                   flex: { xs: "1 1 auto", xl: "0 0 520px" },
                   width: "100%",
@@ -358,7 +372,7 @@ export default function RouletteFunWheel() {
                   sx={{
                     position: "relative",
                     width: "100%",
-                    maxWidth: { xs: 300, sm: 380, md: 470 },
+                    maxWidth: { xs: 340, sm: 430, md: 540, xl: 580 },
                     mx: "auto",
                   }}
                 >
@@ -511,111 +525,261 @@ export default function RouletteFunWheel() {
                 <Card
                   sx={{
                     borderRadius: 3,
+                    border: "1px solid rgba(212,175,55,0.2)",
+                    background:
+                      "linear-gradient(180deg, rgba(18,33,20,0.98), rgba(9,20,11,0.98))",
+                  }}
+                >
+                  <CardContent sx={{ p: 1, "&:last-child": { pb: 1 } }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      {/* Pick */}
+                      <Box sx={{ flex: 1, textAlign: "center" }}>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                          Pick
+                        </Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                          {selectedColor}
+                        </Typography>
+                      </Box>
+
+                      {/* Result */}
+                      <Box sx={{ flex: 1, textAlign: "center" }}>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                          Result
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: "1.1rem",
+                            color:
+                              didWin === null
+                                ? "text.primary"
+                                : didWin
+                                  ? "success.main"
+                                  : "error.main",
+                          }}
+                        >
+                          {didWin === null ? "—" : didWin ? "WIN" : "LOSS"}
+                        </Typography>
+                      </Box>
+
+                      {/* Landed */}
+                      <Box sx={{ flex: 1, textAlign: "center" }}>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                          Landed
+                        </Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                          {resultColor ?? "—"}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  sx={{
+                    borderRadius: 3,
                     border: "1px solid rgba(212,175,55,0.22)",
                     background:
                       "linear-gradient(180deg, rgba(19,52,27,0.9), rgba(8,27,13,0.96))",
                   }}
                 >
-                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={2}
-                      justifyContent="space-between"
-                    >
-                      <Box>
-                        <Typography sx={{ color: "text.secondary", mb: 0.5 }}>
-                          Status
-                        </Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: "1.15rem" }}>
-                          {isSpinning ? "Spinning..." : "Ready to spin"}
-                        </Typography>
-                      </Box>
+                  <CardContent
+                    sx={{
+                      p: { xs: 1.5, sm: 2 },
+                      "&:last-child": { pb: { xs: 1.5, sm: 2 } },
+                    }}
+                  >
+                    <Stack spacing={1.75}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="space-between"
+                        alignItems="stretch"
+                      >
+                        <Box sx={{ flex: 1, textAlign: "center" }}>
+                          <Typography sx={{ color: "text.secondary", fontSize: "0.72rem", mb: 0.4 }}>
+                            Status
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: { xs: "0.9rem", sm: "1.05rem" },
+                              lineHeight: 1.1,
+                            }}
+                          >
+                            {isSpinning ? "Spinning..." : "Ready"}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ flex: 1, textAlign: "center" }}>
+                          <Typography sx={{ color: "text.secondary", fontSize: "0.72rem", mb: 0.4 }}>
+                            Last result
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: { xs: "1.25rem", sm: "1.7rem" },
+                              lineHeight: 1,
+                              color:
+                                result === null
+                                  ? "text.primary"
+                                  : result === 0
+                                    ? "success.main"
+                                    : RED_NUMBERS.has(result)
+                                      ? "error.main"
+                                      : "text.primary",
+                            }}
+                          >
+                            {result ?? "—"}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ flex: 1, textAlign: "center" }}>
+                          <Typography sx={{ color: "text.secondary", fontSize: "0.72rem", mb: 0.4 }}>
+                            Spins
+                          </Typography>
+                          <Typography
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                              lineHeight: 1.1,
+                            }}
+                          >
+                            {spinCount}
+                          </Typography>
+                        </Box>
+                      </Stack>
 
                       <Box>
-                        <Typography sx={{ color: "text.secondary", mb: 0.5 }}>
-                          Last result
-                        </Typography>
                         <Typography
-                          variant="h3"
                           sx={{
-                            lineHeight: 1,
-                            color:
-                              result === null
-                                ? "text.primary"
-                                : result === 0
-                                ? "success.main"
-                                : RED_NUMBERS.has(result)
-                                ? "error.main"
-                                : "text.primary",
+                            color: "text.secondary",
+                            mb: 0.8,
+                            fontSize: { xs: "0.78rem", sm: "0.95rem" },
                           }}
                         >
-                          {result ?? "—"}
+                          Choose color
                         </Typography>
+
+                        <Stack direction="row" spacing={1}>
+                          {(["Red", "Black", "Green"] as RouletteColor[]).map((color) => {
+                            const isSelected = selectedColor === color;
+
+                            return (
+                              <Button
+                                key={color}
+                                variant={isSelected ? "contained" : "outlined"}
+                                onClick={() => setSelectedColor(color)}
+                                disabled={isSpinning}
+                                fullWidth
+                                sx={{
+                                  minWidth: 0,
+                                  px: 1,
+                                  py: 0.9,
+                                  fontSize: { xs: "0.8rem", sm: "0.95rem" },
+                                  fontWeight: 700,
+                                  ...(color === "Red" && {
+                                    borderColor: "error.main",
+                                    color: isSelected ? "#fff" : "error.main",
+                                    backgroundColor: isSelected ? "error.main" : "transparent",
+                                  }),
+                                  ...(color === "Black" && {
+                                    borderColor: "rgba(255,255,255,0.3)",
+                                    color: "#fff",
+                                    backgroundColor: isSelected ? "#111" : "transparent",
+                                  }),
+                                  ...(color === "Green" && {
+                                    borderColor: "success.main",
+                                    color: isSelected ? "#fff" : "success.main",
+                                    backgroundColor: isSelected ? "success.main" : "transparent",
+                                  }),
+                                }}
+                              >
+                                {color}
+                              </Button>
+                            );
+                          })}
+                        </Stack>
                       </Box>
+
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          variant="contained"
+                          onClick={spinWheel}
+                          disabled={isSpinning}
+                          fullWidth
+                          sx={{
+                            py: { xs: 1, sm: 1.2 },
+                            fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                            fontWeight: 700,
+                          }}
+                        >
+                          {isSpinning ? "Spinning" : `Spin on ${selectedColor}`}
+                        </Button>
+
+                        <Button
+                          variant="outlined"
+                          onClick={resetHistory}
+                          disabled={isSpinning}
+                          sx={{
+                            px: { xs: 1.6, sm: 2.2 },
+                            minWidth: { xs: 82, sm: 96 },
+                            fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                          }}
+                        >
+                          Reset
+                        </Button>
+                      </Stack>
 
                       <Box>
-                        <Typography sx={{ color: "text.secondary", mb: 0.5 }}>
-                          Total spins
+                        <Typography
+                          sx={{
+                            color: "text.secondary",
+                            mb: 0.8,
+                            fontSize: { xs: "0.78rem", sm: "0.95rem" },
+                          }}
+                        >
+                          Last spins
                         </Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: "1.15rem" }}>
-                          {spinCount}
-                        </Typography>
+
+                        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                          {lastFive.length === 0 && (
+                            <Typography variant="body2" color="text.secondary">
+                              No spins yet.
+                            </Typography>
+                          )}
+
+                          {lastFive.map((value, index) => (
+                            <Chip
+                              key={`${value}-${index}`}
+                              label={value}
+                              size="small"
+                              sx={{
+                                minWidth: 40,
+                                height: 28,
+                                fontWeight: 700,
+                                color: "#f5e6a8",
+                                border: "1px solid rgba(212,175,55,0.22)",
+                                backgroundColor:
+                                  value === 0
+                                    ? "rgba(46,125,50,0.28)"
+                                    : RED_NUMBERS.has(value)
+                                      ? "rgba(183,28,28,0.28)"
+                                      : "rgba(255,255,255,0.06)",
+                                "& .MuiChip-label": {
+                                  px: 1,
+                                },
+                              }}
+                            />
+                          ))}
+                        </Stack>
                       </Box>
                     </Stack>
-
-                    <Stack direction="row" spacing={1.25} sx={{ mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        onClick={spinWheel}
-                        disabled={isSpinning}
-                        fullWidth
-                        sx={{ py: 1.2 }}
-                      >
-                        {isSpinning ? "Spinning" : "Spin"}
-                      </Button>
-
-                      <Button
-                        variant="outlined"
-                        onClick={resetHistory}
-                        disabled={isSpinning}
-                        sx={{ px: 2.2 }}
-                      >
-                        Reset
-                      </Button>
-                    </Stack>
-
-                    <Box sx={{ mt: 2 }}>
-                      <Typography sx={{ color: "text.secondary", mb: 1 }}>
-                        Last spins
-                      </Typography>
-
-                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        {lastFive.length === 0 && (
-                          <Typography variant="body2" color="text.secondary">
-                            No spins yet.
-                          </Typography>
-                        )}
-
-                        {lastFive.map((value, index) => (
-                          <Chip
-                            key={`${value}-${index}`}
-                            label={value}
-                            sx={{
-                              minWidth: 48,
-                              fontWeight: 700,
-                              color: "#f5e6a8",
-                              border: "1px solid rgba(212,175,55,0.22)",
-                              backgroundColor:
-                                value === 0
-                                  ? "rgba(46,125,50,0.28)"
-                                  : RED_NUMBERS.has(value)
-                                  ? "rgba(183,28,28,0.28)"
-                                  : "rgba(255,255,255,0.06)",
-                            }}
-                          />
-                        ))}
-                      </Stack>
-                    </Box>
                   </CardContent>
                 </Card>
               </Stack>
@@ -647,12 +811,14 @@ export default function RouletteFunWheel() {
                             {result}
                           </Box>
                         </Typography>
+
                         <Typography>
                           Color:{" "}
                           <Box component="span" sx={{ fontWeight: 700 }}>
                             {hits?.color ?? "Green"}
                           </Box>
                         </Typography>
+
                         <Typography>
                           Outside:{" "}
                           <Box component="span" sx={{ fontWeight: 700 }}>
@@ -663,31 +829,31 @@ export default function RouletteFunWheel() {
                             {hits?.evenOdd ?? "—"}
                           </Box>
                         </Typography>
+
                         <Typography>
                           Dozen:{" "}
                           <Box component="span" sx={{ fontWeight: 700 }}>
                             {hits?.dozen
-                              ? `${hits.dozen}${
-                                  hits.dozen === 1
-                                    ? "st"
-                                    : hits.dozen === 2
-                                    ? "nd"
-                                    : "rd"
-                                } 12`
+                              ? `${hits.dozen}${hits.dozen === 1
+                                ? "st"
+                                : hits.dozen === 2
+                                  ? "nd"
+                                  : "rd"
+                              } 12`
                               : "—"}
                           </Box>
                         </Typography>
+
                         <Typography>
                           Column:{" "}
                           <Box component="span" sx={{ fontWeight: 700 }}>
                             {hits?.column
-                              ? `${hits.column}${
-                                  hits.column === 1
-                                    ? "st"
-                                    : hits.column === 2
-                                    ? "nd"
-                                    : "rd"
-                                } column`
+                              ? `${hits.column}${hits.column === 1
+                                ? "st"
+                                : hits.column === 2
+                                  ? "nd"
+                                  : "rd"
+                              } column`
                               : "—"}
                           </Box>
                         </Typography>
