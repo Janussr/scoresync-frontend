@@ -1,5 +1,5 @@
 import { apiFetch } from "./clients";
-import {  Game, GameDetails, GamePanel, GameType, HallOfFameEntry, GameHistoryEntry  } from "@/lib/models/game";
+import {  Game, GameDetails, GamePanel, GameType, HallOfFameEntry, GameHistoryEntry, ActivePlayerGame  } from "@/lib/models/game";
 
 export const startGame = (type: GameType) =>
   apiFetch<Game>(`/games/start`, {
@@ -35,7 +35,7 @@ export const getAllActiveGamesForGamePanel = () =>
   apiFetch<GamePanel[]>(`/games/game-panel/active/all`);
 
 export const getActiveGameForPlayerPage = () =>
-  apiFetch<GameDetails | null>(`/games/player-page/active`, { allow404: true });
+  apiFetch<ActivePlayerGame  | null>(`/games/player-page/active`, { allow404: true });
 
 export const getActiveLobbyGames = () =>
   apiFetch<Game[]>(`/games/lobby`);

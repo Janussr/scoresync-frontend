@@ -96,3 +96,39 @@ export interface RoundDto {
 scores: Score[];
 }
 
+
+export interface ActivePlayerGame {
+  id: number;
+  gameNumber: number;
+  startedAt: string;
+  endedAt?: string;
+  isFinished: boolean;
+  type: GameType;
+  rebuyValue?: number;
+  bountyValue?: number;
+  me: {
+    playerId: number;
+    userId: number;
+    username: string;
+    rebuyCount: number;
+    activeBounties: number;
+  };
+  knockoutTargets: {
+    playerId: number;
+    username: string;
+    activeBounties: number;
+  }[];
+  rounds: {
+    id: number;
+    roundNumber: number;
+    startedAt: string;
+    endedAt?: string;
+    scores: {
+      id: number;
+      playerId: number;
+      points: number;
+      type: string;
+    }[];
+  }[];
+}
+

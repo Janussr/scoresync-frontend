@@ -8,7 +8,7 @@ import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
 import { registerPlayerKnockout } from "@/lib/api/bounties";
-import { GameDetails } from "@/lib/models/game";
+import { ActivePlayerGame, GameDetails } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
@@ -18,7 +18,7 @@ export default function PlayerGamePage() {
   const { userId, setActiveGameId } = useAuth();
   const { showError } = useError();
 
-  const [currentGame, setCurrentGame] = useState<GameDetails | null>(null);
+  const [currentGame, setCurrentGame] = useState<ActivePlayerGame | null>(null);
   const activeRound = currentGame?.rounds?.find(r => !r.endedAt);
   const [points, setPoints] = useState("");
   const [knockoutPlayerId, setKnockoutPlayerId] = useState<number | "">("");
@@ -34,7 +34,7 @@ export default function PlayerGamePage() {
       try {
         const game = await getActiveGameForPlayerPage();
 
-        if (!game || !game.players?.some(p => p.userId === userId)) {
+        if (!game) {
           setActiveGameId(null);
           router.replace("/game/lobby");
           return;
@@ -75,8 +75,8 @@ export default function PlayerGamePage() {
   });
 
 
-  // ----- Actions -----
-  const me = currentGame?.players?.find(p => p.userId === userId);
+  // ----- Actions -----const 
+  const me = currentGame?.me;
 
 
 
@@ -353,14 +353,12 @@ export default function PlayerGamePage() {
                   value={knockoutPlayerId}
                   onChange={(e) => setKnockoutPlayerId(Number(e.target.value))}
                 >
-                  {currentGame.players
-                    ?.filter((p) => p.playerId !== me.playerId)
-                    .map((p) => (
-                      <MenuItem key={p.playerId} value={p.playerId}>
-                        {p.username.charAt(0).toUpperCase() + p.username.slice(1)} {"-"} {p.activeBounties > 0 ? `(${p.activeBounties} bounties)` : "(no bounties)"}
-                        {" rewards"} ({p.activeBounties * (currentGame.bountyValue ?? 0)} points)
-                      </MenuItem>
-                    ))}
+                  {currentGame.knockoutTargets.map((p) => (
+                    <MenuItem key={p.playerId} value={p.playerId}>
+                      {p.username.charAt(0).toUpperCase() + p.username.slice(1)} {"-"} {p.activeBounties > 0 ? `(${p.activeBounties} bounties)` : "(no bounties)"}
+                      {" rewards"} ({p.activeBounties * (currentGame.bountyValue ?? 0)} points)
+                    </MenuItem>
+                  ))}
                 </TextField>
 
                 <Button
@@ -381,7 +379,7 @@ export default function PlayerGamePage() {
               .slice()
               .sort((a, b) => a.roundNumber - b.roundNumber)
               .map(round => {
-                const myScores = round.scores.filter(s => s.playerId === me.playerId);
+                const myScores = round.scores;
 
                 return (
                   <Accordion key={round.id}>

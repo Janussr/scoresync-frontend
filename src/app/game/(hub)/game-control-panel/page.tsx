@@ -1060,7 +1060,10 @@ export default function GameControlPanelPage() {
           );
         })
       )}
-      <Stack
+
+
+      {/* ABILITY TO FETCH ALL GAMES INCLUDING THE ACTIVE ONE */}
+      {/* <Stack
         mt={2}
         mb={2}
         direction="row"
@@ -1076,7 +1079,7 @@ export default function GameControlPanelPage() {
         <Button variant="contained" color="success" onClick={fetchAllGames}>
           Fetch All Games
         </Button>
-      </Stack>
+      </Stack> */}
       {[...games]
         .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
         .map((g) => (
