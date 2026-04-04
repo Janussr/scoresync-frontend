@@ -30,7 +30,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-
   useEffect(() => {
     if (!hydrated) return;
 
@@ -362,37 +361,58 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       </Button>
                     );
                   })}
-                  {accountLinks.map((link) => {
-                    const isActive = pathname === link.href;
-
-                    return (
-                      <Button
-                        key={link.href}
-                        component={Link}
-                        href={link.href}
-                        onClick={closeDrawer}
-                        fullWidth
-                        sx={{
-                          ...menuLinkSx,
-                          backgroundColor: isActive ? "rgba(212,175,55,0.08)" : "transparent",
-                          color: isActive ? "#ffd84d" : "#f1c40f",
-                        }}
-                      >
-                        <Box
-                          component="span"
-                          sx={{
-                            mr: 1.2,
-                            color: "rgba(245,230,168,0.75)",
-                          }}
-                        >
-                          —
-                        </Box>
-                        {link.label}
-                      </Button>
-                    );
-                  })}
                 </Stack>
               </Box>
+
+              {accountLinks.length > 0 && (
+                <>
+                  <Divider
+                    sx={{
+                      mt: 3,
+                      mb: 2.5,
+                      borderColor: "rgba(212,175,55,0.12)",
+                    }}
+                  />
+
+                  <Box>
+                    <Typography sx={sectionLabelSx}>Account</Typography>
+
+                    <Stack spacing={0.6}>
+                      {accountLinks.map((link) => {
+                        const isActive = pathname === link.href;
+
+                        return (
+                          <Button
+                            key={link.href}
+                            component={Link}
+                            href={link.href}
+                            onClick={closeDrawer}
+                            fullWidth
+                            sx={{
+                              ...menuLinkSx,
+                              backgroundColor: isActive
+                                ? "rgba(212,175,55,0.08)"
+                                : "transparent",
+                              color: isActive ? "#ffd84d" : "#f1c40f",
+                            }}
+                          >
+                            <Box
+                              component="span"
+                              sx={{
+                                mr: 1.2,
+                                color: "rgba(245,230,168,0.75)",
+                              }}
+                            >
+                              —
+                            </Box>
+                            {link.label}
+                          </Button>
+                        );
+                      })}
+                    </Stack>
+                  </Box>
+                </>
+              )}
 
               <Box sx={{ mt: "auto", pt: 3 }}>
                 {!isLoggedIn ? (
