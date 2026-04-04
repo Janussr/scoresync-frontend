@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  
+
   useEffect(() => {
     if (!hydrated) return;
 
@@ -43,7 +43,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return <div>Loading...</div>;
   }
 
-  const gameLinks: NavItem[] = [
+  const guideLinks: NavItem[] = [
     { label: "Black Jack", href: "/game/blackjack" },
     { label: "Poker", href: "/game/poker" },
     { label: "Roulette", href: "/game/roulette" },
@@ -75,7 +75,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return links;
   }, [isLoggedIn, role]);
 
-  const desktopNavLinks = [...gameLinks, ...accountLinks];
+  const desktopNavLinks = [...navigationLinks, ...guideLinks, ...accountLinks];
 
   const closeDrawer = () => setOpen(false);
 
@@ -289,34 +289,36 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <Typography sx={sectionLabelSx}>Guides</Typography>
 
                 <Stack spacing={0.2}>
-                  {gameLinks.map((link) => (
-                    <Button
-                      key={link.href}
-                      component={Link}
-                      href={link.href}
-                      onClick={closeDrawer}
-                      fullWidth
-                      sx={{
-                        ...menuLinkSx,
-                        py: 1.2,
-                        px: 1,
-                        borderRadius: 0,
-                        backgroundColor:
-                          link.href === "/game/blackjack"
-                            ? "rgba(212,175,55,0.08)"
-                            : "transparent",
-                      }}
-                    >
-                      <Box component="span" sx={{ mr: 1.2, fontSize: "0.75rem" }}>
-                        {link.label === "Black Jack"
-                          ? "♣"
-                          : link.label === "Poker"
-                            ? "♦"
-                            : "♥"}
-                      </Box>
-                      {link.label}
-                    </Button>
-                  ))}
+                  {guideLinks.map((link) => {
+                    const isActive = pathname === link.href;
+
+                    return (
+                      <Button
+                        key={link.href}
+                        component={Link}
+                        href={link.href}
+                        onClick={closeDrawer}
+                        fullWidth
+                        sx={{
+                          ...menuLinkSx,
+                          py: 1.2,
+                          px: 1,
+                          borderRadius: 0,
+                          backgroundColor: isActive ? "rgba(212,175,55,0.08)" : "transparent",
+                          color: isActive ? "#ffd84d" : "#f1c40f",
+                        }}
+                      >
+                        <Box component="span" sx={{ mr: 1.2, fontSize: "0.75rem" }}>
+                          {link.label === "Black Jack"
+                            ? "♣"
+                            : link.label === "Poker"
+                              ? "♦"
+                              : "♥"}
+                        </Box>
+                        {link.label}
+                      </Button>
+                    );
+                  })}
                 </Stack>
               </Box>
 
@@ -331,49 +333,64 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <Typography sx={sectionLabelSx}>Game</Typography>
 
                 <Stack spacing={0.6}>
-                  {navigationLinks.map((link) => (
-                    <Button
-                      key={link.href}
-                      component={Link}
-                      href={link.href}
-                      onClick={closeDrawer}
-                      fullWidth
-                      sx={menuLinkSx}
-                    >
-                      <Box
-                        component="span"
-                        sx={{
-                          mr: 1.2,
-                          color: "rgba(245,230,168,0.75)",
-                        }}
-                      >
-                        —
-                      </Box>
-                      {link.label}
-                    </Button>
-                  ))}
+                  {navigationLinks.map((link) => {
+                    const isActive = pathname === link.href;
 
-                  {accountLinks.map((link) => (
-                    <Button
-                      key={link.href}
-                      component={Link}
-                      href={link.href}
-                      onClick={closeDrawer}
-                      fullWidth
-                      sx={menuLinkSx}
-                    >
-                      <Box
-                        component="span"
+                    return (
+                      <Button
+                        key={link.href}
+                        component={Link}
+                        href={link.href}
+                        onClick={closeDrawer}
+                        fullWidth
                         sx={{
-                          mr: 1.2,
-                          color: "rgba(245,230,168,0.75)",
+                          ...menuLinkSx,
+                          backgroundColor: isActive ? "rgba(212,175,55,0.08)" : "transparent",
+                          color: isActive ? "#ffd84d" : "#f1c40f",
                         }}
                       >
-                        —
-                      </Box>
-                      {link.label}
-                    </Button>
-                  ))}
+                        <Box
+                          component="span"
+                          sx={{
+                            mr: 1.2,
+                            color: "rgba(245,230,168,0.75)",
+                          }}
+                        >
+                          —
+                        </Box>
+                        {link.label}
+                      </Button>
+                    );
+                  })}
+                 {accountLinks.map((link) => {
+  const isActive = pathname === link.href;
+
+  return (
+    <Button
+      key={link.href}
+      component={Link}
+      href={link.href}
+      onClick={closeDrawer}
+      fullWidth
+      sx={{
+        ...menuLinkSx,
+        backgroundColor: isActive ? "rgba(212,175,55,0.08)" : "transparent",
+        color: isActive ? "#ffd84d" : "#f1c40f",
+      }}
+    >
+      <Box
+        component="span"
+        sx={{
+          mr: 1.2,
+          color: "rgba(245,230,168,0.75)",
+        }}
+      >
+        —
+      </Box>
+      {link.label}
+    </Button>
+  );
+})}
                 </Stack>
               </Box>
 
