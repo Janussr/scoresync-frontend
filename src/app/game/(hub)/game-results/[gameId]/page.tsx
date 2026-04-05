@@ -26,7 +26,7 @@ import { getGameDetails } from "@/lib/api/games";
 import { getPlayerGameScoreDetails } from "@/lib/api/scores";
 import { GameDetails } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
-import { PlayerScoreDetails } from "@/lib/models/score";
+import { PlayerScoreDetails } from "@/lib/models/player";
 
 export default function GameResultspage() {
   const params = useParams();

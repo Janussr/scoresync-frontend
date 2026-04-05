@@ -1,4 +1,7 @@
+import { Player } from "./player";
 import { Score } from "./score";
+
+export type GameType = "BlackJack" | "Poker" | "Roulette";
 
 export interface Winner {
   userId: number;
@@ -6,8 +9,6 @@ export interface Winner {
   winningScore: number;
   winDate: string;
 }
-
-export type GameType = "BlackJack" | "Poker" | "Roullette";
 
 export interface GameDetails {
   id: number;
@@ -54,15 +55,6 @@ export interface GamePanel {
   rounds: RoundDto[];
 }
 
-export interface Player {
-  playerId: number;
-  userId: number
-  username: string;
-  rebuyCount: number;
-  activeBounties: number;
-  isActive: boolean;
-}
-
 export interface GameHistoryEntry {
   id: number;
   gameNumber: number;
@@ -78,14 +70,6 @@ export interface HallOfFameEntry {
   gameType: GameType;
   playerName: string;
   wins: number;
-}
-
-export interface BountyRow {
-  userId: number;
-  userName: string;
-  knockouts: number;
-  timesKnockedOut: number;
-  totalBountyPoints: number;
 }
 
 export interface RoundDto {
@@ -118,17 +102,6 @@ export interface ActivePlayerGame {
     username: string;
     activeBounties: number;
   }[];
-  rounds: {
-    id: number;
-    roundNumber: number;
-    startedAt: string;
-    endedAt?: string;
-    scores: {
-      id: number;
-      playerId: number;
-      points: number;
-      type: string;
-    }[];
-  }[];
+  rounds: RoundDto[]
 }
 

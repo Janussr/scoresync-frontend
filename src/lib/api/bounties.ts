@@ -1,5 +1,5 @@
+import { BountyRow } from "../models/bounty";
 import { apiFetch } from "./clients";
-import { BountyRow } from "@/lib/models/game";
 
 export const registerPlayerKnockout = (gameId: number, victimPlayerId: number) =>
   apiFetch(`/bounties/player/knockout`, {

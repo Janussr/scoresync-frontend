@@ -8,10 +8,11 @@ import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
 import { registerPlayerKnockout } from "@/lib/api/bounties";
-import { ActivePlayerGame, GameDetails } from "@/lib/models/game";
+import { ActivePlayerGame, GameDetails, RoundDto } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
+import { KnockoutUpdatedDto } from "@/lib/models/bounty";
 
 export default function PlayerGamePage() {
   const router = useRouter();
@@ -57,21 +58,76 @@ export default function PlayerGamePage() {
 
   const currentGameId = currentGame?.id;
 
-  const handleRoundStarted = useCallback(async () => {
-    const updated = await getActiveGameForPlayerPage();
-    setCurrentGame(updated);
-  }, []);
+const handleRoundStarted = useCallback((newRound: RoundDto) => {
+  setCurrentGame((prev) => {
+    if (!prev) return prev;
+
+    return {
+      ...prev,
+      rounds: [
+        ...prev.rounds.map((round) =>
+          !round.endedAt ? { ...round, endedAt: newRound.startedAt } : round
+        ),
+        newRound,
+      ],
+    };
+  });
+}, []);
 
   const handleGameFinished = useCallback((finishedGameId: number) => {
     setCurrentGame(null);
     router.push(`/game/game-results/${finishedGameId}`);
   }, [router]);
 
+const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
+  setCurrentGame((prev) => {
+    if (!prev) return prev;
+
+    const updatedMe =
+      prev.me.playerId === payload.killerPlayerId
+        ? { ...prev.me, activeBounties: payload.killerActiveBounties }
+        : prev.me.playerId === payload.victimPlayerId
+        ? { ...prev.me, activeBounties: payload.victimActiveBounties }
+        : prev.me;
+
+    const updatedTargets = prev.knockoutTargets.map((target) => {
+      if (target.playerId === payload.killerPlayerId) {
+        return { ...target, activeBounties: payload.killerActiveBounties };
+      }
+
+      if (target.playerId === payload.victimPlayerId) {
+        return { ...target, activeBounties: payload.victimActiveBounties };
+      }
+
+      return target;
+    });
+
+    const activeRound = prev.rounds.find((r) => r.endedAt === null);
+
+    return {
+      ...prev,
+      me: updatedMe,
+      knockoutTargets: updatedTargets,
+      rounds: activeRound
+        ? prev.rounds.map((round) =>
+            round.id !== activeRound.id
+              ? round
+              : {
+                  ...round,
+                  scores: [...round.scores, payload.score],
+                }
+          )
+        : prev.rounds,
+    };
+  });
+}, []);
+
   // ----- Setup GameHub -----
   useGameHub({
     gameId: currentGameId,
     onRoundStarted: handleRoundStarted,
     onGameFinished: handleGameFinished,
+    onKnockout: handleKnockoutUpdated,
   });
 
 
@@ -120,26 +176,26 @@ export default function PlayerGamePage() {
     }
   };
 
-  const handleKnockout = async () => {
-    if (!currentGame || !knockoutPlayerId) return;
+  
 
-    try {
-      setLoadingAction(true);
-      await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
-      setKnockoutPlayerId("");
-      const updated = await getActiveGameForPlayerPage();
-      setCurrentGame(updated);
-    } catch (err: any) {
-      if (err?.status === 404) {
-        setActiveGameId(null);
-        router.replace("/game/lobby");
-        return;
-      }
-      showError(err.message || "Knockout failed");
-    } finally {
-      setLoadingAction(false);
+const handleKnockout = async () => {
+  if (!currentGame || !knockoutPlayerId) return;
+
+  try {
+    setLoadingAction(true);
+    await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
+    setKnockoutPlayerId("");
+  } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
     }
-  };
+    showError(err.message || "Knockout failed");
+  } finally {
+    setLoadingAction(false);
+  }
+};
 
   const handleLeaveGame = async () => {
     if (!currentGame) return;

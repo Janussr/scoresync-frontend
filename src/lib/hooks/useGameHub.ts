@@ -7,37 +7,38 @@ import {
   joinedGameRefs,
   startGameHub,
 } from "./gameHubClient";
+import { KnockoutUpdatedDto } from "../models/bounty";
 
 type UseGameHubProps = {
   gameId?: number;
   onGameUpdated?: (game: Game) => void;
   onRoundStarted?: (round: RoundDto) => void;
-  onRoundEnded?: (round: RoundDto) => void;
   onGameFinished?: (gameId: number) => void;
+  onKnockout?: (knockout: KnockoutUpdatedDto) => void;
 };
 
 export function useGameHub({
   gameId,
   onGameUpdated,
   onRoundStarted,
-  onRoundEnded,
   onGameFinished,
+  onKnockout,
 }: UseGameHubProps) {
   const handlersRef = useRef({
     onGameUpdated,
     onRoundStarted,
-    onRoundEnded,
     onGameFinished,
+    onKnockout
   });
 
   useEffect(() => {
     handlersRef.current = {
       onGameUpdated,
       onRoundStarted,
-      onRoundEnded,
       onGameFinished,
+      onKnockout,
     };
-  }, [onGameUpdated, onRoundStarted, onRoundEnded, onGameFinished]);
+  }, [onGameUpdated, onRoundStarted,  onGameFinished, onKnockout]);
 
   useEffect(() => {
     const connection = getGameHubConnection();
@@ -51,26 +52,26 @@ export function useGameHub({
       handlersRef.current.onRoundStarted?.(round);
     };
 
-    const handleRoundEnded = (round: RoundDto) => {
-      console.log("⏹️ Round ended", round);
-      handlersRef.current.onRoundEnded?.(round);
-    };
-
     const handleGameFinished = (finishedGameId: number) => {
       console.log("🏁 Game finished", finishedGameId);
       handlersRef.current.onGameFinished?.(finishedGameId);
     };
 
+    const handleKnockoutUpdated = (knockout: KnockoutUpdatedDto) => {
+      console.log ("Registered knockout", knockout);
+      handlersRef.current.onKnockout?.(knockout);
+    }
+
     connection.on("GameUpdated", handleGameUpdated);
     connection.on("RoundStarted", handleRoundStarted);
-    connection.on("RoundEnded", handleRoundEnded);
     connection.on("GameFinished", handleGameFinished);
+    connection.on("KnockoutUpdated", handleKnockoutUpdated);
 
     return () => {
       connection.off("GameUpdated", handleGameUpdated);
       connection.off("RoundStarted", handleRoundStarted);
-      connection.off("RoundEnded", handleRoundEnded);
       connection.off("GameFinished", handleGameFinished);
+      connection.off("KnockoutUpdated", handleKnockoutUpdated);
     };
   }, []);
 

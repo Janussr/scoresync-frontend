@@ -1,6 +1,6 @@
+import { PlayerScoreDetails, Player } from "../models/player";
+import { Score } from "../models/score";
 import { apiFetch } from "./clients";
-import { BountyRow, Game, GameDetails, HallOfFameEntry, Player } from "@/lib/models/game";
-import { PlayerScoreDetails, Score } from "@/lib/models/score";
 
 
 // Kun til player siden – current user kan kun tilføje points til sig selv

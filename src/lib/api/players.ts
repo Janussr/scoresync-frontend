@@ -1,5 +1,5 @@
+import { Player } from "../models/player";
 import { apiFetch } from "./clients";
-import { Player } from "@/lib/models/game";
 
 
 

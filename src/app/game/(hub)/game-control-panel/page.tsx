@@ -44,13 +44,14 @@ import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { getAllUsers } from "@/lib/api/users";
 import { Score } from "@/lib/models/score";
-import { Game, GamePanel, GameType, Player } from "@/lib/models/game";
+import { Game, GamePanel, GameType} from "@/lib/models/game";
 import { User } from "@/lib/models/user";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { startRound } from "@/lib/api/rounds";
 import { useGameHub } from "@/lib/hooks/useGameHub";
+import { Player } from "@/lib/models/player";
 
 
 type ScoreInputsState = Record<number, Record<number, string>>;

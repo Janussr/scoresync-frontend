@@ -1,3 +1,5 @@
+export type PointsType = "Chips" | "Rebuy" | "Bounty";
+
 export interface Score {
   id: number;
   playerId: number;
@@ -6,20 +8,11 @@ export interface Score {
   points: number;
   createdAt: string;
   totalPoints: number;
-  type: "Chips" | "Rebuy" | "Bounty";
+  type: PointsType;
   victimUserName: string;
   gameId?: number;        
   roundId?: number; 
   roundNumber: number;
-}
-
-
-export interface PlayerScoreDetails {
-  userId: number;
-  playerId: number;
-  userName: string;
-  totalPoints: number;
-  rounds: RoundScoreDto[]; 
 }
 
 export interface RoundScoreDto {
@@ -34,11 +27,10 @@ export interface ScoreEntryDto {
   id: number;
   points: number;
   createdAt: string;
-  type: "Chips" | "Rebuy" | "Bounty"; 
+  type: PointsType; 
   victimUserId?: number | null;
   victimUserName?: string | null;
 }
-
 
 export interface Winner {
   userId: number;

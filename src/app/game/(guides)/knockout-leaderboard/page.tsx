@@ -16,8 +16,8 @@ import {
   Stack,
 } from "@mui/material";
 import { getKnockoutLeaderboard } from "@/lib/api/bounties";
-import { BountyRow } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
+import { BountyRow } from "@/lib/models/bounty";
 
 export default function BountyLeaderboard() {
   const [data, setData] = useState<BountyRow[]>([]);
