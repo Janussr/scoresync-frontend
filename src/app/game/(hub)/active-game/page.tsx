@@ -12,7 +12,7 @@ import { ActivePlayerGame, GameDetails, RoundDto } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
-import { KnockoutUpdatedDto } from "@/lib/models/bounty";
+import { KnockoutTargetsUpdatedDto, KnockoutUpdatedDto } from "@/lib/models/bounty";
 import { Score } from "@/lib/models/score";
 
 export default function PlayerGamePage() {
@@ -123,12 +123,29 @@ const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
   });
 }, []);
 
+const handleKnockoutTargetsUpdated = useCallback(
+  (payload: KnockoutTargetsUpdatedDto) => {
+    setCurrentGame((prev) => {
+      if (!prev || prev.id !== payload.gameId) return prev;
+
+      return {
+        ...prev,
+        knockoutTargets: payload.knockoutTargets.filter(
+          (target) => target.playerId !== prev.me.playerId
+        ),
+      };
+    });
+  },
+  []
+);
+
   // ----- Setup GameHub -----
   useGameHub({
     gameId: currentGameId,
     onRoundStarted: handleRoundStarted,
     onGameFinished: handleGameFinished,
     onKnockout: handleKnockoutUpdated,
+    onKnockoutTargetsUpdated: handleKnockoutTargetsUpdated,
   });
 
 

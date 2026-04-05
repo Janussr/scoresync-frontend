@@ -9,6 +9,17 @@ export interface KnockoutUpdatedDto {
   score: Score;
 }
 
+export interface KnockoutTargetDto {
+  playerId: number;
+  username: string;
+  activeBounties: number;
+}
+
+export interface KnockoutTargetsUpdatedDto {
+  gameId: number;
+  knockoutTargets: KnockoutTargetDto[];
+}
+
 export interface BountyRow {
   userId: number;
   userName: string;
