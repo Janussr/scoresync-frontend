@@ -13,6 +13,7 @@ import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
 import { KnockoutUpdatedDto } from "@/lib/models/bounty";
+import { Score } from "@/lib/models/score";
 
 export default function PlayerGamePage() {
   const router = useRouter();
@@ -136,45 +137,116 @@ const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
 
 
 
-  const submitScore = async () => {
-    if (!currentGame || !points) return;
-    try {
-      setLoadingAction(true);
-      await addScorePlayer(currentGame.id, Number(points));
-      setPoints("");
+ const submitScore = async () => {
+  if (!currentGame || !me || !points) return;
 
-      const updated = await getActiveGameForPlayerPage();
-      setCurrentGame(updated);
-    } catch (err: any) {
-      if (err?.status === 404) {
-        setActiveGameId(null);
-        router.replace("/game/lobby");
-        return;
-      }
-      showError(err.message || "Failed to add score");
-    } finally {
-      setLoadingAction(false);
-    }
-  };
+  const parsedPoints = Number(points);
+  if (Number.isNaN(parsedPoints)) return;
 
-  const handleRebuy = async () => {
-    if (!currentGame || !me) return;
-    try {
-      setLoadingAction(true);
-      await rebuyAsPlayer(currentGame.id);
-      const updated = await getActiveGameForPlayerPage();
-      setCurrentGame(updated);
-    } catch (err: any) {
-      if (err?.status === 404) {
-        setActiveGameId(null);
-        router.replace("/game/lobby");
-        return;
-      }
-      showError(err.message || "Rebuy failed");
-    } finally {
-      setLoadingAction(false);
+  try {
+    setLoadingAction(true);
+
+    const created = await addScorePlayer(currentGame.id, parsedPoints);
+
+    const newScore: Score = {
+      id: created.id || Date.now(),
+      playerId: created.playerId,
+      userId: created.userId,
+      userName: created.userName ?? me.username,
+      points: created.points,
+      createdAt: new Date().toISOString(),
+      totalPoints: 0,
+      type: created.type,
+      victimUserName: "",
+      gameId: currentGame.id,
+      roundId: created.rounds.id,
+      roundNumber: created.rounds.roundNumber,
+    };
+
+    setCurrentGame((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        rounds: prev.rounds.map((round) =>
+          round.id === created.rounds.id
+            ? {
+                ...round,
+                scores: [...round.scores, newScore],
+              }
+            : round
+        ),
+      };
+    });
+
+    setPoints("");
+  } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
     }
-  };
+
+    showError(err.message || "Failed to add score");
+  } finally {
+    setLoadingAction(false);
+  }
+};
+
+const handleRebuy = async () => {
+  if (!currentGame || !me) return;
+
+  try {
+    setLoadingAction(true);
+
+    const created = await rebuyAsPlayer(currentGame.id);
+
+    const rebuyScore: Score = {
+      id: created.id || Date.now(),
+      playerId: created.playerId,
+      userId: me.userId,
+      userName: me.username,
+      points: created.points,
+      createdAt: new Date().toISOString(),
+      totalPoints: 0,
+      type: created.type,
+      victimUserName: "",
+      gameId: currentGame.id,
+      roundId: created.rounds.id,
+      roundNumber: created.rounds.roundNumber,
+    };
+
+    setCurrentGame((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        me: {
+          ...prev.me,
+          rebuyCount: prev.me.rebuyCount + 1,
+        },
+        rounds: prev.rounds.map((round) =>
+          round.id === created.rounds.id
+            ? {
+                ...round,
+                scores: [...round.scores, rebuyScore],
+              }
+            : round
+        ),
+      };
+    });
+  } catch (err: any) {
+    if (err?.status === 404) {
+      setActiveGameId(null);
+      router.replace("/game/lobby");
+      return;
+    }
+
+    showError(err.message || "Rebuy failed");
+  } finally {
+    setLoadingAction(false);
+  }
+};
 
   
 

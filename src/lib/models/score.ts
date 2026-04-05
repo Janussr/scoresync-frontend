@@ -38,3 +38,22 @@ export interface Winner {
   winningScore: number;
   winDate: string;
 }
+
+export interface AddScoreResponse  {
+  id: number;
+  playerId: number;
+  userId: number;
+  userName: string | null;
+  points: number;
+  gameId: number;
+  rounds: {
+    id: number;
+    roundNumber: number;
+    startedAt: string;
+    endedAt: string | null;
+    scores: [];
+  };
+  type: PointsType;
+};
+
+

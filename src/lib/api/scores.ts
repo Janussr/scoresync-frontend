@@ -1,11 +1,11 @@
 import { PlayerScoreDetails, Player } from "../models/player";
-import { Score } from "../models/score";
+import { Score, AddScoreResponse } from "../models/score";
 import { apiFetch } from "./clients";
 
 
 // Kun til player siden – current user kan kun tilføje points til sig selv
 export const addScorePlayer = (gameId: number, value : number) =>
-  apiFetch<PlayerScoreDetails>(`/scores/player/addscore`, {
+  apiFetch<AddScoreResponse>(`/scores/player/addscore`, {
     method: "POST",
     body: { gameId, value  } as any,
   });
@@ -33,7 +33,7 @@ export const getPlayerGameScoreDetails = (gameId: number, playerId: number) =>
 
 
 export const rebuyAsPlayer = (gameId: number) =>
-  apiFetch<Score>(`/scores/${gameId}/player/rebuy`, { method: "POST" });
+  apiFetch<AddScoreResponse>(`/scores/${gameId}/player/rebuy`, { method: "POST" });
 
 export const rebuyAsAdmin = (gameId: number, targetPlayerId: number) =>
   apiFetch(`/scores/${gameId}/admin/rebuy`, {
