@@ -81,6 +81,7 @@ const handleRoundStarted = useCallback((newRound: RoundDto) => {
   }, [router]);
 
 const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
+  console.log("Knockout payload score:", payload.score);
   setCurrentGame((prev) => {
     if (!prev) return prev;
 

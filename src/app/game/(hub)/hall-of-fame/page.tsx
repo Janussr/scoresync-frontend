@@ -52,7 +52,7 @@ export default function HallOfFamePage() {
     if (gameType === "ALL") return "All";
     if (gameType === "BlackJack") return "Blackjack";
     if (gameType === "Poker") return "Poker";
-    if (gameType === "Roullette") return "Roulette";
+    if (gameType === "Roulette") return "Roulette";
     return gameType;
   };
 
