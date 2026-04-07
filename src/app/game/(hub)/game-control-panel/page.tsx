@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Stack,
@@ -96,15 +96,19 @@ export default function GameControlPanelPage() {
 
 
   // /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
-  // useGameHub({
-  //   gameIds: activeGames.map((g) => g.id),
-  //   onRoundStarted: () => {
-  //     fetchActiveGames();
-  //   },
-  //   onGameFinished: () => {
-  //     fetchActiveGames();
-  //   },
-  // });
+ const activeGameIds = useMemo(
+  () => activeGames.map((g) => g.id).sort((a, b) => a - b),
+  [activeGames]
+);
+
+const handleAdminGameFinished = useCallback((gameId: number) => {
+  setActiveGames((prev) => prev.filter((g) => g.id !== gameId));
+}, []);
+
+useGameHub({
+  gameIds: activeGameIds,
+  onGameFinished: handleAdminGameFinished,
+});
 
 
   useEffect(() => {
@@ -217,79 +221,148 @@ export default function GameControlPanelPage() {
     }
   };
 
-  const handleOpenGame = async (gameId: number) => {
-    try {
-      setOpeningGameByGame((prev) => ({ ...prev, [gameId]: true }));
-      await openGameForPlayers(gameId);
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to open game");
-    } finally {
-      setOpeningGameByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+ const handleOpenGame = async (gameId: number) => {
+  try {
+    setOpeningGameByGame((prev) => ({ ...prev, [gameId]: true }));
+    await openGameForPlayers(gameId);
+
+    setActiveGames((prev) =>
+      prev.map((game) =>
+        game.id === gameId
+          ? { ...game, isOpenForPlayers: true }
+          : game
+      )
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to open game");
+  } finally {
+    setOpeningGameByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
 
   const handleStartRound = async (gameId: number) => {
-    try {
-      setStartingRoundByGame((prev) => ({ ...prev, [gameId]: true }));
-      await startRound(gameId);
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to start round");
-    } finally {
-      setStartingRoundByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+  try {
+    setStartingRoundByGame((prev) => ({ ...prev, [gameId]: true }));
+
+    const newRound = await startRound(gameId);
+
+    setActiveGames((prev) =>
+      prev.map((game) =>
+        game.id !== gameId
+          ? game
+          : {
+              ...game,
+              rounds: [
+                ...game.rounds.map((round) =>
+                  round.endedAt === null
+                    ? { ...round, endedAt: newRound.startedAt }
+                    : round
+                ),
+                newRound,
+              ],
+            }
+      )
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to start round");
+  } finally {
+    setStartingRoundByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
 
   const addScoreHandler = async (gameId: number, playerId: number) => {
-    const value = Number(scoreInputsByGame[gameId]?.[playerId]);
-    if (!value) return;
+  const value = Number(scoreInputsByGame[gameId]?.[playerId]);
+  if (!value) return;
 
-    try {
-      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
-      await addScoreAdmin(gameId, playerId, value);
+  try {
+    setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
 
-      setScoreInputsByGame((prev) => ({
-        ...prev,
-        [gameId]: {
-          ...(prev[gameId] ?? {}),
-          [playerId]: "",
-        },
-      }));
+    const newScore = await addScoreAdmin(gameId, playerId, value);
 
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to add score");
-    } finally {
-      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+    setScoreInputsByGame((prev) => ({
+      ...prev,
+      [gameId]: {
+        ...(prev[gameId] ?? {}),
+        [playerId]: "",
+      },
+    }));
 
-  const addAllScoresHandler = async (gameId: number) => {
-    const gameInputs = scoreInputsByGame[gameId] ?? {};
-    const scoresToAdd = Object.entries(gameInputs)
-      .map(([playerId, points]) => ({
-        playerId: Number(playerId),
-        points: Number(points),
-      }))
-      .filter((s) => s.points > 0);
+    setActiveGames((prev) =>
+      prev.map((game) => {
+        if (game.id !== gameId) return game;
 
-    if (!scoresToAdd.length) return;
+        const activeRound = game.rounds.find((r) => r.endedAt === null);
+        if (!activeRound) return game;
 
-    try {
-      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
-      await addPointsBulk(gameId, scoresToAdd);
-      setScoreInputsByGame((prev) => ({
-        ...prev,
-        [gameId]: {},
-      }));
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to add bulk points");
-    } finally {
-      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+        return {
+          ...game,
+          scores: [...game.scores, newScore],
+          rounds: game.rounds.map((round) =>
+            round.id !== activeRound.id
+              ? round
+              : {
+                  ...round,
+                  scores: [...round.scores, newScore],
+                }
+          ),
+        };
+      })
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to add score");
+  } finally {
+    setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
+
+  const addAllScoresBulkHandler = async (gameId: number) => {
+  const gameInputs = scoreInputsByGame[gameId] ?? {};
+  const scoresToAdd = Object.entries(gameInputs)
+    .map(([playerId, points]) => ({
+      playerId: Number(playerId),
+      points: Number(points),
+    }))
+    .filter((s) => s.points > 0);
+
+  if (!scoresToAdd.length) return;
+
+  try {
+    setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
+
+    const newScores = await addPointsBulk(gameId, scoresToAdd);
+
+    setScoreInputsByGame((prev) => ({
+      ...prev,
+      [gameId]: {},
+    }));
+
+    setActiveGames((prev) =>
+      prev.map((game) => {
+        if (game.id !== gameId) return game;
+
+        const activeRound = game.rounds.find((r) => r.endedAt === null);
+        if (!activeRound) return game;
+
+        return {
+          ...game,
+          scores: [...game.scores, ...newScores],
+          rounds: game.rounds.map((round) =>
+            round.id !== activeRound.id
+              ? round
+              : {
+                  ...round,
+                  scores: [...round.scores, ...newScores],
+                }
+          ),
+        };
+      })
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to add bulk points");
+  } finally {
+    setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
 
   const handleEndGameClick = (game: Game) => {
     setGameToEnd(game);
@@ -297,31 +370,31 @@ export default function GameControlPanelPage() {
   };
 
   const confirmEndOrCancelGame = async () => {
-    if (!gameToEnd || endingGameByGame[gameToEnd.id]) return;
+  if (!gameToEnd || endingGameByGame[gameToEnd.id]) return;
 
-    const gameId = gameToEnd.id;
-    const hasScores = (gameToEnd.scores?.length ?? 0) > 0;
-    const canCancelGame = !gameToEnd.isOpenForPlayers && !hasScores;
+  const gameId = gameToEnd.id;
+  const hasScores = (gameToEnd.scores?.length ?? 0) > 0;
+  const canCancelGame = !gameToEnd.isOpenForPlayers && !hasScores;
 
-    try {
-      setEndingGameByGame((prev) => ({ ...prev, [gameId]: true }));
+  try {
+    setEndingGameByGame((prev) => ({ ...prev, [gameId]: true }));
 
-      if (canCancelGame) {
-        await cancelGame(gameId);
-      } else {
-        await endGame(gameId);
-      }
-
-      setActiveGameId(null);
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to end/cancel game");
-    } finally {
-      setEndingGameByGame((prev) => ({ ...prev, [gameId]: false }));
-      setEndGameConfirmOpen(false);
-      setGameToEnd(null);
+    if (canCancelGame) {
+      await cancelGame(gameId);
+    } else {
+      await endGame(gameId);
     }
-  };
+
+    setActiveGameId(null);
+    setActiveGames((prev) => prev.filter((g) => g.id !== gameId));
+  } catch (err: any) {
+    showError(err.message || "Failed to end/cancel game");
+  } finally {
+    setEndingGameByGame((prev) => ({ ...prev, [gameId]: false }));
+    setEndGameConfirmOpen(false);
+    setGameToEnd(null);
+  }
+};
 
   const handleAddPlayersAsAdmin = async (gameId: number) => {
     const selectedUserIds = selectedUserIdsByGame[gameId] ?? [];
@@ -346,75 +419,161 @@ export default function GameControlPanelPage() {
     setScoreToRemove(null);
   };
 
-  const handleRemovePoint = async () => {
-    if (!scoreToRemove) return;
+ const handleRemovePoint = async () => {
+  if (!scoreToRemove) return;
 
-    try {
-      await removePoints(scoreToRemove.id);
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to remove points");
-    } finally {
-      setConfirmOpen(false);
-      setScoreToRemove(null);
-    }
-  };
+  try {
+    await removePoints(scoreToRemove.id);
 
-  const handleRebuy = async (gameId: number, playerId: number) => {
-    try {
-      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
-      await rebuyAsAdmin(gameId, playerId);
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to rebuy");
-    } finally {
-      setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+    setActiveGames((prev) =>
+      prev.map((game) => {
+        const gameHasScore = game.scores?.some((s) => s.id === scoreToRemove.id);
+        if (!gameHasScore) return game;
+
+        return {
+          ...game,
+          scores: game.scores.map((s) =>
+            s.id === scoreToRemove.id
+              ? { ...s, points: 0 }
+              : s
+          ),
+          rounds: game.rounds.map((round) => ({
+            ...round,
+            scores: round.scores.map((s) =>
+              s.id === scoreToRemove.id
+                ? { ...s, points: 0 }
+                : s
+            ),
+          })),
+        };
+      })
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to remove points");
+  } finally {
+    setConfirmOpen(false);
+    setScoreToRemove(null);
+  }
+};
+
+ const handleRebuy = async (gameId: number, playerId: number) => {
+  try {
+    setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
+
+    const newScore = await rebuyAsAdmin(gameId, playerId);
+
+    setActiveGames((prev) =>
+      prev.map((game) => {
+        if (game.id !== gameId) return game;
+
+        const activeRound = game.rounds.find((r) => r.endedAt === null);
+        if (!activeRound) return game;
+
+        return {
+          ...game,
+          scores: [...game.scores, newScore],
+          rounds: game.rounds.map((round) =>
+            round.id !== activeRound.id
+              ? round
+              : {
+                  ...round,
+                  scores: [...round.scores, newScore],
+                }
+          ),
+        };
+      })
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to rebuy");
+  } finally {
+    setLoadingActionByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
 
   const handleSaveRules = async (gameId: number) => {
-    const rules = rulesByGame[gameId];
-    if (!rules) return;
+  const rules = rulesByGame[gameId];
+  if (!rules) return;
 
-    try {
-      setSavingRulesByGame((prev) => ({ ...prev, [gameId]: true }));
-      await updateRules(
-        gameId,
-        Number(rules.rebuyValue),
-        Number(rules.bountyValue)
-      );
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to save rules");
-    } finally {
-      setSavingRulesByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+  try {
+    setSavingRulesByGame((prev) => ({ ...prev, [gameId]: true }));
 
-  const registerKnockoutHandler = async (gameId: number) => {
-    const knockout = knockoutByGame[gameId];
-    if (!knockout || !knockout.killerPlayerId || !knockout.victimPlayerId) return;
+    await updateRules(
+      gameId,
+      Number(rules.rebuyValue),
+      Number(rules.bountyValue)
+    );
 
-    try {
-      setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: true }));
-      await registerAdminKnockout(
-        gameId,
-        knockout.killerPlayerId,
-        knockout.victimPlayerId
-      );
+    setActiveGames((prev) =>
+      prev.map((game) =>
+        game.id === gameId
+          ? {
+              ...game,
+              rebuyValue: Number(rules.rebuyValue),
+              bountyValue: Number(rules.bountyValue),
+            }
+          : game
+      )
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to save rules");
+  } finally {
+    setSavingRulesByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
 
-      setKnockoutByGame((prev) => ({
-        ...prev,
-        [gameId]: { killerPlayerId: "", victimPlayerId: "" },
-      }));
+ const registerKnockoutHandler = async (gameId: number) => {
+  const knockout = knockoutByGame[gameId];
+  if (!knockout || !knockout.killerPlayerId || !knockout.victimPlayerId) return;
 
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to register knockout");
-    } finally {
-      setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: false }));
-    }
-  };
+  try {
+    setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: true }));
+
+    const newScore = await registerAdminKnockout(
+      gameId,
+      knockout.killerPlayerId,
+      knockout.victimPlayerId
+    );
+
+    setKnockoutByGame((prev) => ({
+      ...prev,
+      [gameId]: { killerPlayerId: "", victimPlayerId: "" },
+    }));
+
+    setActiveGames((prev) =>
+      prev.map((game) => {
+        if (game.id !== gameId) return game;
+
+        const activeRound = game.rounds.find((r) => r.endedAt === null);
+        if (!activeRound) return game;
+
+        return {
+          ...game,
+          players: game.players.map((player) =>
+            player.playerId === knockout.killerPlayerId
+              ? {
+                  ...player,
+                  activeBounties: (player.activeBounties ?? 0) + 1,
+                }
+              : player
+          ),
+          scores: [...game.scores, newScore],
+          rounds: game.rounds.map((round) =>
+            round.id !== activeRound.id
+              ? round
+              : {
+                  ...round,
+                  scores: [...round.scores, newScore],
+                }
+          ),
+        };
+      })
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to register knockout");
+  } finally {
+    setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: false }));
+  }
+};
 
   const handleCancelRemovePlayer = () => {
     setRemovePlayerConfirmOpen(false);
@@ -423,18 +582,40 @@ export default function GameControlPanelPage() {
   };
 
   const handleConfirmRemovePlayer = async () => {
-    if (!playerToRemove || gameIdForPlayerRemoval === null) return;
+  if (!playerToRemove || gameIdForPlayerRemoval === null) return;
 
-    try {
-      await removePlayer(gameIdForPlayerRemoval, playerToRemove.playerId);
-      setActiveGameId(null);
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to remove player");
-    } finally {
-      handleCancelRemovePlayer();
-    }
-  };
+  try {
+    await removePlayer(gameIdForPlayerRemoval, playerToRemove.playerId);
+
+    setActiveGameId(null);
+
+    setActiveGames((prev) =>
+      prev.map((game) => {
+        if (game.id !== gameIdForPlayerRemoval) return game;
+
+        return {
+          ...game,
+          players: game.players.filter(
+            (p) => p.playerId !== playerToRemove.playerId
+          ),
+          scores: game.scores.filter(
+            (s) => s.playerId !== playerToRemove.playerId
+          ),
+          rounds: game.rounds.map((round) => ({
+            ...round,
+            scores: round.scores.filter(
+              (s) => s.playerId !== playerToRemove.playerId
+            ),
+          })),
+        };
+      })
+    );
+  } catch (err: any) {
+    showError(err.message || "Failed to remove player");
+  } finally {
+    handleCancelRemovePlayer();
+  }
+};
 
   const handleRemoveGameClick = (game: Game) => {
     setGameToRemove(game);
@@ -884,7 +1065,7 @@ export default function GameControlPanelPage() {
                       <Button
                         variant="contained"
                         color="success"
-                        onClick={() => addAllScoresHandler(game.id)}
+                        onClick={() => addAllScoresBulkHandler(game.id)}
                         disabled={
                           Object.values(scoreInputs).filter((v) => Number(v) > 0).length === 0
                         }

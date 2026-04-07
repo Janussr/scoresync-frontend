@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Game, RoundDto } from "@/lib/models/game";
 import {
   getGameHubConnection,
@@ -11,6 +11,7 @@ import { KnockoutTargetsUpdatedDto, KnockoutUpdatedDto } from "../models/bounty"
 
 type UseGameHubProps = {
   gameId?: number;
+  gameIds?: number[],
   onGameUpdated?: (game: Game) => void;
   onRoundStarted?: (round: RoundDto) => void;
   onGameFinished?: (gameId: number) => void;
@@ -20,6 +21,7 @@ type UseGameHubProps = {
 
 export function useGameHub({
   gameId,
+  gameIds,
   onGameUpdated,
   onRoundStarted,
   onGameFinished,
@@ -33,6 +35,20 @@ export function useGameHub({
     onKnockout,
     onKnockoutTargetsUpdated,
   });
+
+ const effectiveGameIds = useMemo(() => {
+  if (gameIds && gameIds.length > 0) {
+    return [...new Set(gameIds)].sort((a, b) => a - b);
+  }
+
+  if (gameId) {
+    return [gameId];
+  }
+
+  return [];
+}, [gameId, gameIds]);
+
+const gameIdsKey = effectiveGameIds.join(",");
 
   useEffect(() => {
     handlersRef.current = {
@@ -75,6 +91,7 @@ export function useGameHub({
     connection.on("RoundStarted", handleRoundStarted);
     connection.on("GameFinished", handleGameFinished);
     connection.on("KnockoutUpdated", handleKnockoutUpdated);
+    //The list of players to knockout
     connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
 
     return () => {
@@ -82,62 +99,69 @@ export function useGameHub({
       connection.off("RoundStarted", handleRoundStarted);
       connection.off("GameFinished", handleGameFinished);
       connection.off("KnockoutUpdated", handleKnockoutUpdated);
+    //The list of players to knockout
       connection.off("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
     };
   }, []);
 
-  useEffect(() => {
-    if (!gameId) return;
+ useEffect(() => {
+  if (effectiveGameIds.length === 0) return;
 
-    const connection = getGameHubConnection();
-    let cancelled = false;
+  const connection = getGameHubConnection();
+  let cancelled = false;
 
-    const init = async () => {
-      await startGameHub();
-      if (cancelled) return;
+  const ids = [...effectiveGameIds];
 
-      const currentRefCount = joinedGameRefs.get(gameId) || 0;
-      joinedGameRefs.set(gameId, currentRefCount + 1);
+  const init = async () => {
+    await startGameHub();
+    if (cancelled) return;
+
+    for (const id of ids) {
+      const currentRefCount = joinedGameRefs.get(id) || 0;
+      joinedGameRefs.set(id, currentRefCount + 1);
 
       if (currentRefCount === 0) {
-        await connection.invoke("JoinGameGroup", gameId);
-        console.log(`▶️ Joined GameGroup ${gameId}`);
+        await connection.invoke("JoinGameGroup", id);
+        console.log(`▶️ Joined GameGroup ${id}`);
       } else {
         console.log(
-          `ℹ️ GameGroup ${gameId} already joined, refCount=${currentRefCount + 1}`
+          `ℹ️ GameGroup ${id} already joined, refCount=${currentRefCount + 1}`
         );
       }
-    };
+    }
+  };
 
-    init().catch((err) => {
-      console.error("❌ Failed to initialize GameHub", err);
-    });
+  init().catch((err) => {
+    console.error("❌ Failed to initialize GameHub", err);
+  });
 
-    return () => {
-      cancelled = true;
+  return () => {
+    cancelled = true;
 
-      const currentRefCount = joinedGameRefs.get(gameId);
-      if (!currentRefCount) return;
+    for (const id of ids) {
+      const currentRefCount = joinedGameRefs.get(id);
+      if (!currentRefCount) continue;
 
       if (currentRefCount === 1) {
-        joinedGameRefs.delete(gameId);
+        joinedGameRefs.delete(id);
 
         if (connection.state === "Connected") {
           connection
-            .invoke("LeaveGameGroup", gameId)
+            .invoke("LeaveGameGroup", id)
             .then(() => {
-              console.log(`👋 Left GameGroup ${gameId}`);
+              console.log(`👋 Left GameGroup ${id}`);
             })
             .catch((err) => {
-              console.error(`❌ Failed to leave GameGroup ${gameId}`, err);
+              console.error(`❌ Failed to leave GameGroup ${id}`, err);
             });
         }
       } else {
-        joinedGameRefs.set(gameId, currentRefCount - 1);
+        joinedGameRefs.set(id, currentRefCount - 1);
         console.log(
-          `ℹ️ Decremented GameGroup ${gameId} refCount to ${currentRefCount - 1}`
+          `ℹ️ Decremented GameGroup ${id} refCount to ${currentRefCount - 1}`
         );
       }
-    };
-  }, [gameId]);
+    }
+  };
+}, [gameIdsKey]);
 }

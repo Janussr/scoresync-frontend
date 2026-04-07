@@ -77,6 +77,7 @@ const handleRoundStarted = useCallback((newRound: RoundDto) => {
 
   const handleGameFinished = useCallback((finishedGameId: number) => {
     setCurrentGame(null);
+    setActiveGameId(null);
     router.push(`/game/game-results/${finishedGameId}`);
   }, [router]);
 

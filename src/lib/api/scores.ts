@@ -12,7 +12,7 @@ export const addScorePlayer = (gameId: number, value : number) =>
 
 // Til admin/GameControl
 export const addScoreAdmin = (gameId: number, targetPlayerId: number, value: number) =>
-  apiFetch<PlayerScoreDetails>(`/scores/admin/addscore`, {
+  apiFetch<Score>(`/scores/admin/addscore`, {
     method: "POST",
     body: { gameId, targetPlayerId, value }as any,
   });
@@ -36,7 +36,7 @@ export const rebuyAsPlayer = (gameId: number) =>
   apiFetch<AddScoreResponse>(`/scores/${gameId}/player/rebuy`, { method: "POST" });
 
 export const rebuyAsAdmin = (gameId: number, targetPlayerId: number) =>
-  apiFetch(`/scores/${gameId}/admin/rebuy`, {
+  apiFetch<Score>(`/scores/${gameId}/admin/rebuy`, {
     method: "POST",
     body: targetPlayerId as any, 
   });
