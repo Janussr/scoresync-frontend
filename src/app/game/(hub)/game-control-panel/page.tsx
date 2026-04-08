@@ -396,18 +396,33 @@ useGameHub({
   }
 };
 
-  const handleAddPlayersAsAdmin = async (gameId: number) => {
-    const selectedUserIds = selectedUserIdsByGame[gameId] ?? [];
-    if (selectedUserIds.length === 0) return;
+const handleAddPlayersAsAdmin = async (gameId: number) => {
+  const selectedUserIds = selectedUserIdsByGame[gameId] ?? [];
+  if (selectedUserIds.length === 0) return;
 
-    try {
-      await AddPlayersToGameAsAdmin(gameId, selectedUserIds);
-      setSelectedUserIdsByGame((prev) => ({ ...prev, [gameId]: [] }));
-      await fetchActiveGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to add players");
-    }
-  };
+  try {
+    const newPlayers = await AddPlayersToGameAsAdmin(gameId, selectedUserIds);
+    //Fetching all active games because cba, refactoring every handler du include totalscore.
+    fetchActiveGames();
+    setActiveGames((prev) =>
+      prev.map((game) =>
+        game.id !== gameId
+          ? game
+          : {
+              ...game,
+              players: [...game.players, ...newPlayers],
+            }
+      )
+    );
+
+    setSelectedUserIdsByGame((prev) => ({
+      ...prev,
+      [gameId]: [],
+    }));
+  } catch (err: any) {
+    showError(err.message || "Failed to add players");
+  }
+};
 
   const handleConfirmRemove = (score: Score) => {
     setScoreToRemove(score);
