@@ -16,3 +16,9 @@ export interface Player {
   activeBounties: number;
   isActive: boolean;
 }
+
+export interface PlayerRemovedDto  {
+  gameId: number;
+  removedPlayerId: number;
+  removedUserId?: number | null;
+};

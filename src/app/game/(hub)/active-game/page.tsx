@@ -14,6 +14,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
 import { KnockoutTargetsUpdatedDto, KnockoutUpdatedDto } from "@/lib/models/bounty";
 import { Score } from "@/lib/models/score";
+import { PlayerRemovedDto } from "@/lib/models/player";
 
 export default function PlayerGamePage() {
   const router = useRouter();
@@ -75,11 +76,11 @@ const handleRoundStarted = useCallback((newRound: RoundDto) => {
   });
 }, []);
 
-  const handleGameFinished = useCallback((finishedGameId: number) => {
-    setCurrentGame(null);
-    setActiveGameId(null);
-    router.push(`/game/game-results/${finishedGameId}`);
-  }, [router]);
+const handleGameFinished = useCallback((finishedGameId: number) => {
+  console.log("handleGameFinished fired", finishedGameId);
+  // setCurrentGame(null);
+  router.push(`/game/game-results/${finishedGameId}`);
+}, [router]);
 
 const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
   console.log("Knockout payload score:", payload.score);
@@ -141,6 +142,20 @@ const handleKnockoutTargetsUpdated = useCallback(
   []
 );
 
+const handlePlayerRemoved = useCallback((payload: PlayerRemovedDto) => {
+  if (!currentGame || payload.gameId !== currentGame.id) return;
+
+  const isMe =
+    payload.removedPlayerId === currentGame.me.playerId ||
+    payload.removedUserId === currentGame.me.userId;
+
+  if (!isMe) return;
+
+  setCurrentGame(null);
+  setActiveGameId(null);
+  router.replace("/game/lobby");
+}, [currentGame, router, setActiveGameId]);
+
   // ----- Setup GameHub -----
   useGameHub({
     gameId: currentGameId,
@@ -148,6 +163,7 @@ const handleKnockoutTargetsUpdated = useCallback(
     onGameFinished: handleGameFinished,
     onKnockout: handleKnockoutUpdated,
     onKnockoutTargetsUpdated: handleKnockoutTargetsUpdated,
+    onPlayerRemoved: handlePlayerRemoved,
   });
 
 

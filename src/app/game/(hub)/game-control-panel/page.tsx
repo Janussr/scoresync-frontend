@@ -52,6 +52,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { startRound } from "@/lib/api/rounds";
 import { useGameHub } from "@/lib/hooks/useGameHub";
 import { Player } from "@/lib/models/player";
+import { KnockoutUpdatedDto } from "@/lib/models/bounty";
 
 
 type ScoreInputsState = Record<number, Record<number, string>>;
@@ -101,13 +102,42 @@ export default function GameControlPanelPage() {
   [activeGames]
 );
 
-const handleAdminGameFinished = useCallback((gameId: number) => {
-  setActiveGames((prev) => prev.filter((g) => g.id !== gameId));
+
+
+const handleAdminKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
+  setActiveGames((prev) =>
+    prev.map((game) => {
+      if (game.id !== payload.gameId) return game;
+
+      const scoreExistsInGame = game.scores.some((s) => s.id === payload.score.id);
+      if (scoreExistsInGame) {
+        return game;
+      }
+
+      const activeRound = game.rounds.find((r) => r.endedAt === null);
+      if (!activeRound) return game;
+
+      return {
+        ...game,
+        scores: [...game.scores, payload.score],
+        rounds: game.rounds.map((round) =>
+          round.id !== activeRound.id
+            ? round
+            : {
+                ...round,
+                scores: round.scores.some((s) => s.id === payload.score.id)
+                  ? round.scores
+                  : [...round.scores, payload.score],
+              }
+        ),
+      };
+    })
+  );
 }, []);
 
 useGameHub({
   gameIds: activeGameIds,
-  onGameFinished: handleAdminGameFinished,
+  onKnockout: handleAdminKnockoutUpdated,
 });
 
 
@@ -402,7 +432,7 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
 
   try {
     const newPlayers = await AddPlayersToGameAsAdmin(gameId, selectedUserIds);
-    //Fetching all active games because cba, refactoring every handler du include totalscore.
+    //Fetching all active games because cba, refactoring every handler to include totalscore.
     fetchActiveGames();
     setActiveGames((prev) =>
       prev.map((game) =>
@@ -543,7 +573,7 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
   try {
     setKnockoutLoadingByGame((prev) => ({ ...prev, [gameId]: true }));
 
-    const newScore = await registerAdminKnockout(
+    await registerAdminKnockout(
       gameId,
       knockout.killerPlayerId,
       knockout.victimPlayerId
@@ -553,36 +583,6 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
       ...prev,
       [gameId]: { killerPlayerId: "", victimPlayerId: "" },
     }));
-
-    setActiveGames((prev) =>
-      prev.map((game) => {
-        if (game.id !== gameId) return game;
-
-        const activeRound = game.rounds.find((r) => r.endedAt === null);
-        if (!activeRound) return game;
-
-        return {
-          ...game,
-          players: game.players.map((player) =>
-            player.playerId === knockout.killerPlayerId
-              ? {
-                  ...player,
-                  activeBounties: (player.activeBounties ?? 0) + 1,
-                }
-              : player
-          ),
-          scores: [...game.scores, newScore],
-          rounds: game.rounds.map((round) =>
-            round.id !== activeRound.id
-              ? round
-              : {
-                  ...round,
-                  scores: [...round.scores, newScore],
-                }
-          ),
-        };
-      })
-    );
   } catch (err: any) {
     showError(err.message || "Failed to register knockout");
   } finally {

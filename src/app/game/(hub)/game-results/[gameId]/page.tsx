@@ -27,11 +27,13 @@ import { getPlayerGameScoreDetails } from "@/lib/api/scores";
 import { GameDetails } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
 import { PlayerScoreDetails } from "@/lib/models/player";
+import { useAuth } from "@/context/AuthContext";
 
 export default function GameResultspage() {
   const params = useParams();
   const gameId = Number(params.gameId);
   const router = useRouter();
+  const { activeGameId, setActiveGameId } = useAuth();
 
   const [game, setGame] = useState<GameDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,14 @@ export default function GameResultspage() {
 
     if (!isNaN(gameId)) fetchGame();
   }, [gameId, router, showError]);
+
+  useEffect(() => {
+  if (isNaN(gameId) || activeGameId == null) return;
+
+  if (activeGameId === gameId) {
+    setActiveGameId(null);
+  }
+}, [gameId, activeGameId, setActiveGameId]);
 
   const openPlayerModal = async (playerId: number) => {
     if (!game) return;
