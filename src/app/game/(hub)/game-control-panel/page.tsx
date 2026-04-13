@@ -51,7 +51,7 @@ import { useError } from "@/context/ErrorContext";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { startRound } from "@/lib/api/rounds";
 import { useGameHub } from "@/lib/hooks/useGameHub";
-import { Player, PlayerJoinedDto } from "@/lib/models/player";
+import { Player, PlayerJoinedDto, PlayerLeftDto } from "@/lib/models/player";
 import { KnockoutUpdatedDto } from "@/lib/models/bounty";
 
 
@@ -170,10 +170,31 @@ const handleAdminPlayerJoined = useCallback((payload: PlayerJoinedDto) => {
   );
 }, []);
 
+const handlePlayerLeftGame = useCallback((payload: PlayerLeftDto) => {
+  setActiveGames((prev) =>
+    prev.map((game) => {
+      if (game.id !== payload.gameId) return game;
+
+      return {
+        ...game,
+        players: game.players.map((player) =>
+          player.playerId !== payload.playerId
+            ? player
+            : {
+                ...player,
+                isActive: false,
+              }
+        ),
+      };
+    })
+  );
+}, []);
+
 useGameHub({
   gameIds: activeGameIds,
   onKnockout: handleAdminKnockoutUpdated,
   onPlayerJoined: handleAdminPlayerJoined,
+  onPlayerLeft: handlePlayerLeftGame,
 });
 
 

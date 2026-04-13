@@ -27,3 +27,9 @@ export interface PlayerJoinedDto {
   gameId: number;
   player: Player;
 }
+
+export interface PlayerLeftDto {
+  gameId: number;
+  playerId: number;
+  userId: number;
+}
