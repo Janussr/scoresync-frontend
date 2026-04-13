@@ -43,7 +43,7 @@ import {
 import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { getAllUsers } from "@/lib/api/users";
-import { RebuyUpdatedDto, Score } from "@/lib/models/score";
+import { RebuyUpdatedDto, Score, ScoreAddedDto } from "@/lib/models/score";
 import { Game, GamePanel, GameType} from "@/lib/models/game";
 import { User } from "@/lib/models/user";
 import { useAuth } from "@/context/AuthContext";
@@ -228,12 +228,44 @@ const handleAdminRebuyUpdated = useCallback((payload: RebuyUpdatedDto) => {
   );
 }, []);
 
+
+const handleAdminScoreAdded = useCallback((payload: ScoreAddedDto) => {
+  setActiveGames((prev) =>
+    prev.map((game) => {
+      if (game.id !== payload.gameId) return game;
+
+      if (game.scores.some((s) => s.id === payload.score.id)) {
+        return game;
+      }
+
+      const activeRound = game.rounds.find((r) => r.endedAt === null);
+      if (!activeRound) return game;
+
+      return {
+        ...game,
+        scores: [...game.scores, payload.score],
+        rounds: game.rounds.map((round) =>
+          round.id !== activeRound.id
+            ? round
+            : {
+                ...round,
+                scores: round.scores.some((s) => s.id === payload.score.id)
+                  ? round.scores
+                  : [...round.scores, payload.score],
+              }
+        ),
+      };
+    })
+  );
+}, []);
+
 useGameHub({
   gameIds: activeGameIds,
   onKnockout: handleAdminKnockoutUpdated,
   onPlayerJoined: handleAdminPlayerJoined,
   onPlayerLeft: handlePlayerLeftGame,
   onRebuyUpdated: handleAdminRebuyUpdated,
+  onScoreAdded: handleAdminScoreAdded,
 });
 
 
@@ -403,7 +435,7 @@ useGameHub({
   try {
     setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
 
-    const newScore = await addScoreAdmin(gameId, playerId, value);
+    await addScoreAdmin(gameId, playerId, value);
 
     setScoreInputsByGame((prev) => ({
       ...prev,
@@ -412,28 +444,6 @@ useGameHub({
         [playerId]: "",
       },
     }));
-
-    setActiveGames((prev) =>
-      prev.map((game) => {
-        if (game.id !== gameId) return game;
-
-        const activeRound = game.rounds.find((r) => r.endedAt === null);
-        if (!activeRound) return game;
-
-        return {
-          ...game,
-          scores: [...game.scores, newScore],
-          rounds: game.rounds.map((round) =>
-            round.id !== activeRound.id
-              ? round
-              : {
-                  ...round,
-                  scores: [...round.scores, newScore],
-                }
-          ),
-        };
-      })
-    );
   } catch (err: any) {
     showError(err.message || "Failed to add score");
   } finally {

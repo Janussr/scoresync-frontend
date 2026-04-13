@@ -9,7 +9,7 @@ import {
 } from "./gameHubClient";
 import { KnockoutTargetsUpdatedDto, KnockoutUpdatedDto } from "../models/bounty";
 import { PlayerJoinedDto, PlayerLeftDto, PlayerRemovedDto } from "../models/player";
-import { RebuyUpdatedDto } from "../models/score";
+import { RebuyUpdatedDto, ScoreAddedDto } from "../models/score";
 
 type UseGameHubProps = {
   gameId?: number;
@@ -24,6 +24,7 @@ type UseGameHubProps = {
   onPlayerJoined?: (payload: PlayerJoinedDto) => void;
   onPlayerLeft?: (payload: PlayerLeftDto) => void;
   onRebuyUpdated?: (payload: RebuyUpdatedDto) => void;
+  onScoreAdded?: (payload: ScoreAddedDto) => void;
 };
 
 export function useGameHub({
@@ -39,6 +40,7 @@ export function useGameHub({
   onPlayerJoined,
   onPlayerLeft,
   onRebuyUpdated,
+  onScoreAdded,
 }: UseGameHubProps) {
   const handlersRef = useRef({
     onGameUpdated,
@@ -51,6 +53,7 @@ export function useGameHub({
     onPlayerJoined,
     onPlayerLeft,
     onRebuyUpdated,
+    onScoreAdded,
   });
 
   const effectiveGameIds = useMemo(() => {
@@ -79,8 +82,9 @@ export function useGameHub({
       onPlayerJoined,
       onPlayerLeft,
       onRebuyUpdated,
+      onScoreAdded,
     };
-  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated, onPlayerJoined, onPlayerLeft, onRebuyUpdated]);
+  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated, onPlayerJoined, onPlayerLeft, onRebuyUpdated, onScoreAdded]);
 
   useEffect(() => {
     const connection = getGameHubConnection();
@@ -135,6 +139,13 @@ export function useGameHub({
     };
 
 
+    const handleScoreAdded = (payload: ScoreAddedDto) => {
+  console.log("Score added", payload);
+  handlersRef.current.onScoreAdded?.(payload);
+};
+
+
+
 
     connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated); //The list of players to knockout
     connection.on("GameUpdated", handleGameUpdated);
@@ -146,6 +157,8 @@ export function useGameHub({
     connection.on("PlayerJoined", handlePlayerJoined);
     connection.on("PlayerLeft", handlePlayerLeft);
     connection.on("RebuyUpdated", handleRebuyUpdated);
+connection.on("ScoreAdded", handleScoreAdded);
+
 
 
     return () => {
@@ -159,6 +172,7 @@ export function useGameHub({
       connection.off("PlayerJoined", handlePlayerJoined);
       connection.off("PlayerLeft", handlePlayerLeft);
       connection.off("RebuyUpdated", handleRebuyUpdated);
+      connection.off("ScoreAdded", handleScoreAdded);
     };
   }, []);
 

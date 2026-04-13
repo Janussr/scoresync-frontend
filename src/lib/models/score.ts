@@ -65,3 +65,7 @@ export interface RebuyUpdatedDto {
 }
 
 
+export interface ScoreAddedDto {
+  gameId: number;
+  score: Score;
+}
