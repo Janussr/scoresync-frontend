@@ -8,7 +8,7 @@ import {
   startGameHub,
 } from "./gameHubClient";
 import { KnockoutTargetsUpdatedDto, KnockoutUpdatedDto } from "../models/bounty";
-import { PlayerRemovedDto } from "../models/player";
+import { PlayerJoinedDto, PlayerRemovedDto } from "../models/player";
 
 type UseGameHubProps = {
   gameId?: number;
@@ -20,6 +20,7 @@ type UseGameHubProps = {
   onKnockoutTargetsUpdated?: (payload: KnockoutTargetsUpdatedDto) => void;
   onPlayerRemoved?: (payload: PlayerRemovedDto) => void;
   onRulesUpdated?: (payload: RulesUpdatedDto) => void;
+  onPlayerJoined?: (payload: PlayerJoinedDto) => void;
 };
 
 export function useGameHub({
@@ -31,7 +32,8 @@ export function useGameHub({
   onKnockout,
   onKnockoutTargetsUpdated,
   onPlayerRemoved,
-  onRulesUpdated
+  onRulesUpdated,
+  onPlayerJoined,
 }: UseGameHubProps) {
   const handlersRef = useRef({
     onGameUpdated,
@@ -40,7 +42,8 @@ export function useGameHub({
     onKnockout,
     onKnockoutTargetsUpdated,
     onPlayerRemoved,
-    onRulesUpdated
+    onRulesUpdated,
+    onPlayerJoined,
   });
 
   const effectiveGameIds = useMemo(() => {
@@ -65,9 +68,10 @@ export function useGameHub({
       onKnockout,
       onKnockoutTargetsUpdated,
       onPlayerRemoved,
-      onRulesUpdated
+      onRulesUpdated,
+      onPlayerJoined,
     };
-  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated]);
+  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated, onPlayerJoined]);
 
   useEffect(() => {
     const connection = getGameHubConnection();
@@ -106,6 +110,12 @@ export function useGameHub({
       handlersRef.current.onRulesUpdated?.(payload);
     };
 
+    const handlePlayerJoined = (payload: PlayerJoinedDto) => {
+      console.log("Player joined", payload);
+      handlersRef.current.onPlayerJoined?.(payload);
+    };
+
+
 
     //The list of players to knockout
     connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
@@ -115,6 +125,7 @@ export function useGameHub({
     connection.on("KnockoutUpdated", handleKnockoutUpdated);
     connection.on("PlayerRemoved", handlePlayerRemoved);
     connection.on("RulesUpdated", handleRulesUpdated);
+    connection.on("PlayerJoined", handlePlayerJoined);
     return () => {
       //The list of players to knockout
       connection.off("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
@@ -124,6 +135,7 @@ export function useGameHub({
       connection.off("KnockoutUpdated", handleKnockoutUpdated);
       connection.off("PlayerRemoved", handlePlayerRemoved)
       connection.off("RulesUpdated", handleRulesUpdated);
+      connection.off("PlayerJoined", handlePlayerJoined);
     };
   }, []);
 

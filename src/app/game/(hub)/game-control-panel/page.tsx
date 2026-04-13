@@ -51,7 +51,7 @@ import { useError } from "@/context/ErrorContext";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { startRound } from "@/lib/api/rounds";
 import { useGameHub } from "@/lib/hooks/useGameHub";
-import { Player } from "@/lib/models/player";
+import { Player, PlayerJoinedDto } from "@/lib/models/player";
 import { KnockoutUpdatedDto } from "@/lib/models/bounty";
 
 
@@ -135,9 +135,45 @@ const handleAdminKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => 
   );
 }, []);
 
+const handleAdminPlayerJoined = useCallback((payload: PlayerJoinedDto) => {
+  setActiveGames((prev) =>
+    prev.map((game) => {
+      if (game.id !== payload.gameId) return game;
+
+      const existingPlayer = game.players.find(
+        (p) => p.playerId === payload.player.playerId
+      );
+
+      if (!existingPlayer) {
+        return {
+          ...game,
+          players: [...game.players, payload.player],
+        };
+      }
+
+      return {
+        ...game,
+        players: game.players.map((p) =>
+          p.playerId !== payload.player.playerId
+            ? p
+            : {
+                ...p,
+                isActive: true,
+                username: payload.player.username,
+                userId: payload.player.userId,
+                rebuyCount: payload.player.rebuyCount,
+                activeBounties: payload.player.activeBounties,
+              }
+        ),
+      };
+    })
+  );
+}, []);
+
 useGameHub({
   gameIds: activeGameIds,
   onKnockout: handleAdminKnockoutUpdated,
+  onPlayerJoined: handleAdminPlayerJoined,
 });
 
 

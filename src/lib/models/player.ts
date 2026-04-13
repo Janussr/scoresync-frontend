@@ -22,3 +22,8 @@ export interface PlayerRemovedDto  {
   removedPlayerId: number;
   removedUserId?: number | null;
 };
+
+export interface PlayerJoinedDto {
+  gameId: number;
+  player: Player;
+}
