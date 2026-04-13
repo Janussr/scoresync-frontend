@@ -54,7 +54,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     setAccountMenuAnchor(null);
   };
 
-
   useEffect(() => {
     if (!hydrated) return;
 
@@ -183,11 +182,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               anchorEl={gameMenuAnchor}
               open={Boolean(gameMenuAnchor)}
               onClose={closeDesktopMenus}
-              PaperProps={{
-                sx: {
-                  bgcolor: "#0b2413",
-                  color: "#f5e6a8",
-                  border: "1px solid rgba(212,175,55,0.2)",
+              slotProps={{
+                paper: {
+                  sx: {
+                    bgcolor: "#0b2413",
+                    color: "#f5e6a8",
+                    border: "1px solid rgba(212,175,55,0.2)",
+                  },
                 },
               }}
             >
@@ -215,11 +216,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               anchorEl={guideMenuAnchor}
               open={Boolean(guideMenuAnchor)}
               onClose={closeDesktopMenus}
-              PaperProps={{
-                sx: {
-                  bgcolor: "#0b2413",
-                  color: "#f5e6a8",
-                  border: "1px solid rgba(212,175,55,0.2)",
+              slotProps={{
+                paper: {
+                  sx: {
+                    bgcolor: "#0b2413",
+                    color: "#f5e6a8",
+                    border: "1px solid rgba(212,175,55,0.2)",
+                  },
                 },
               }}
             >
@@ -246,8 +249,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </Button>
 
                 <Menu
-                  anchorEl={gameMenuAnchor}
-                  open={Boolean(gameMenuAnchor)}
+                  anchorEl={accountMenuAnchor}
+                  open={Boolean(accountMenuAnchor)}
                   onClose={closeDesktopMenus}
                   slotProps={{
                     paper: {
@@ -259,7 +262,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     },
                   }}
                 >
-                  {navigationLinks.map((link) => (
+                  {accountLinks.map((link) => (
                     <MenuItem
                       key={link.href}
                       component={Link}

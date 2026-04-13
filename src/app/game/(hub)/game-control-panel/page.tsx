@@ -25,11 +25,9 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  getAllGames,
   cancelGame,
   startGame,
   endGame,
-  removeGame,
   updateRules,
   getAllActiveGamesForGamePanel,
   openGameForPlayers,
@@ -92,17 +90,11 @@ export default function GameControlPanelPage() {
   const [gameIdForPlayerRemoval, setGameIdForPlayerRemoval] = useState<number | null>(null);
   const [removePlayerConfirmOpen, setRemovePlayerConfirmOpen] = useState(false);
 
-  const [removeGameConfirmOpen, setRemoveGameConfirmOpen] = useState(false);
-  const [gameToRemove, setGameToRemove] = useState<Game | null>(null);
-
-
   // /** --- SIGNALR ONLY FOR ROUND/GAME EVENTS --- */
  const activeGameIds = useMemo(
   () => activeGames.map((g) => g.id).sort((a, b) => a - b),
   [activeGames]
 );
-
-
 
 const handleAdminKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
   setActiveGames((prev) =>
@@ -342,15 +334,6 @@ useGameHub({
       });
     } catch (err: any) {
       showError(err.message || "Failed to fetch active games");
-    }
-  };
-
-  const fetchAllGames = async () => {
-    try {
-      const data = await getAllGames();
-      setGames(data);
-    } catch (err: any) {
-      showError(err.message || "Failed to fetch all games");
     }
   };
 
@@ -715,29 +698,6 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
     handleCancelRemovePlayer();
   }
 };
-
-  const handleRemoveGameClick = (game: Game) => {
-    setGameToRemove(game);
-    setRemoveGameConfirmOpen(true);
-  };
-
-  const handleCancelRemoveGame = () => {
-    setRemoveGameConfirmOpen(false);
-    setGameToRemove(null);
-  };
-
-  const handleConfirmRemoveGame = async () => {
-    if (!gameToRemove) return;
-
-    try {
-      await removeGame(gameToRemove.id);
-      await fetchAllGames();
-    } catch (err: any) {
-      showError(err.message || "Failed to remove game");
-    } finally {
-      handleCancelRemoveGame();
-    }
-  };
 
   if (!isLoggedIn || (role !== "Admin" && role !== "Gamemaster")) return null;
 
@@ -1347,29 +1307,13 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
 
 
       {/* ABILITY TO FETCH ALL GAMES INCLUDING THE ACTIVE ONE */}
-      {/* <Stack
-        mt={2}
-        mb={2}
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <Typography
-          sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, fontWeight: 500 }}
-        >
-          All Games
-        </Typography>
-
-        <Button variant="contained" color="success" onClick={fetchAllGames}>
-          Fetch All Games
-        </Button>
-      </Stack> */}
+     
       {[...games]
         .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
         .map((g) => (
           <Card key={g.id} sx={{ mt: 1 }}>
             <CardContent>
-              {/* 🔝 HEADER */}
+              {/*  HEADER */}
               <Stack
                 direction="row"
                 justifyContent="space-between"
@@ -1424,20 +1368,6 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
                       </Button>
                     </Link>
                   </Box>
-
-                  {g.isFinished && role === "Admin" && (
-                    <Box sx={{ flex: { xs: 1, sm: "0 0 auto" } }}>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleRemoveGameClick(g)}
-                        sx={{ width: { xs: "100%", sm: "auto" } }}
-                      >
-                        Delete
-                      </Button>
-                    </Box>
-                  )}
                 </Stack>
               </Stack>
             </CardContent>
@@ -1500,20 +1430,6 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
           >
             Cancel
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={removeGameConfirmOpen} onClose={handleCancelRemoveGame}>
-        <DialogTitle>Delete Game Permanently</DialogTitle>
-        <DialogContent>
-          Are you sure you want to permanently delete Game #{gameToRemove?.gameNumber}? This
-          action cannot be undone.
-        </DialogContent>
-        <DialogActions>
-          <Button color="error" onClick={handleConfirmRemoveGame}>
-            Delete
-          </Button>
-          <Button onClick={handleCancelRemoveGame}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>

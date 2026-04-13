@@ -1,5 +1,5 @@
 import { apiFetch } from "./clients";
-import {  Game, GameDetails, GamePanel, GameType, HallOfFameEntry, GameHistoryEntry, ActivePlayerGame  } from "@/lib/models/game";
+import {  Game, GameDetails, GamePanel, GameType, HallOfFameEntry, GameHistoryEntry, ActivePlayerGame, GameListItemDto  } from "@/lib/models/game";
 
 export const startGame = (type: GameType) =>
   apiFetch<Game>(`/games/start`, {
@@ -20,7 +20,7 @@ export const getGameDetails = (gameId: number) =>
   apiFetch<GameDetails>(`/games/${gameId}`);
 
 export const getAllGames = () =>
-  apiFetch<Game[]>(`/games`);
+  apiFetch<GameListItemDto[]>(`/games`);
 
 export const getGamesHistoryPage = () =>
   apiFetch<GameHistoryEntry[]>(`/games/history-page`);

@@ -41,6 +41,15 @@ export interface Game {
   winner?: Winner | null;
 }
 
+export interface GameListItemDto {
+  id: number;
+  gameNumber: number;
+  startedAt?: string;
+  endedAt?: string;
+  isFinished: boolean;
+  type: GameType;
+}
+
 export interface GamePanel {
   id: number;
   gameNumber: number;

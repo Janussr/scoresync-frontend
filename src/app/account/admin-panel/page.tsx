@@ -24,7 +24,9 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useRouter } from "next/navigation";
 import { getAllUsers, adminResetPwd, setUserRole } from "@/lib/api/users";
+import { getAllGames, removeGame } from "@/lib/api/games";
 import { User, UserRole } from "@/lib/models/user";
+import { GameListItemDto } from "@/lib/models/game";
 import { useAuth } from "@/context/AuthContext";
 import { useError } from "@/context/ErrorContext";
 import { useEffect, useState } from "react";
@@ -36,6 +38,7 @@ export default function AdminPanelPage() {
   const { showError } = useError();
 
   const [users, setUsers] = useState<User[]>([]);
+  const [games, setGames] = useState<GameListItemDto[]>([]);
   const [adminResetUserId, setAdminResetUserId] = useState<number | "">("");
   const [adminResetPassword, setAdminResetPassword] = useState("");
   const [adminResetConfirmOpen, setAdminResetConfirmOpen] = useState(false);
@@ -48,6 +51,10 @@ export default function AdminPanelPage() {
 
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [gamesLoading, setGamesLoading] = useState(false);
+  const [hasFetchedGames, setHasFetchedGames] = useState(false);
+  const [deleteGameId, setDeleteGameId] = useState<number | null>(null);
+  const [deleteGameLoading, setDeleteGameLoading] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) router.replace("/login");
@@ -67,6 +74,19 @@ export default function AdminPanelPage() {
     }
   };
 
+ const fetchGames = async () => {
+  try {
+    setGamesLoading(true);
+    const data = await getAllGames();
+    setGames(data);
+    setHasFetchedGames(true);
+  } catch (err: any) {
+    showError(err.message || "Failed to fetch games");
+  } finally {
+    setGamesLoading(false);
+  }
+};
+
   const showSnackbar = (message: string) => {
     setSnackbarMessage(message);
     setSnackbarOpen(true);
@@ -76,7 +96,6 @@ export default function AdminPanelPage() {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", mt: 4, px: 2 }}>
-      {/* Centered title */}
       <Typography mb={3} sx={{ fontSize: "2rem", fontWeight: 500, textAlign: "center" }}>
         Admin panel
       </Typography>
@@ -85,7 +104,6 @@ export default function AdminPanelPage() {
         <CardContent>
           <Divider sx={{ my: 2 }} />
 
-          {/* Set User Role */}
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Set User Role</Typography>
@@ -143,7 +161,6 @@ export default function AdminPanelPage() {
             </AccordionDetails>
           </Accordion>
 
-          {/* Reset Password */}
           <Accordion sx={{ mt: 2 }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography>Reset User Password</Typography>
@@ -195,16 +212,82 @@ export default function AdminPanelPage() {
               </Stack>
             </AccordionDetails>
           </Accordion>
+
+          
+<Accordion sx={{ mt: 2 }}>
+  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+    <Typography>Manage Games</Typography>
+  </AccordionSummary>
+  <AccordionDetails>
+    <Stack spacing={1.5}>
+      <Button
+        variant="contained"
+        onClick={fetchGames}
+        disabled={gamesLoading}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {gamesLoading ? "Loading..." : "Fetch all games"}
+      </Button>
+
+      {!hasFetchedGames ? (
+        <Typography color="text.secondary">
+          Click "Fetch all games" to load games
+        </Typography>
+      ) : games.length === 0 ? (
+        <Typography color="text.secondary">No games found</Typography>
+      ) : (
+        games.map((game) => (
+          <Box
+            key={game.id}
+            sx={{
+              p: 1.5,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 1,
+            }}
+          >
+            <Typography fontWeight={600}>
+              Game #{game.gameNumber} - {game.type}
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              Status: {game.isFinished ? "Finished" : "Active"}
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              Started: {game.startedAt ? new Date(game.startedAt).toLocaleString() : "-"}
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              Ended: {game.endedAt ? new Date(game.endedAt).toLocaleString() : "-"}
+            </Typography>
+
+            <Box sx={{ mt: 1.5 }}>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => setDeleteGameId(game.id)}
+              >
+                Delete
+              </Button>
+            </Box>
+          </Box>
+        ))
+      )}
+    </Stack>
+  </AccordionDetails>
+</Accordion>
+
         </CardContent>
       </Card>
 
       <Card sx={{ mb: 4 }}>
-  <CardContent>
-    <DatabasePingToggle />
-  </CardContent>
-</Card>
+        <CardContent>
+          <DatabasePingToggle />
+        </CardContent>
+      </Card>
 
-      {/* Dialogs */}
       <Dialog open={adminResetConfirmOpen} onClose={() => setAdminResetConfirmOpen(false)}>
         <DialogTitle>Reset Password</DialogTitle>
         <DialogContent>
@@ -267,6 +350,44 @@ export default function AdminPanelPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={deleteGameId !== null} onClose={() => setDeleteGameId(null)}>
+  <DialogTitle>Delete Game</DialogTitle>
+  <DialogContent>
+    Are you sure you want to delete{" "}
+    {games.find((g) => g.id === deleteGameId)
+      ? `Game #${games.find((g) => g.id === deleteGameId)?.gameNumber}`
+      : "this game"}
+    ?
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setDeleteGameId(null)} disabled={deleteGameLoading}>
+      Cancel
+    </Button>
+    <Button
+      color="error"
+      disabled={deleteGameLoading || deleteGameId === null}
+      onClick={async () => {
+        if (deleteGameId === null) return;
+
+        try {
+          setDeleteGameLoading(true);
+          await removeGame(deleteGameId);
+
+          setGames((prev) => prev.filter((g) => g.id !== deleteGameId));
+          setDeleteGameId(null);
+          showSnackbar("Game deleted successfully");
+        } catch (err: any) {
+          showSnackbar(err.message || "Failed to delete game");
+        } finally {
+          setDeleteGameLoading(false);
+        }
+      }}
+    >
+      {deleteGameLoading ? "Deleting..." : "Delete"}
+    </Button>
+  </DialogActions>
+</Dialog>
 
       <Snackbar
         open={snackbarOpen}

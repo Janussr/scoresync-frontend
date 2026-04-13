@@ -14,8 +14,8 @@ import {
   Button,
   Stack,
 } from "@mui/material";
-import { getAllGames, getGamesHistoryPage } from "@/lib/api/games";
-import { GameDetails, GameHistoryEntry, Game } from "@/lib/models/game";
+import { getGamesHistoryPage } from "@/lib/api/games";
+import { GameHistoryEntry, Game } from "@/lib/models/game";
 import { useError } from "@/context/ErrorContext";
 
 
