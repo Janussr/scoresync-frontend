@@ -12,6 +12,8 @@ import {
   IconButton,
   Stack,
   Divider,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -29,6 +31,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  const [gameMenuAnchor, setGameMenuAnchor] = useState<null | HTMLElement>(null);
+  const [guideMenuAnchor, setGuideMenuAnchor] = useState<null | HTMLElement>(null);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<null | HTMLElement>(null);
+
+  const openGameMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setGameMenuAnchor(event.currentTarget);
+  };
+
+  const openGuideMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setGuideMenuAnchor(event.currentTarget);
+  };
+
+  const openAccountMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAccountMenuAnchor(event.currentTarget);
+  };
+
+  const closeDesktopMenus = () => {
+    setGameMenuAnchor(null);
+    setGuideMenuAnchor(null);
+    setAccountMenuAnchor(null);
+  };
+
 
   useEffect(() => {
     if (!hydrated) return;
@@ -73,8 +98,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
     return links;
   }, [isLoggedIn, role]);
-
-  const desktopNavLinks = [...navigationLinks, ...guideLinks, ...accountLinks];
 
   const closeDrawer = () => setOpen(false);
 
@@ -146,19 +169,110 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             sx={{
               display: { xs: "none", md: "flex" },
               alignItems: "center",
-              gap: 2,
+              gap: 1.5,
             }}
           >
-            {desktopNavLinks.map((link) => (
-              <Button
-                key={link.href}
-                component={Link}
-                href={link.href}
-                sx={{ color: "gold", textTransform: "none" }}
-              >
-                {link.label}
-              </Button>
-            ))}
+            <Button
+              onClick={openGameMenu}
+              sx={{ color: "gold", textTransform: "none" }}
+            >
+              Game
+            </Button>
+
+            <Menu
+              anchorEl={gameMenuAnchor}
+              open={Boolean(gameMenuAnchor)}
+              onClose={closeDesktopMenus}
+              PaperProps={{
+                sx: {
+                  bgcolor: "#0b2413",
+                  color: "#f5e6a8",
+                  border: "1px solid rgba(212,175,55,0.2)",
+                },
+              }}
+            >
+              {navigationLinks.map((link) => (
+                <MenuItem
+                  key={link.href}
+                  component={Link}
+                  href={link.href}
+                  onClick={closeDesktopMenus}
+                  selected={pathname === link.href}
+                >
+                  {link.label}
+                </MenuItem>
+              ))}
+            </Menu>
+
+            <Button
+              onClick={openGuideMenu}
+              sx={{ color: "gold", textTransform: "none" }}
+            >
+              Guides
+            </Button>
+
+            <Menu
+              anchorEl={guideMenuAnchor}
+              open={Boolean(guideMenuAnchor)}
+              onClose={closeDesktopMenus}
+              PaperProps={{
+                sx: {
+                  bgcolor: "#0b2413",
+                  color: "#f5e6a8",
+                  border: "1px solid rgba(212,175,55,0.2)",
+                },
+              }}
+            >
+              {guideLinks.map((link) => (
+                <MenuItem
+                  key={link.href}
+                  component={Link}
+                  href={link.href}
+                  onClick={closeDesktopMenus}
+                  selected={pathname === link.href}
+                >
+                  {link.label}
+                </MenuItem>
+              ))}
+            </Menu>
+
+            {isLoggedIn && accountLinks.length > 0 && (
+              <>
+                <Button
+                  onClick={openAccountMenu}
+                  sx={{ color: "gold", textTransform: "none" }}
+                >
+                  Account
+                </Button>
+
+                <Menu
+                  anchorEl={gameMenuAnchor}
+                  open={Boolean(gameMenuAnchor)}
+                  onClose={closeDesktopMenus}
+                  slotProps={{
+                    paper: {
+                      sx: {
+                        bgcolor: "#0b2413",
+                        color: "#f5e6a8",
+                        border: "1px solid rgba(212,175,55,0.2)",
+                      },
+                    },
+                  }}
+                >
+                  {navigationLinks.map((link) => (
+                    <MenuItem
+                      key={link.href}
+                      component={Link}
+                      href={link.href}
+                      onClick={closeDesktopMenus}
+                      selected={pathname === link.href}
+                    >
+                      {link.label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </>
+            )}
 
             {isLoggedIn && (
               <Typography
@@ -166,6 +280,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   color: "gold",
                   fontStyle: "italic",
                   textTransform: "capitalize",
+                  ml: 1,
                 }}
               >
                 {username}
