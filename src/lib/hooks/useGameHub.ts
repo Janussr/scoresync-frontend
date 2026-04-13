@@ -9,6 +9,7 @@ import {
 } from "./gameHubClient";
 import { KnockoutTargetsUpdatedDto, KnockoutUpdatedDto } from "../models/bounty";
 import { PlayerJoinedDto, PlayerLeftDto, PlayerRemovedDto } from "../models/player";
+import { RebuyUpdatedDto } from "../models/score";
 
 type UseGameHubProps = {
   gameId?: number;
@@ -22,6 +23,7 @@ type UseGameHubProps = {
   onRulesUpdated?: (payload: RulesUpdatedDto) => void;
   onPlayerJoined?: (payload: PlayerJoinedDto) => void;
   onPlayerLeft?: (payload: PlayerLeftDto) => void;
+  onRebuyUpdated?: (payload: RebuyUpdatedDto) => void;
 };
 
 export function useGameHub({
@@ -36,6 +38,7 @@ export function useGameHub({
   onRulesUpdated,
   onPlayerJoined,
   onPlayerLeft,
+  onRebuyUpdated,
 }: UseGameHubProps) {
   const handlersRef = useRef({
     onGameUpdated,
@@ -47,6 +50,7 @@ export function useGameHub({
     onRulesUpdated,
     onPlayerJoined,
     onPlayerLeft,
+    onRebuyUpdated,
   });
 
   const effectiveGameIds = useMemo(() => {
@@ -74,8 +78,9 @@ export function useGameHub({
       onRulesUpdated,
       onPlayerJoined,
       onPlayerLeft,
+      onRebuyUpdated,
     };
-  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated, onPlayerJoined, onPlayerLeft]);
+  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated, onPlayerJoined, onPlayerLeft, onRebuyUpdated]);
 
   useEffect(() => {
     const connection = getGameHubConnection();
@@ -119,10 +124,16 @@ export function useGameHub({
       handlersRef.current.onPlayerJoined?.(payload);
     };
 
-const handlePlayerLeft = (payload: PlayerLeftDto) => {
-  console.log("Player left", payload);
-  handlersRef.current.onPlayerLeft?.(payload);
-};
+    const handlePlayerLeft = (payload: PlayerLeftDto) => {
+      console.log("Player left", payload);
+      handlersRef.current.onPlayerLeft?.(payload);
+    };
+
+    const handleRebuyUpdated = (payload: RebuyUpdatedDto) => {
+      console.log("Rebuy updated", payload);
+      handlersRef.current.onRebuyUpdated?.(payload);
+    };
+
 
 
     connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated); //The list of players to knockout
@@ -133,7 +144,9 @@ const handlePlayerLeft = (payload: PlayerLeftDto) => {
     connection.on("PlayerRemoved", handlePlayerRemoved);
     connection.on("RulesUpdated", handleRulesUpdated);
     connection.on("PlayerJoined", handlePlayerJoined);
-connection.on("PlayerLeft", handlePlayerLeft);
+    connection.on("PlayerLeft", handlePlayerLeft);
+    connection.on("RebuyUpdated", handleRebuyUpdated);
+
 
     return () => {
       connection.off("KnockoutTargetsUpdated", onKnockoutTargetsUpdated); //The list of players to knockout
@@ -145,6 +158,7 @@ connection.on("PlayerLeft", handlePlayerLeft);
       connection.off("RulesUpdated", handleRulesUpdated);
       connection.off("PlayerJoined", handlePlayerJoined);
       connection.off("PlayerLeft", handlePlayerLeft);
+      connection.off("RebuyUpdated", handleRebuyUpdated);
     };
   }, []);
 

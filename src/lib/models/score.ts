@@ -57,3 +57,11 @@ export interface AddScoreResponse  {
 };
 
 
+export interface RebuyUpdatedDto {
+  gameId: number;
+  playerId: number;
+  rebuyCount: number;
+  score: Score;
+}
+
+

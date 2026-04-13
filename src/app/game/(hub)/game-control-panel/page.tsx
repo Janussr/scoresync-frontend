@@ -43,7 +43,7 @@ import {
 import { AddPlayersToGameAsAdmin, removePlayer } from "@/lib/api/players";
 import { registerAdminKnockout } from "@/lib/api/bounties";
 import { getAllUsers } from "@/lib/api/users";
-import { Score } from "@/lib/models/score";
+import { RebuyUpdatedDto, Score } from "@/lib/models/score";
 import { Game, GamePanel, GameType} from "@/lib/models/game";
 import { User } from "@/lib/models/user";
 import { useAuth } from "@/context/AuthContext";
@@ -190,11 +190,50 @@ const handlePlayerLeftGame = useCallback((payload: PlayerLeftDto) => {
   );
 }, []);
 
+const handleAdminRebuyUpdated = useCallback((payload: RebuyUpdatedDto) => {
+  setActiveGames((prev) =>
+    prev.map((game) => {
+      if (game.id !== payload.gameId) return game;
+
+      if (game.scores.some((s) => s.id === payload.score.id)) {
+        return game;
+      }
+
+      const activeRound = game.rounds.find((r) => r.endedAt === null);
+      if (!activeRound) return game;
+
+      return {
+        ...game,
+        players: game.players.map((player) =>
+          player.playerId !== payload.playerId
+            ? player
+            : {
+                ...player,
+                rebuyCount: payload.rebuyCount,
+              }
+        ),
+        scores: [...game.scores, payload.score],
+        rounds: game.rounds.map((round) =>
+          round.id !== activeRound.id
+            ? round
+            : {
+                ...round,
+                scores: round.scores.some((s) => s.id === payload.score.id)
+                  ? round.scores
+                  : [...round.scores, payload.score],
+              }
+        ),
+      };
+    })
+  );
+}, []);
+
 useGameHub({
   gameIds: activeGameIds,
   onKnockout: handleAdminKnockoutUpdated,
   onPlayerJoined: handleAdminPlayerJoined,
   onPlayerLeft: handlePlayerLeftGame,
+  onRebuyUpdated: handleAdminRebuyUpdated,
 });
 
 
@@ -562,29 +601,7 @@ const handleAddPlayersAsAdmin = async (gameId: number) => {
   try {
     setLoadingActionByGame((prev) => ({ ...prev, [gameId]: true }));
 
-    const newScore = await rebuyAsAdmin(gameId, playerId);
-
-    setActiveGames((prev) =>
-      prev.map((game) => {
-        if (game.id !== gameId) return game;
-
-        const activeRound = game.rounds.find((r) => r.endedAt === null);
-        if (!activeRound) return game;
-
-        return {
-          ...game,
-          scores: [...game.scores, newScore],
-          rounds: game.rounds.map((round) =>
-            round.id !== activeRound.id
-              ? round
-              : {
-                  ...round,
-                  scores: [...round.scores, newScore],
-                }
-          ),
-        };
-      })
-    );
+    await rebuyAsAdmin(gameId, playerId);
   } catch (err: any) {
     showError(err.message || "Failed to rebuy");
   } finally {
