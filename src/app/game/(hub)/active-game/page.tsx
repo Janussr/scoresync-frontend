@@ -8,7 +8,7 @@ import { useError } from "@/context/ErrorContext";
 import { getActiveGameForPlayerPage } from "@/lib/api/games";
 import { addScorePlayer, rebuyAsPlayer } from "@/lib/api/scores";
 import { registerPlayerKnockout } from "@/lib/api/bounties";
-import { ActivePlayerGame, GameDetails, RoundDto } from "@/lib/models/game";
+import { ActivePlayerGame, GameDetails, RoundDto, RulesUpdatedDto } from "@/lib/models/game";
 import { leaveGame } from "@/lib/api/players";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useGameHub } from "@/lib/hooks/useGameHub";
@@ -60,101 +60,113 @@ export default function PlayerGamePage() {
 
   const currentGameId = currentGame?.id;
 
-const handleRoundStarted = useCallback((newRound: RoundDto) => {
-  setCurrentGame((prev) => {
-    if (!prev) return prev;
+  const handleRoundStarted = useCallback((newRound: RoundDto) => {
+    setCurrentGame((prev) => {
+      if (!prev) return prev;
 
-    return {
-      ...prev,
-      rounds: [
-        ...prev.rounds.map((round) =>
-          !round.endedAt ? { ...round, endedAt: newRound.startedAt } : round
-        ),
-        newRound,
-      ],
-    };
-  });
-}, []);
-
-const handleGameFinished = useCallback((finishedGameId: number) => {
-  console.log("handleGameFinished fired", finishedGameId);
-  // setCurrentGame(null);
-  router.push(`/game/game-results/${finishedGameId}`);
-}, [router]);
-
-const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
-  console.log("Knockout payload score:", payload.score);
-  setCurrentGame((prev) => {
-    if (!prev) return prev;
-
-    const updatedMe =
-      prev.me.playerId === payload.killerPlayerId
-        ? { ...prev.me, activeBounties: payload.killerActiveBounties }
-        : prev.me.playerId === payload.victimPlayerId
-        ? { ...prev.me, activeBounties: payload.victimActiveBounties }
-        : prev.me;
-
-    const updatedTargets = prev.knockoutTargets.map((target) => {
-      if (target.playerId === payload.killerPlayerId) {
-        return { ...target, activeBounties: payload.killerActiveBounties };
-      }
-
-      if (target.playerId === payload.victimPlayerId) {
-        return { ...target, activeBounties: payload.victimActiveBounties };
-      }
-
-      return target;
+      return {
+        ...prev,
+        rounds: [
+          ...prev.rounds.map((round) =>
+            !round.endedAt ? { ...round, endedAt: newRound.startedAt } : round
+          ),
+          newRound,
+        ],
+      };
     });
+  }, []);
 
-    const activeRound = prev.rounds.find((r) => r.endedAt === null);
+  const handleGameFinished = useCallback((finishedGameId: number) => {
+    console.log("handleGameFinished fired", finishedGameId);
+    // setCurrentGame(null);
+    router.push(`/game/game-results/${finishedGameId}`);
+  }, [router]);
 
-    return {
-      ...prev,
-      me: updatedMe,
-      knockoutTargets: updatedTargets,
-      rounds: activeRound
-        ? prev.rounds.map((round) =>
+  const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
+    console.log("Knockout payload score:", payload.score);
+    setCurrentGame((prev) => {
+      if (!prev) return prev;
+
+      const updatedMe =
+        prev.me.playerId === payload.killerPlayerId
+          ? { ...prev.me, activeBounties: payload.killerActiveBounties }
+          : prev.me.playerId === payload.victimPlayerId
+            ? { ...prev.me, activeBounties: payload.victimActiveBounties }
+            : prev.me;
+
+      const updatedTargets = prev.knockoutTargets.map((target) => {
+        if (target.playerId === payload.killerPlayerId) {
+          return { ...target, activeBounties: payload.killerActiveBounties };
+        }
+
+        if (target.playerId === payload.victimPlayerId) {
+          return { ...target, activeBounties: payload.victimActiveBounties };
+        }
+
+        return target;
+      });
+
+      const activeRound = prev.rounds.find((r) => r.endedAt === null);
+
+      return {
+        ...prev,
+        me: updatedMe,
+        knockoutTargets: updatedTargets,
+        rounds: activeRound
+          ? prev.rounds.map((round) =>
             round.id !== activeRound.id
               ? round
               : {
-                  ...round,
-                  scores: [...round.scores, payload.score],
-                }
+                ...round,
+                scores: [...round.scores, payload.score],
+              }
           )
-        : prev.rounds,
-    };
-  });
-}, []);
+          : prev.rounds,
+      };
+    });
+  }, []);
 
-const handleKnockoutTargetsUpdated = useCallback(
-  (payload: KnockoutTargetsUpdatedDto) => {
+  const handleKnockoutTargetsUpdated = useCallback(
+    (payload: KnockoutTargetsUpdatedDto) => {
+      setCurrentGame((prev) => {
+        if (!prev || prev.id !== payload.gameId) return prev;
+
+        return {
+          ...prev,
+          knockoutTargets: payload.knockoutTargets.filter(
+            (target) => target.playerId !== prev.me.playerId
+          ),
+        };
+      });
+    },
+    []
+  );
+
+  const handlePlayerRemoved = useCallback((payload: PlayerRemovedDto) => {
+    if (!currentGame || payload.gameId !== currentGame.id) return;
+
+    const isMe =
+      payload.removedPlayerId === currentGame.me.playerId ||
+      payload.removedUserId === currentGame.me.userId;
+
+    if (!isMe) return;
+
+    setCurrentGame(null);
+    setActiveGameId(null);
+    router.replace("/game/lobby");
+  }, [currentGame, router, setActiveGameId]);
+
+  const handleRulesUpdated = useCallback((payload: RulesUpdatedDto) => {
     setCurrentGame((prev) => {
       if (!prev || prev.id !== payload.gameId) return prev;
 
       return {
         ...prev,
-        knockoutTargets: payload.knockoutTargets.filter(
-          (target) => target.playerId !== prev.me.playerId
-        ),
+        rebuyValue: payload.rebuyValue ?? undefined,
+        bountyValue: payload.bountyValue ?? undefined,
       };
     });
-  },
-  []
-);
-
-const handlePlayerRemoved = useCallback((payload: PlayerRemovedDto) => {
-  if (!currentGame || payload.gameId !== currentGame.id) return;
-
-  const isMe =
-    payload.removedPlayerId === currentGame.me.playerId ||
-    payload.removedUserId === currentGame.me.userId;
-
-  if (!isMe) return;
-
-  setCurrentGame(null);
-  setActiveGameId(null);
-  router.replace("/game/lobby");
-}, [currentGame, router, setActiveGameId]);
+  }, []);
 
   // ----- Setup GameHub -----
   useGameHub({
@@ -164,6 +176,7 @@ const handlePlayerRemoved = useCallback((payload: PlayerRemovedDto) => {
     onKnockout: handleKnockoutUpdated,
     onKnockoutTargetsUpdated: handleKnockoutTargetsUpdated,
     onPlayerRemoved: handlePlayerRemoved,
+    onRulesUpdated: handleRulesUpdated,
   });
 
 
@@ -172,137 +185,137 @@ const handlePlayerRemoved = useCallback((payload: PlayerRemovedDto) => {
 
 
 
- const submitScore = async () => {
-  if (!currentGame || !me || !points) return;
+  const submitScore = async () => {
+    if (!currentGame || !me || !points) return;
 
-  const parsedPoints = Number(points);
-  if (Number.isNaN(parsedPoints)) return;
+    const parsedPoints = Number(points);
+    if (Number.isNaN(parsedPoints)) return;
 
-  try {
-    setLoadingAction(true);
+    try {
+      setLoadingAction(true);
 
-    const created = await addScorePlayer(currentGame.id, parsedPoints);
+      const created = await addScorePlayer(currentGame.id, parsedPoints);
 
-    const newScore: Score = {
-      id: created.id || Date.now(),
-      playerId: created.playerId,
-      userId: created.userId,
-      userName: created.userName ?? me.username,
-      points: created.points,
-      createdAt: new Date().toISOString(),
-      totalPoints: 0,
-      type: created.type,
-      victimUserName: "",
-      gameId: currentGame.id,
-      roundId: created.rounds.id,
-      roundNumber: created.rounds.roundNumber,
-    };
+      const newScore: Score = {
+        id: created.id || Date.now(),
+        playerId: created.playerId,
+        userId: created.userId,
+        userName: created.userName ?? me.username,
+        points: created.points,
+        createdAt: new Date().toISOString(),
+        totalPoints: 0,
+        type: created.type,
+        victimUserName: "",
+        gameId: currentGame.id,
+        roundId: created.rounds.id,
+        roundNumber: created.rounds.roundNumber,
+      };
 
-    setCurrentGame((prev) => {
-      if (!prev) return prev;
+      setCurrentGame((prev) => {
+        if (!prev) return prev;
 
-      return {
-        ...prev,
-        rounds: prev.rounds.map((round) =>
-          round.id === created.rounds.id
-            ? {
+        return {
+          ...prev,
+          rounds: prev.rounds.map((round) =>
+            round.id === created.rounds.id
+              ? {
                 ...round,
                 scores: [...round.scores, newScore],
               }
-            : round
-        ),
-      };
-    });
+              : round
+          ),
+        };
+      });
 
-    setPoints("");
-  } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
+      setPoints("");
+    } catch (err: any) {
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
+
+      showError(err.message || "Failed to add score");
+    } finally {
+      setLoadingAction(false);
     }
+  };
 
-    showError(err.message || "Failed to add score");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+  const handleRebuy = async () => {
+    if (!currentGame || !me) return;
 
-const handleRebuy = async () => {
-  if (!currentGame || !me) return;
+    try {
+      setLoadingAction(true);
 
-  try {
-    setLoadingAction(true);
+      const created = await rebuyAsPlayer(currentGame.id);
 
-    const created = await rebuyAsPlayer(currentGame.id);
+      const rebuyScore: Score = {
+        id: created.id || Date.now(),
+        playerId: created.playerId,
+        userId: me.userId,
+        userName: me.username,
+        points: created.points,
+        createdAt: new Date().toISOString(),
+        totalPoints: 0,
+        type: created.type,
+        victimUserName: "",
+        gameId: currentGame.id,
+        roundId: created.rounds.id,
+        roundNumber: created.rounds.roundNumber,
+      };
 
-    const rebuyScore: Score = {
-      id: created.id || Date.now(),
-      playerId: created.playerId,
-      userId: me.userId,
-      userName: me.username,
-      points: created.points,
-      createdAt: new Date().toISOString(),
-      totalPoints: 0,
-      type: created.type,
-      victimUserName: "",
-      gameId: currentGame.id,
-      roundId: created.rounds.id,
-      roundNumber: created.rounds.roundNumber,
-    };
+      setCurrentGame((prev) => {
+        if (!prev) return prev;
 
-    setCurrentGame((prev) => {
-      if (!prev) return prev;
-
-      return {
-        ...prev,
-        me: {
-          ...prev.me,
-          rebuyCount: prev.me.rebuyCount + 1,
-        },
-        rounds: prev.rounds.map((round) =>
-          round.id === created.rounds.id
-            ? {
+        return {
+          ...prev,
+          me: {
+            ...prev.me,
+            rebuyCount: prev.me.rebuyCount + 1,
+          },
+          rounds: prev.rounds.map((round) =>
+            round.id === created.rounds.id
+              ? {
                 ...round,
                 scores: [...round.scores, rebuyScore],
               }
-            : round
-        ),
-      };
-    });
-  } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
+              : round
+          ),
+        };
+      });
+    } catch (err: any) {
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
+
+      showError(err.message || "Rebuy failed");
+    } finally {
+      setLoadingAction(false);
     }
+  };
 
-    showError(err.message || "Rebuy failed");
-  } finally {
-    setLoadingAction(false);
-  }
-};
 
-  
 
-const handleKnockout = async () => {
-  if (!currentGame || !knockoutPlayerId) return;
+  const handleKnockout = async () => {
+    if (!currentGame || !knockoutPlayerId) return;
 
-  try {
-    setLoadingAction(true);
-    await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
-    setKnockoutPlayerId("");
-  } catch (err: any) {
-    if (err?.status === 404) {
-      setActiveGameId(null);
-      router.replace("/game/lobby");
-      return;
+    try {
+      setLoadingAction(true);
+      await registerPlayerKnockout(currentGame.id, knockoutPlayerId);
+      setKnockoutPlayerId("");
+    } catch (err: any) {
+      if (err?.status === 404) {
+        setActiveGameId(null);
+        router.replace("/game/lobby");
+        return;
+      }
+      showError(err.message || "Knockout failed");
+    } finally {
+      setLoadingAction(false);
     }
-    showError(err.message || "Knockout failed");
-  } finally {
-    setLoadingAction(false);
-  }
-};
+  };
 
   const handleLeaveGame = async () => {
     if (!currentGame) return;

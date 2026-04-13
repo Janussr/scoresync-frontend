@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { Game, RoundDto } from "@/lib/models/game";
+import { Game, RoundDto, RulesUpdatedDto } from "@/lib/models/game";
 import {
   getGameHubConnection,
   joinedGameRefs,
@@ -19,6 +19,7 @@ type UseGameHubProps = {
   onKnockout?: (knockout: KnockoutUpdatedDto) => void;
   onKnockoutTargetsUpdated?: (payload: KnockoutTargetsUpdatedDto) => void;
   onPlayerRemoved?: (payload: PlayerRemovedDto) => void;
+  onRulesUpdated?: (payload: RulesUpdatedDto) => void;
 };
 
 export function useGameHub({
@@ -30,6 +31,7 @@ export function useGameHub({
   onKnockout,
   onKnockoutTargetsUpdated,
   onPlayerRemoved,
+  onRulesUpdated
 }: UseGameHubProps) {
   const handlersRef = useRef({
     onGameUpdated,
@@ -38,6 +40,7 @@ export function useGameHub({
     onKnockout,
     onKnockoutTargetsUpdated,
     onPlayerRemoved,
+    onRulesUpdated
   });
 
   const effectiveGameIds = useMemo(() => {
@@ -62,8 +65,9 @@ export function useGameHub({
       onKnockout,
       onKnockoutTargetsUpdated,
       onPlayerRemoved,
+      onRulesUpdated
     };
-  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved]);
+  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated]);
 
   useEffect(() => {
     const connection = getGameHubConnection();
@@ -97,23 +101,29 @@ export function useGameHub({
       handlersRef.current.onPlayerRemoved?.(payload);
     };
 
-    
+    const handleRulesUpdated = (payload: RulesUpdatedDto) => {
+      console.log("Rules updated", payload);
+      handlersRef.current.onRulesUpdated?.(payload);
+    };
+
+
+    //The list of players to knockout
+    connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
     connection.on("GameUpdated", handleGameUpdated);
     connection.on("RoundStarted", handleRoundStarted);
     connection.on("GameFinished", handleGameFinished);
     connection.on("KnockoutUpdated", handleKnockoutUpdated);
     connection.on("PlayerRemoved", handlePlayerRemoved);
-    //The list of players to knockout
-    connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
-
+    connection.on("RulesUpdated", handleRulesUpdated);
     return () => {
+      //The list of players to knockout
+      connection.off("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
       connection.off("GameUpdated", handleGameUpdated);
       connection.off("RoundStarted", handleRoundStarted);
       connection.off("GameFinished", handleGameFinished);
       connection.off("KnockoutUpdated", handleKnockoutUpdated);
       connection.off("PlayerRemoved", handlePlayerRemoved)
-      //The list of players to knockout
-      connection.off("KnockoutTargetsUpdated", onKnockoutTargetsUpdated);
+      connection.off("RulesUpdated", handleRulesUpdated);
     };
   }, []);
 

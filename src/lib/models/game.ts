@@ -105,3 +105,9 @@ export interface ActivePlayerGame {
   rounds: RoundDto[]
 }
 
+
+export interface RulesUpdatedDto {
+  gameId: number;
+  rebuyValue: number | null;
+  bountyValue: number | null;
+};
