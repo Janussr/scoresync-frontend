@@ -83,48 +83,53 @@ export default function PlayerGamePage() {
   }, [router]);
 
   const handleKnockoutUpdated = useCallback((payload: KnockoutUpdatedDto) => {
-    console.log("Knockout payload score:", payload.score);
-    setCurrentGame((prev) => {
-      if (!prev) return prev;
+  setCurrentGame((prev) => {
+    if (!prev) return prev;
 
-      const updatedMe =
-        prev.me.playerId === payload.killerPlayerId
-          ? { ...prev.me, activeBounties: payload.killerActiveBounties }
-          : prev.me.playerId === payload.victimPlayerId
-            ? { ...prev.me, activeBounties: payload.victimActiveBounties }
-            : prev.me;
+    const updatedMe =
+      prev.me.playerId === payload.killerPlayerId
+        ? { ...prev.me, activeBounties: payload.killerActiveBounties }
+        : prev.me.playerId === payload.victimPlayerId
+          ? { ...prev.me, activeBounties: payload.victimActiveBounties }
+          : prev.me;
 
-      const updatedTargets = prev.knockoutTargets.map((target) => {
-        if (target.playerId === payload.killerPlayerId) {
-          return { ...target, activeBounties: payload.killerActiveBounties };
-        }
+    const updatedTargets = prev.knockoutTargets.map((target) => {
+      if (target.playerId === payload.killerPlayerId) {
+        return { ...target, activeBounties: payload.killerActiveBounties };
+      }
 
-        if (target.playerId === payload.victimPlayerId) {
-          return { ...target, activeBounties: payload.victimActiveBounties };
-        }
+      if (target.playerId === payload.victimPlayerId) {
+        return { ...target, activeBounties: payload.victimActiveBounties };
+      }
 
-        return target;
-      });
-
-      const activeRound = prev.rounds.find((r) => r.endedAt === null);
-
-      return {
-        ...prev,
-        me: updatedMe,
-        knockoutTargets: updatedTargets,
-        rounds: activeRound
-          ? prev.rounds.map((round) =>
-            round.id !== activeRound.id
-              ? round
-              : {
-                ...round,
-                scores: [...round.scores, payload.score],
-              }
-          )
-          : prev.rounds,
-      };
+      return target;
     });
-  }, []);
+
+    const shouldAddScoreToThisClient =
+      prev.me.playerId === payload.killerPlayerId;
+
+    const activeRound = prev.rounds.find((r) => r.endedAt === null);
+
+    return {
+      ...prev,
+      me: updatedMe,
+      knockoutTargets: updatedTargets,
+      rounds:
+        shouldAddScoreToThisClient && activeRound
+          ? prev.rounds.map((round) =>
+              round.id !== activeRound.id
+                ? round
+                : {
+                    ...round,
+                    scores: round.scores.some((s) => s.id === payload.score.id)
+                      ? round.scores
+                      : [...round.scores, payload.score],
+                  }
+            )
+          : prev.rounds,
+    };
+  });
+}, []);
 
   const handleKnockoutTargetsUpdated = useCallback(
     (payload: KnockoutTargetsUpdatedDto) => {

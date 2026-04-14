@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import * as signalR from "@microsoft/signalr";
 import { Game, RoundDto, RulesUpdatedDto } from "@/lib/models/game";
 import {
   getGameHubConnection,
@@ -13,7 +14,7 @@ import { RebuyUpdatedDto, ScoreAddedDto } from "../models/score";
 
 type UseGameHubProps = {
   gameId?: number;
-  gameIds?: number[],
+  gameIds?: number[];
   onGameUpdated?: (game: Game) => void;
   onRoundStarted?: (round: RoundDto) => void;
   onGameFinished?: (gameId: number) => void;
@@ -56,12 +57,14 @@ export function useGameHub({
     onScoreAdded,
   });
 
+  const subscribedIdsRef = useRef<Set<number>>(new Set());
+
   const effectiveGameIds = useMemo(() => {
     if (gameIds && gameIds.length > 0) {
       return [...new Set(gameIds)].sort((a, b) => a - b);
     }
 
-    if (gameId) {
+    if (gameId !== undefined) {
       return [gameId];
     }
 
@@ -84,7 +87,19 @@ export function useGameHub({
       onRebuyUpdated,
       onScoreAdded,
     };
-  }, [onGameUpdated, onRoundStarted, onGameFinished, onKnockout, onKnockoutTargetsUpdated, onPlayerRemoved, onRulesUpdated, onPlayerJoined, onPlayerLeft, onRebuyUpdated, onScoreAdded]);
+  }, [
+    onGameUpdated,
+    onRoundStarted,
+    onGameFinished,
+    onKnockout,
+    onKnockoutTargetsUpdated,
+    onPlayerRemoved,
+    onRulesUpdated,
+    onPlayerJoined,
+    onPlayerLeft,
+    onRebuyUpdated,
+    onScoreAdded,
+  ]);
 
   useEffect(() => {
     const connection = getGameHubConnection();
@@ -94,60 +109,46 @@ export function useGameHub({
     };
 
     const handleRoundStarted = (round: RoundDto) => {
-      console.log("▶️ Round started", round);
       handlersRef.current.onRoundStarted?.(round);
     };
 
     const handleGameFinished = (finishedGameId: number) => {
-      console.log("🏁 Game finished", finishedGameId);
       handlersRef.current.onGameFinished?.(finishedGameId);
     };
 
     const handleKnockoutUpdated = (knockout: KnockoutUpdatedDto) => {
-      console.log("Registered knockout", knockout);
       handlersRef.current.onKnockout?.(knockout);
-    }
+    };
 
-    const onKnockoutTargetsUpdated = (payload: KnockoutTargetsUpdatedDto) => {
-      console.log("Player joined / left", payload)
-      handlersRef.current.onKnockoutTargetsUpdated?.(payload)
-    }
+    const handleKnockoutTargetsUpdated = (payload: KnockoutTargetsUpdatedDto) => {
+      handlersRef.current.onKnockoutTargetsUpdated?.(payload);
+    };
 
     const handlePlayerRemoved = (payload: PlayerRemovedDto) => {
-      console.log("Player removed", payload);
       handlersRef.current.onPlayerRemoved?.(payload);
     };
 
     const handleRulesUpdated = (payload: RulesUpdatedDto) => {
-      console.log("Rules updated", payload);
       handlersRef.current.onRulesUpdated?.(payload);
     };
 
     const handlePlayerJoined = (payload: PlayerJoinedDto) => {
-      console.log("Player joined", payload);
       handlersRef.current.onPlayerJoined?.(payload);
     };
 
     const handlePlayerLeft = (payload: PlayerLeftDto) => {
-      console.log("Player left", payload);
       handlersRef.current.onPlayerLeft?.(payload);
     };
 
     const handleRebuyUpdated = (payload: RebuyUpdatedDto) => {
-      console.log("Rebuy updated", payload);
       handlersRef.current.onRebuyUpdated?.(payload);
     };
 
-
     const handleScoreAdded = (payload: ScoreAddedDto) => {
-  console.log("Score added", payload);
-  handlersRef.current.onScoreAdded?.(payload);
-};
+      handlersRef.current.onScoreAdded?.(payload);
+    };
 
-
-
-
-    connection.on("KnockoutTargetsUpdated", onKnockoutTargetsUpdated); //The list of players to knockout
+    connection.on("KnockoutTargetsUpdated", handleKnockoutTargetsUpdated);
     connection.on("GameUpdated", handleGameUpdated);
     connection.on("RoundStarted", handleRoundStarted);
     connection.on("GameFinished", handleGameFinished);
@@ -157,17 +158,15 @@ export function useGameHub({
     connection.on("PlayerJoined", handlePlayerJoined);
     connection.on("PlayerLeft", handlePlayerLeft);
     connection.on("RebuyUpdated", handleRebuyUpdated);
-connection.on("ScoreAdded", handleScoreAdded);
-
-
+    connection.on("ScoreAdded", handleScoreAdded);
 
     return () => {
-      connection.off("KnockoutTargetsUpdated", onKnockoutTargetsUpdated); //The list of players to knockout
+      connection.off("KnockoutTargetsUpdated", handleKnockoutTargetsUpdated);
       connection.off("GameUpdated", handleGameUpdated);
       connection.off("RoundStarted", handleRoundStarted);
       connection.off("GameFinished", handleGameFinished);
       connection.off("KnockoutUpdated", handleKnockoutUpdated);
-      connection.off("PlayerRemoved", handlePlayerRemoved)
+      connection.off("PlayerRemoved", handlePlayerRemoved);
       connection.off("RulesUpdated", handleRulesUpdated);
       connection.off("PlayerJoined", handlePlayerJoined);
       connection.off("PlayerLeft", handlePlayerLeft);
@@ -177,63 +176,104 @@ connection.on("ScoreAdded", handleScoreAdded);
   }, []);
 
   useEffect(() => {
-    if (effectiveGameIds.length === 0) return;
-
     const connection = getGameHubConnection();
     let cancelled = false;
 
-    const ids = [...effectiveGameIds];
+    const prevIds = subscribedIdsRef.current;
+    const nextIds = new Set(effectiveGameIds);
 
-    const init = async () => {
+    const idsToJoin = [...nextIds].filter((id) => !prevIds.has(id));
+    const idsToLeave = [...prevIds].filter((id) => !nextIds.has(id));
+
+    const syncGroups = async () => {
       await startGameHub();
       if (cancelled) return;
 
-      for (const id of ids) {
-        const currentRefCount = joinedGameRefs.get(id) || 0;
-        joinedGameRefs.set(id, currentRefCount + 1);
+      if (connection.state !== signalR.HubConnectionState.Connected) {
+        return;
+      }
+
+      for (const id of idsToJoin) {
+        const currentRefCount = joinedGameRefs.get(id) ?? 0;
 
         if (currentRefCount === 0) {
-          await connection.invoke("JoinGameGroup", id);
-          console.log(`▶️ Joined GameGroup ${id}`);
+          try {
+            await connection.invoke("JoinGameGroup", id);
+            joinedGameRefs.set(id, 1);
+            console.log(`▶️ Joined GameGroup ${id}`);
+          } catch (err) {
+            console.error(`❌ Failed to join GameGroup ${id}`, err);
+          }
         } else {
-          console.log(
-            `ℹ️ GameGroup ${id} already joined, refCount=${currentRefCount + 1}`
-          );
+          joinedGameRefs.set(id, currentRefCount + 1);
+          console.log(`ℹ️ GameGroup ${id} already joined, refCount=${currentRefCount + 1}`);
         }
       }
+
+      for (const id of idsToLeave) {
+        const currentRefCount = joinedGameRefs.get(id);
+        if (currentRefCount === undefined) continue;
+
+        if (currentRefCount <= 1) {
+          if (connection.state === signalR.HubConnectionState.Connected) {
+            try {
+              await connection.invoke("LeaveGameGroup", id);
+              joinedGameRefs.delete(id);
+              console.log(`👋 Left GameGroup ${id}`);
+            } catch (err) {
+              console.error(`❌ Failed to leave GameGroup ${id}`, err);
+            }
+          } else {
+            joinedGameRefs.delete(id);
+          }
+        } else {
+          joinedGameRefs.set(id, currentRefCount - 1);
+          console.log(`ℹ️ Decremented GameGroup ${id} refCount to ${currentRefCount - 1}`);
+        }
+      }
+
+      subscribedIdsRef.current = nextIds;
     };
 
-    init().catch((err) => {
-      console.error("❌ Failed to initialize GameHub", err);
+    syncGroups().catch((err) => {
+      console.error("❌ Failed to sync GameHub groups", err);
     });
 
     return () => {
       cancelled = true;
+    };
+  }, [gameIdsKey]);
 
-      for (const id of ids) {
+  useEffect(() => {
+    return () => {
+      const connection = getGameHubConnection();
+      const subscribedIds = subscribedIdsRef.current;
+
+      for (const id of subscribedIds) {
         const currentRefCount = joinedGameRefs.get(id);
-        if (!currentRefCount) continue;
+        if (currentRefCount === undefined) continue;
 
-        if (currentRefCount === 1) {
-          joinedGameRefs.delete(id);
-
-          if (connection.state === "Connected") {
+        if (currentRefCount <= 1) {
+          if (connection.state === signalR.HubConnectionState.Connected) {
             connection
               .invoke("LeaveGameGroup", id)
               .then(() => {
+                joinedGameRefs.delete(id);
                 console.log(`👋 Left GameGroup ${id}`);
               })
               .catch((err) => {
                 console.error(`❌ Failed to leave GameGroup ${id}`, err);
               });
+          } else {
+            joinedGameRefs.delete(id);
           }
         } else {
           joinedGameRefs.set(id, currentRefCount - 1);
-          console.log(
-            `ℹ️ Decremented GameGroup ${id} refCount to ${currentRefCount - 1}`
-          );
+          console.log(`ℹ️ Decremented GameGroup ${id} refCount to ${currentRefCount - 1}`);
         }
       }
+
+      subscribedIdsRef.current = new Set();
     };
-  }, [gameIdsKey]);
+  }, []);
 }

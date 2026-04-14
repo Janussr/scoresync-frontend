@@ -1,6 +1,7 @@
 import * as signalR from "@microsoft/signalr";
 
 let connectionStartCount = 0;
+let startPromise: Promise<void> | null = null;
 
 // key = gameId, value = antal aktive subscribers/hooks
 export const joinedGameRefs = new Map<number, number>();
@@ -40,7 +41,6 @@ export const getGameHubConnection = () => {
 
   connection.onreconnected(async () => {
     console.log("🔄 Reconnected to GameHub");
-    console.log("Connection state after reconnect:", connection.state);
 
     for (const [gameId] of joinedGameRefs) {
       try {
@@ -64,24 +64,27 @@ export async function startGameHub() {
   const connection = getGameHubConnection();
 
   if (connection.state === signalR.HubConnectionState.Connected) {
-    console.log("ℹ️ GameHub already connected, state: Connected");
     return;
   }
 
-  if (connection.state === signalR.HubConnectionState.Connecting) {
-    console.log("ℹ️ GameHub is currently connecting...");
+  if (connection.state === signalR.HubConnectionState.Connecting && startPromise) {
+    await startPromise;
     return;
   }
 
   if (connection.state === signalR.HubConnectionState.Reconnecting) {
-    console.log("ℹ️ GameHub is currently reconnecting...");
     return;
   }
 
   connectionStartCount++;
   console.log(`✅ GameHub connecting... (count=${connectionStartCount})`);
 
-  await connection.start();
+  startPromise = connection.start();
 
-  console.log("✅ GameHub connected (singleton)");
+  try {
+    await startPromise;
+    console.log("✅ GameHub connected (singleton)");
+  } finally {
+    startPromise = null;
+  }
 }
