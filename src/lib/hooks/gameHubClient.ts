@@ -8,7 +8,7 @@ export const joinedGameRefs = new Map<number, number>();
 
 export const getHubBaseUrl = () => {
   if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_HUB_URL_LAN!;
+    return process.env.NEXT_PUBLIC_HUB_URL_PROD!;
   }
 
   const host = window.location.hostname;
@@ -17,7 +17,7 @@ export const getHubBaseUrl = () => {
   if (host.includes("rpi.local")) return process.env.NEXT_PUBLIC_HUB_URL_LAN!;
   if (host.startsWith("100.")) return process.env.NEXT_PUBLIC_HUB_URL_TAILSCALE!;
 
-  return process.env.NEXT_PUBLIC_HUB_URL_LAN!;
+  return process.env.NEXT_PUBLIC_HUB_URL_PROD!;
 };
 
 let gameHubConnection: signalR.HubConnection | null = null;

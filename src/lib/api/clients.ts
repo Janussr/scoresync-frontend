@@ -2,14 +2,16 @@ import { logoutUser } from "./users";
 
 export const getApiBaseUrl = () => {
   if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL_LAN!;
+    return process.env.NEXT_PUBLIC_API_URL_PROD!;
   }
 
   const host = window.location.hostname;
+
   if (host.includes("localhost")) return process.env.NEXT_PUBLIC_API_URL_LOCAL!;
   if (host.includes("rpi.local")) return process.env.NEXT_PUBLIC_API_URL_LAN!;
   if (host.startsWith("100.")) return process.env.NEXT_PUBLIC_API_URL_TAILSCALE!;
-  return process.env.NEXT_PUBLIC_API_URL_LOCAL!;
+
+  return process.env.NEXT_PUBLIC_API_URL_PROD!;
 };
 
 export const apiFetch = async <T>(
