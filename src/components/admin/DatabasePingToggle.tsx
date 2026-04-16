@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Stack,
   Typography,
@@ -8,51 +8,40 @@ import {
   FormControlLabel,
   Box,
 } from "@mui/material";
-import { pingDatabase } from "@/lib/api/database";
 import { useError } from "@/context/ErrorContext";
-
-const PING_INTERVAL_MS = 5 * 60 * 1000; // 5 minutter
+import {
+  getDatabaseKeepAwakeState,
+  setDatabaseKeepAwake,
+} from "@/lib/api/database";
 
 export default function DatabasePingToggle() {
   const [isPinging, setIsPinging] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { showError } = useError();
 
   useEffect(() => {
-    if (!isPinging) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    const runPing = async () => {
+    const loadState = async () => {
       try {
-        await pingDatabase();
-        console.log("DB ping success");
+        const result = await getDatabaseKeepAwakeState();
+        setIsPinging(result.enabled);
       } catch (err: any) {
-        console.error("DB ping failed:", err);
-        showError(err.message || "Database ping failed");
-        setIsPinging(false); // stop automatisk hvis det fejler
+        showError(err.message || "Failed to load keep-awake status");
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    // Kør første ping med det samme
-    runPing();
+    loadState();
+  }, [showError]);
 
-    // Start interval
-    intervalRef.current = setInterval(() => {
-      runPing();
-    }, PING_INTERVAL_MS);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isPinging, showError]);
+  const handleToggle = async (checked: boolean) => {
+    try {
+      const result = await setDatabaseKeepAwake(checked);
+      setIsPinging(result.enabled);
+    } catch (err: any) {
+      showError(err.message || "Failed to update keep-awake status");
+    }
+  };
 
   return (
     <Box>
@@ -65,8 +54,9 @@ export default function DatabasePingToggle() {
           control={
             <Switch
               checked={isPinging}
-              onChange={(e) => setIsPinging(e.target.checked)}
+              onChange={(e) => handleToggle(e.target.checked)}
               color="success"
+              disabled={isLoading}
             />
           }
           label={
@@ -78,12 +68,10 @@ export default function DatabasePingToggle() {
 
         <Typography
           variant="caption"
-          sx={{
-            color: isPinging ? "success.main" : "text.secondary",
-          }}
+          sx={{ color: isPinging ? "success.main" : "text.secondary" }}
         >
           {isPinging
-            ? `Pinging database every ${PING_INTERVAL_MS / 60000} minutes`
+            ? "Backend pings database every 5 minutes"
             : "Ping is disabled"}
         </Typography>
       </Stack>
