@@ -1,7 +1,6 @@
 "use client";
 
 import SectionTitle from "@/components/ui/SectionTitle";
-// import BountyLeaderboard from "@/components/poker/BountyLeaderboard";
 import {
   Stack,
   Box,

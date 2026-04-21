@@ -6,7 +6,7 @@ import { getActiveLobbyGames, joinGameAsPlayer, getGameDetails } from "@/lib/api
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useError } from "@/context/ErrorContext";
-import { GameDetails } from "@/lib/models/game"; // Sørg for at have GameDetails typen
+import { GameDetails } from "@/lib/models/game"; 
 
 export default function LobbyPage() {
   const { userId, setActiveGameId } = useAuth();

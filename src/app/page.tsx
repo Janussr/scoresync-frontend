@@ -159,7 +159,7 @@ export default function HomePage() {
           direction={{ xs: "column", md: "row" }}
           spacing={{ xs: 3, md: 4 }}
           justifyContent="center"
-          alignItems="center" // <-- vigtig fix til mobil
+          alignItems="center" 
         >
           {games.map((game) => (
             <Card
@@ -167,7 +167,7 @@ export default function HomePage() {
               sx={{
                 width: "100%",
                 maxWidth: 300,
-                mx: "auto", // <-- centrerer på mobil
+                mx: "auto", 
                 background:
                   "linear-gradient(180deg, rgba(15,55,20,0.75), rgba(7,32,12,0.9))",
                 border: "2px solid rgba(183, 148, 28, 0.5)",
@@ -189,9 +189,9 @@ export default function HomePage() {
               >
                 <CardContent
                   sx={{
-                    py: { xs: 3, md: 3.5 }, // <-- mindre højde
+                    py: { xs: 3, md: 3.5 }, 
                     px: 2,
-                    minHeight: 160, // <-- fast lavere højde
+                    minHeight: 160, 
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",

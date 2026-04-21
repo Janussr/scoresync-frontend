@@ -34,7 +34,6 @@ export default function SectionTitle({
         position: "relative",
         pb: 0.5,
 
-        // 🔥 elegant underline (meget bedre end border)
         "&::after": {
           content: '""',
           position: "absolute",

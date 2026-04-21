@@ -3,14 +3,12 @@ import { Score, AddScoreResponse } from "../models/score";
 import { apiFetch } from "./clients";
 
 
-// Kun til player siden – current user kan kun tilføje points til sig selv
 export const addScorePlayer = (gameId: number, value : number) =>
   apiFetch<AddScoreResponse>(`/scores/player/addscore`, {
     method: "POST",
     body: { gameId, value  } as any,
   });
 
-// Til admin/GameControl
 export const addScoreAdmin = (gameId: number, targetPlayerId: number, value: number) =>
   apiFetch<Score>(`/scores/admin/addscore`, {
     method: "POST",
