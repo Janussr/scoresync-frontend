@@ -15,6 +15,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { useAuth } from "@/context/AuthContext";
@@ -173,6 +174,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           >
             <Button
               onClick={openGameMenu}
+              endIcon={<KeyboardArrowDownIcon />}
               sx={{ color: "gold", textTransform: "none" }}
             >
               Game
@@ -207,6 +209,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             <Button
               onClick={openGuideMenu}
+              endIcon={<KeyboardArrowDownIcon />}
               sx={{ color: "gold", textTransform: "none" }}
             >
               Guides

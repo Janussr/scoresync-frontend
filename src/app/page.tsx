@@ -222,7 +222,7 @@ export default function HomePage() {
                       letterSpacing: "0.15em",
                     }}
                   >
-                    JOIN
+                    Guide
                   </Typography>
                 </CardContent>
               </CardActionArea>
